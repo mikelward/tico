@@ -1,0 +1,8 @@
+{
+  "name": "tico",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  }
+}
