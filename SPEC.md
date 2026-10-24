@@ -874,14 +874,18 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   name and address, beside the key Chrome has bound), the keys checklist
   (every command, the key this spec gives it and the key Chrome has bound,
   the unbound ones first, with a button to `chrome://extensions/shortcuts`;
-  a command on another key counts as done), the extra sites watched for
+  a command on another key counts as done), the setup checklist (the
+  ChromeOS settings in §3.4, each with how to set it and, where it has
+  one, a button to its `chrome://os-settings` page; you tick them off, as
+  ChromeOS can't be read, and the ticks stay in `storage.local`), the
+  extra sites watched for
   attention (§10.3), the dim's strength (2% to 50%,
   repainting what's already dimmed), this Chromebook's
   layouts (the ultrawide threshold and the lone-window widths, kept in
   `storage.local`), and import, export and reset of the shared settings.
   `src/settings.js` checks every value, and the dashboard and home page pick
   up a change at once through `storage.onChanged`; tico reads its settings
-  on each step. The other pages are still to do.
+  on each step. Workspaces is still to do.
 
 ## 14. The extension
 

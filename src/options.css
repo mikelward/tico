@@ -172,3 +172,20 @@ input.width {
 #keys tr.bound td {
   color: var(--muted);
 }
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.checklist li {
+  margin: 8px 0;
+}
+.checklist input {
+  width: auto;
+}
+.checklist label {
+  margin-left: 6px;
+}
+.checklist p {
+  margin: 2px 0 0 26px;
+}
