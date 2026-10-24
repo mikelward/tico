@@ -3,7 +3,7 @@
 // `api` is `chrome` in the extension and a fake in the tests; only its
 // promise-returning calls are used.
 
-import { appOf, DEFAULT_APPS } from "./apps.js";
+import { DEFAULT_APPS } from "./apps.js";
 import { DEFAULT_SETTINGS, load as loadSettings } from "./settings.js";
 import { overlay } from "./dim.js";
 import { matchWindows, windowUrls } from "./restart.js";
@@ -379,7 +379,7 @@ export class Tico {
     if (name === "workspace-next") return this.showWorkspace(display, step(1));
     if (name === "workspace-prev") return this.showWorkspace(display, step(-1));
     if (name === "popup") return this.dashboard(display);
-    if (name === "app-browser") return this.browser(display, n);
+    if (name === "app-browser") return this.browser(display);
     if (name === "attention") return this.attention(display);
     const app = this.apps.find((a) => a.command === name);
     if (app) return this.app(app, display);
@@ -539,32 +539,18 @@ export class Tico {
     return w;
   }
 
-  // The browser key: the most recently focused browser window on this
-  // workspace, else a new one. Every normal window is a browser, whatever
-  // its tab shows.
-  async browser(display, n) {
-    const w = n === null ? null : this.state.workspaces[n];
-    const recency = (id) => this.state.windows[id]?.lastFocused ?? 0;
-    const found = (w?.windows ?? [])
-      .filter((id) => this.windows.get(id)?.type === "normal")
-      .sort((a, b) => recency(b) - recency(a))[0];
-    if (found !== undefined) return this.activate(found, display);
+  // The browser key: always a new browser window on this workspace, as
+  // tide's and KDE's keys launch one (§9.1).
+  async browser(display) {
     return (await this.open({}, display)).id;
   }
 
-  // A web app key: its newest window wherever it is, else a new app window.
-  // Only app windows and the popups tico opened for an app count (§9.1).
+  // A web app key: always a new window on this workspace, never one already
+  // open, as tide's and KDE's keys launch the app (§9.1). Installed web apps
+  // open their own windows, but there's no public way to launch one by
+  // origin, so tico opens the site in an app-like popup and tiles it as the
+  // app's.
   async app(app, display) {
-    let newest = null;
-    for (const w of this.windows.values()) {
-      const eligible = w.type === "app" || (w.type === "popup" && this.state.appPopups.includes(w.id));
-      // Chrome hands out window IDs in increasing order, so the highest is the newest.
-      if (eligible && w.id in this.state.windows && appOf(w, this.apps) === app && (newest === null || w.id > newest)) newest = w.id;
-    }
-    if (newest !== null) return this.activate(newest, display);
-    // Installed web apps open their own windows, but there's no public
-    // way to launch one by origin, so tico opens the site in an app-like
-    // popup and remembers it as the app's (§9.1).
     const w = await this.open({ url: app.url, type: "popup" }, display);
     this.state.appPopups.push(w.id);
     return w.id;
