@@ -1229,22 +1229,39 @@ finer steps and the exact 3× aren't offered in Settings.
    Solaar (`solaar show`) lists `ADJUSTABLE DPI` on a Logitech mouse that
    can change it. Gaming mice keep it in onboard memory: set it once with
    Solaar, libratbag or the maker's app, on any machine.
-2. **`gesture_prop` in crosh.**
+2. **`gesture_prop` in crosh.** Tried on a Chromebook, in normal mode,
+   with a Logitech M510:
    - It needs `chrome://flags/#gesture-properties-dbus-service`
-     (`kGesturePropertiesDBusService`, off by default). The D-Bus policy
-     admits the `chronos` user, so developer mode doesn't seem to be
-     needed. Whether crosh offers the command outside developer mode is
-     *(unverified)*.
-   - It sets properties Chrome never writes, so Settings doesn't
-     overwrite them:
-     - `Mouse CPI` (default 1000): lower is faster, in continuous steps;
-     - `Mouse Pointer Accel Curve`, with
-       `Use Custom Mouse Pointer Accel Curve`;
-     - `Mouse Scroll Accel Curve`: scaling its five coefficients by 3
-       makes accelerated scrolling 3× faster and keeps the spin.
-   - **It's per device and per boot.** The values most likely reset on
-     reboot, resume or replug *(unverified)*, and nothing re-applies them
-     automatically. It suits an experiment, not a daily setting.
+     (`kGesturePropertiesDBusService`, off by default) and a restart.
+     Then crosh's `gesture_prop` works without developer mode.
+   - `gesture_prop devices` lists each input device's ID;
+     `gesture_prop list <id>` its properties; `get <id> "<name>"` a
+     value. `set` takes D-Bus typed values, such as
+     `array:double:200,0,0,0,0` or `array:boolean:false`; a bare `3` is
+     refused as badly formed.
+   - crosh runs only the first line of a paste, so each command goes in
+     on its own.
+   - The wheel, with Controlled scrolling off:
+     - `Mouse Scroll Accel Curve` is five polynomial coefficients in wheel
+       speed, `10.374, 0.41773, 0.025737, 8.0428e-05, -9.1149e-07` by
+       default. Its first term is the step per click.
+     - It has no effect while `Mouse High Resolution Scrolling` is on,
+       which it is by default, even on a wheel without high-resolution
+       steps. Set that to `false` first.
+     - A flat curve, `200,0,0,0,0`, gives every click the same, much
+       longer step, with no acceleration; 200 suited the tester. Tripling
+       all five coefficients only tripled the accelerated curve.
+     - `Scroll Y Out Scale` (2.5 by default) didn't change wheel
+       scrolling; it seems to be for the touchpad.
+   - The pointer: `Mouse CPI` (default 1000), lower is faster in
+     continuous steps; and `Mouse Pointer Accel Curve`, with
+     `Use Custom Mouse Pointer Accel Curve`. Neither has been tried.
+   - Chrome writes `Mouse Scroll Acceleration` and
+     `Mouse Scroll Sensitivity` from Settings, but not the curve or the
+     high-resolution switch.
+   - **It's per device, and nothing re-applies it.** Whether a value
+     survives a reboot, resume, replug, or a change in Settings is
+     *(unverified)*. A device's ID may change between boots.
 3. **Developer mode**, with rootfs verification off: a file in
    `/etc/gesture/` (read at startup, `gesture_property_provider.cc`)
    makes the same properties stick. It costs verified boot, and updates
