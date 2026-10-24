@@ -35,3 +35,12 @@ test("the overlay goes on once and comes off", () => {
   assert.equal(els.size, 0);
   overlay(false);
 });
+
+test("a dimmed page takes a new strength without a second overlay", () => {
+  const els = fakePage();
+  overlay(true, 0.25);
+  assert.match(els.get("tico-dim").style.cssText, /background:rgba\(0,0,0,0\.25\)/);
+  overlay(true, 0.05);
+  assert.equal(els.get("tico-dim").style.background, "rgba(0,0,0,0.05)");
+  assert.equal(els.size, 1);
+});

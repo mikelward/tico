@@ -96,11 +96,13 @@ function fromForm() {
     const [name, url] = [...tr.querySelectorAll("input")].map((i) => i.value.trim());
     return name || url ? [{ command: tr.dataset.command, name, url }] : [];
   });
-  return { clocks, ...hours, apps };
+  const strength = num($("dim-strength"));
+  return { clocks, ...hours, apps, dimStrength: Number((strength / 100).toPrecision(12)) };
 }
 
 function toForm(settings) {
   rows.replaceChildren(...settings.clocks.map(clockRow));
+  $("dim-strength").value = Number((settings.dimStrength * 100).toPrecision(12));
   appRows.replaceChildren(...APP_COMMANDS.map((c) => appRow(c, settings.apps.find((a) => a.command === c))));
   for (const [k, ids] of Object.entries(HOURS)) ids.forEach((id, i) => ($(id).value = settings[k][i]));
   json.value = JSON.stringify(pick(settings, SHARED), null, 2);
@@ -171,6 +173,7 @@ $("add-clock").addEventListener("click", () => {
   rows.lastElementChild.querySelector("input").focus();
 });
 for (const ids of Object.values(HOURS)) for (const id of ids) $(id).addEventListener("change", () => save());
+$("dim-strength").addEventListener("change", () => save());
 
 $("import").addEventListener("click", async () => {
   let value;

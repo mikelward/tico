@@ -422,10 +422,14 @@ export class Tico {
       }
     }
     want.delete(undefined);
+    const strength = this.settings.dimStrength;
+    // A new strength repaints every overlay showing, not just new ones.
+    const repaint = s.dimStrength !== undefined && s.dimStrength !== strength;
+    s.dimStrength = strength;
     const dimmed = new Set(s.dimmed);
     const set = async (tabId, on) => {
       try {
-        await this.api.scripting.executeScript({ target: { tabId }, func: overlay, args: [on] });
+        await this.api.scripting.executeScript({ target: { tabId }, func: overlay, args: [on, strength] });
         return true;
       } catch {
         // chrome:// pages, the Web Store and the PDF viewer can't be
@@ -433,7 +437,7 @@ export class Tico {
         return false;
       }
     };
-    for (const tabId of want) if (!dimmed.has(tabId) && (await set(tabId, true))) dimmed.add(tabId);
+    for (const tabId of want) if ((repaint || !dimmed.has(tabId)) && (await set(tabId, true))) dimmed.add(tabId);
     for (const tabId of dimmed) {
       if (want.has(tabId)) continue;
       const win = this.tabWindow.get(tabId);
@@ -443,6 +447,9 @@ export class Tico {
       if (win !== undefined) await set(tabId, false);
       dimmed.delete(tabId);
     }
+    // Overlays kept on hidden windows take the new strength too, for when
+    // they're back.
+    if (repaint) for (const tabId of dimmed) if (!want.has(tabId) && this.tabWindow.has(tabId)) await set(tabId, true);
     s.dimmed = [...dimmed];
   }
 

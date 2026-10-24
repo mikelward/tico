@@ -101,11 +101,17 @@ test("layouts are set per Chromebook, and checked", () => {
 
 test("pick keeps the shared settings apart from this Chromebook's", () => {
   const all = resolve().settings;
-  assert.deepEqual(Object.keys(pick(all, SHARED)), ["clocks", "day", "work", "apps"]);
+  assert.deepEqual(Object.keys(pick(all, SHARED)), ["clocks", "day", "work", "apps", "dimStrength"]);
   assert.deepEqual(Object.keys(pick(all, PER_MACHINE)), ["singleRules", "ultrawideAspect"]);
 });
 
 test("a settings change applies at once, but tico's own state writes don't count", () => {
   assert.equal(settingsChanged({ settings: { newValue: { ultrawideAspect: 3 } } }), true);
   assert.equal(settingsChanged({ state: { newValue: {} }, view: { newValue: {} } }), false);
+});
+
+test("the dim's strength is shared, and checked", () => {
+  assert.equal(resolve({ dimStrength: 0.2 }).settings.dimStrength, 0.2);
+  assert.deepEqual(resolve({ dimStrength: 0.9 }).errors, ["dimStrength: 0.9 isn't a strength from 0.02 to 0.5 (2% to 50%), like 0.1"]);
+  assert.ok(SHARED.includes("dimStrength"));
 });

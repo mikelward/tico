@@ -754,8 +754,8 @@ Android or Linux app, tap Search for the native launcher instead.
 - tico injects a content script into the visible tab of every **unfocused**
   tiled window. It adds a full-page overlay at 10% black, ignoring the
   pointer, at the top of the stacking order. That's stronger than tide's
-  0.07 Hyprland dim, matching the 10–15% of other desktops; strength
-  becomes a setting with the options page (§13).
+  0.07 Hyprland dim, matching the 10–15% of other desktops; the options
+  page sets the strength, from 2% to 50% (§13).
 - The focused window's overlay goes the instant focus arrives.
 - No dim when the workspace has one visible window, over fullscreen video,
   or in PiP, as in tide §6.2.
@@ -870,7 +870,8 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   name and address, beside the key Chrome has bound), the keys checklist
   (every command, the key this spec gives it and the key Chrome has bound,
   the unbound ones first, with a button to `chrome://extensions/shortcuts`;
-  a command on another key counts as done), this Chromebook's
+  a command on another key counts as done), the dim's strength (2% to 50%,
+  repainting what's already dimmed), this Chromebook's
   layouts (the ultrawide threshold and the lone-window widths, kept in
   `storage.local`), and import, export and reset of the shared settings.
   `src/settings.js` checks every value, and the dashboard and home page pick
