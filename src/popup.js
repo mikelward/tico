@@ -22,6 +22,7 @@ function renderWorkspaces(view) {
     b.textContent = n;
     if (view.counts[n] > 0) b.classList.add("occupied");
     if (elsewhere.has(n)) b.classList.add("elsewhere");
+    if (view.urgent?.includes(n)) b.classList.add("urgent");
     if (here?.workspace === n) b.classList.add("current");
     b.addEventListener("click", () => {
       chrome.runtime.sendMessage({ command: `workspace-${n}` });

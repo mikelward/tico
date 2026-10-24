@@ -5,6 +5,7 @@
 
 import { appOf, DEFAULT_APPS } from "./apps.js";
 import * as geometry from "./geometry.js";
+import { unreadCount } from "./unread.js";
 import * as ws from "./workspaces.js";
 
 export const DEFAULTS = {
@@ -17,6 +18,8 @@ export const DEFAULTS = {
 const MANAGED = ["normal", "app"];
 const STATE_KEY = "state";
 const VIEW_KEY = "view";
+const BADGE = "#3584e4";
+const BADGE_ATTENTION = "#e5a50a";
 
 function area(display) {
   const a = display.workArea;
@@ -62,6 +65,26 @@ export class Tico {
     });
   }
 
+  // A watched page's title changed (§10.3): a rising unread count marks its
+  // window, unless you're already in it. A page's first report only sets the
+  // baseline, so loading one with old unread mail marks nothing, even in a
+  // tab that showed fewer before.
+  title(tabId, windowId, title, first = false) {
+    return this.run(async () => {
+      await this.sync();
+      const s = this.state;
+      const count = unreadCount(title);
+      const before = first ? Infinity : (s.unread[tabId]?.count ?? Infinity);
+      s.unread[tabId] = { windowId, count };
+      const w = this.windows.get(windowId);
+      if (count > before && w && !w.focused) {
+        s.marks = [...s.marks.filter((id) => id !== windowId), windowId];
+        await this.api.windows.update(windowId, { drawAttention: true });
+      }
+      await this.apply();
+    });
+  }
+
   command(name) {
     return this.run(async () => {
       await this.sync();
@@ -91,7 +114,8 @@ export class Tico {
     }
     const counts = {};
     for (let n = 1; n <= ws.WORKSPACES; n++) counts[n] = s.workspaces[n].windows.length;
-    return { focusedDisplay: this.focusedDisplay() ?? null, displays, counts };
+    const urgent = [...new Set(s.marks.map((id) => s.windows[id]?.ws).filter((n) => n !== undefined))];
+    return { focusedDisplay: this.focusedDisplay() ?? null, displays, counts, urgent };
   }
 
   // Bring the state up to date with Chrome: displays, new and closed
@@ -142,6 +166,11 @@ export class Tico {
       if (w.focused) s = ws.focused(s, w.id);
     }
     s.appPopups = [...appPopups].filter((id) => this.windows.has(id));
+    // A mark clears when you go to its window, or it closes.
+    s.marks = (before?.marks ?? []).filter((id) => this.windows.has(id) && !this.windows.get(id).focused);
+    s.unread = Object.fromEntries(
+      Object.entries(before?.unread ?? {}).filter(([, u]) => this.all.has(u.windowId)),
+    );
     s.homes = {};
     for (const [d, id] of Object.entries(this.state?.homes ?? {})) {
       if (!this.all.has(id)) continue;
@@ -212,6 +241,7 @@ export class Tico {
     if (name === "workspace-prev") return this.showWorkspace(display, step(-1));
     if (name === "popup") return this.popup(display);
     if (name === "app-browser") return this.browser(display, n);
+    if (name === "attention") return this.attention(display);
     const app = this.apps.find((a) => a.command === name);
     if (app) return this.app(app, display);
     if (!tracked && name !== "layout-next" && name !== "layout-prev") return null;
@@ -243,6 +273,9 @@ export class Tico {
   async badge() {
     const n = ws.showing(this.state, this.focusedDisplay());
     await this.api.action?.setBadgeText({ text: n === null ? "" : String(n) });
+    // Amber while another workspace holds a marked window (§8.1).
+    const elsewhere = this.state.marks.some((id) => this.state.windows[id] && this.state.windows[id].ws !== n);
+    await this.api.action?.setBadgeBackgroundColor({ color: elsewhere ? BADGE_ATTENTION : BADGE });
   }
 
   // The popup, from the toolbar where there is one. A web app window has no
@@ -270,6 +303,21 @@ export class Tico {
       height,
     });
     return null;
+  }
+
+  // Search+Tab (§10.3): the most recent mark, so pressing again goes to the
+  // next; with none, the last window you were in.
+  attention(display) {
+    const s = this.state;
+    if (s.marks.length > 0) return this.activate(s.marks.pop(), display);
+    const current = this.focusedWindow();
+    let last = null;
+    for (const [key, info] of Object.entries(s.windows)) {
+      const id = Number(key);
+      if (id === current || !info.lastFocused) continue;
+      if (last === null || info.lastFocused > s.windows[last].lastFocused) last = id;
+    }
+    return last === null ? null : this.activate(last, display);
   }
 
   // Bring up a window, with its workspace (§6.1 Activate).

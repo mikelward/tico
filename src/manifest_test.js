@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Tico } from "./tico.js";
 import { FakeChrome, HD } from "./fake_chrome.js";
+import { WATCHED } from "./unread.js";
 
 const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url)));
 
@@ -31,6 +32,11 @@ test("every suggested key is one Chromium can bind, on every platform", () => {
   }
 });
 
+test("the title watcher runs on the watched origins and nowhere else", () => {
+  assert.deepEqual(manifest.content_scripts, [{ matches: WATCHED, js: ["src/unread_watch.js"], run_at: "document_idle" }]);
+  assert.equal(manifest.host_permissions, undefined, "no host access beyond the content script's");
+});
+
 test("every command in the manifest does something", async () => {
   for (const name of Object.keys(manifest.commands)) {
     const chrome = new FakeChrome({
@@ -45,6 +51,13 @@ test("every command in the manifest does something", async () => {
     // Removing a master needs a second one to remove, and going or sending
     // to workspace 1 needs to start somewhere else.
     if (name === "master-remove") await tico.command("master-add");
+    // Search+Tab with nothing marked goes back to the last window you were in.
+    if (name === "attention") {
+      chrome.focus(2);
+      await tico.event();
+      chrome.focus(1);
+      await tico.event();
+    }
     if (name.endsWith("-1")) {
       await tico.command("workspace-2");
       chrome.open({ id: 9, left: 0, top: 0, width: 400, height: 300 });
