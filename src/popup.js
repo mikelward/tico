@@ -2,7 +2,9 @@
 // layout, and the clocks. Opened as a window where there's no toolbar, it
 // closes when it loses focus.
 
-import { renderClocks } from "./clockview.js";
+import { scrub } from "./clocks.js";
+import { renderClocks, renderDetail } from "./clockview.js";
+import { fitHeight } from "./windowfit.js";
 
 const SYMBOLS = { tile: "[]=", threecol: "|M|", twocol: "||=", monocle: "[M]" };
 const asWindow = new URLSearchParams(location.search).has("window");
@@ -58,9 +60,56 @@ dim.addEventListener("change", async () => {
     await chrome.permissions.remove({ origins: DIM_ORIGINS });
   }
 });
+// The clocks: a click opens each zone's strip and the next DST change, and
+// scrolling over them scrubs time until the pointer leaves (§8.2).
 const clocks = document.getElementById("clocks");
-renderClocks(clocks);
-setInterval(() => renderClocks(clocks), 10000);
+const detail = document.getElementById("clock-detail");
+let scrubbed = null;
+function renderTime() {
+  const at = scrubbed ?? new Date();
+  renderClocks(clocks, at, scrubbed !== null);
+  if (!detail.hidden) renderDetail(detail, at, scrubbed !== null);
+}
+renderTime();
+setInterval(renderTime, 10000);
+function toggleDetail() {
+  detail.hidden = !detail.hidden;
+  clocks.setAttribute("aria-expanded", String(!detail.hidden));
+  renderTime();
+}
+clocks.addEventListener("click", toggleDetail);
+// It's a button to the keyboard too.
+clocks.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  toggleDetail();
+});
+
+// Opened as a small window, it fits its content as that changes: the
+// detail opening or closing, or a scrub that brings a clock-change note.
+async function fit() {
+  const me = await chrome.windows.getCurrent();
+  const height = fitHeight({
+    // The body, not the document, which never measures less than the window.
+    content: Math.ceil(document.body.getBoundingClientRect().height),
+    outer: me.height,
+    inner: window.innerHeight,
+    available: screen.availHeight,
+  });
+  if (height !== me.height) await chrome.windows.update(me.id, { height });
+}
+if (asWindow) new ResizeObserver(() => fit()).observe(document.body);
+for (const e of [clocks, detail]) {
+  e.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    scrubbed = scrub(scrubbed ?? new Date(), Math.sign(event.deltaY));
+    renderTime();
+  }, { passive: false });
+}
+document.body.addEventListener("mouseleave", () => {
+  scrubbed = null;
+  renderTime();
+});
 if (asWindow) {
   window.addEventListener("blur", () => window.close());
   window.addEventListener("keydown", (e) => e.key === "Escape" && window.close());

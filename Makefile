@@ -6,6 +6,7 @@ TESTS = \
 	src/dim_test.js \
 	src/geometry_test.js \
 	src/unread_test.js \
+	src/windowfit_test.js \
 	src/workspaces_test.js \
 	src/tico_test.js \
 	src/manifest_test.js

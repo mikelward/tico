@@ -1,6 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkZone, clockRow, nextOffsetChange, offsetMinutes } from "./clocks.js";
+import {
+  abbreviation,
+  checkZone,
+  city,
+  clockRow,
+  dstNote,
+  formatOffset,
+  hoursFromLocal,
+  nextOffsetChange,
+  offsetMinutes,
+  scrub,
+  strip,
+} from "./clocks.js";
 
 // 2026-10-24 23:30 in London (BST), 15:30 in SF, 18:30 in NYC.
 const T = new Date("2026-10-24T22:30:00Z");
@@ -43,4 +55,86 @@ test("London leaves BST at 01:00 UTC on Sunday 25 October 2026", () => {
 
 test("a zone with no DST has no next change", () => {
   assert.equal(nextOffsetChange(T, "Asia/Tokyo"), null);
+});
+
+test("abbreviations follow tzdata, not Chrome's GMT+1", () => {
+  assert.equal(abbreviation(T, "Europe/London"), "BST");
+  assert.equal(abbreviation(new Date("2026-12-01T12:00:00Z"), "Europe/London"), "GMT");
+  assert.equal(abbreviation(T, "Europe/Paris"), "CEST");
+  assert.equal(abbreviation(T, "America/Los_Angeles"), "PDT");
+  assert.equal(abbreviation(T, "Australia/Sydney"), "AEDT");
+});
+
+test("a clock's city is its own, else the zone's last part", () => {
+  assert.equal(city({ zone: "America/Los_Angeles", city: "San Francisco" }), "San Francisco");
+  assert.equal(city({ zone: "America/Los_Angeles" }), "Los Angeles");
+});
+
+test("hours from local can be fractional and negative", () => {
+  assert.equal(hoursFromLocal(T, "Europe/Paris", "America/Los_Angeles"), -9);
+  assert.equal(hoursFromLocal(T, "Europe/London", "Asia/Kolkata"), 4.5);
+});
+
+test("a zone's strip sits on local hours and splits at midnight", () => {
+  // SF is 9 h behind Paris: its 07-19 day is Paris 16-04, its 09-17 work Paris 18-02.
+  assert.deepEqual(strip(T, "Europe/Paris", "America/Los_Angeles"), [
+    { kind: "day", start: 16, end: 24 },
+    { kind: "day", start: 0, end: 4 },
+    { kind: "work", start: 18, end: 24 },
+    { kind: "work", start: 0, end: 2 },
+  ]);
+  assert.deepEqual(strip(T, "Europe/Paris", "Europe/Paris"), [
+    { kind: "day", start: 7, end: 19 },
+    { kind: "work", start: 9, end: 17 },
+  ]);
+});
+
+test("the DST note names each change and the week the gap is off", () => {
+  assert.equal(
+    dstNote(T, "Australia/Sydney"),
+    "London moves to GMT on Sun, Oct 25; New York and San Francisco move to EST/PST on Sun, Nov 1. " +
+      "Until Sun, Nov 1, London is 4 h ahead of New York instead of 5.",
+  );
+});
+
+test("with no change in three weeks there's no note", () => {
+  assert.equal(dstNote(new Date("2026-07-01T12:00:00Z"), "Asia/Tokyo"), null);
+});
+
+test("scrubbing lands on the next quarter hour, then steps by 15 minutes", () => {
+  const at = new Date("2026-10-24T22:31:00Z");
+  assert.equal(scrub(at, 1).toISOString(), "2026-10-24T22:45:00.000Z");
+  assert.equal(scrub(at, -1).toISOString(), "2026-10-24T22:30:00.000Z");
+  assert.equal(scrub(new Date("2026-10-24T22:30:00Z"), -1).toISOString(), "2026-10-24T22:15:00.000Z");
+});
+
+test("the DST search is bounded and quick", () => {
+  // With nothing changing in three weeks, the note searches no further.
+  const start = performance.now();
+  for (let i = 0; i < 10; i++) dstNote(new Date("2026-07-01T12:00:00Z"), "Asia/Tokyo");
+  assert.ok(performance.now() - start < 500, "ten notes in under half a second");
+  assert.equal(nextOffsetChange(new Date("2026-07-01T12:00:00Z"), "Europe/London", 21 * 86400000), null);
+});
+
+test("a change is found to the minute from any start", () => {
+  assert.equal(
+    nextOffsetChange(new Date("2026-10-24T22:30:17.250Z"), "Europe/London").toISOString(),
+    "2026-10-25T01:00:00.000Z",
+  );
+});
+
+test("offsets read in hours and minutes, exactly", () => {
+  assert.equal(formatOffset(-9), "\u22129 h");
+  assert.equal(formatOffset(5.5), "+5 h 30 m");
+  // New York from Kathmandu.
+  assert.equal(formatOffset(hoursFromLocal(T, "Asia/Kathmandu", "America/New_York")), "\u22129 h 45 m");
+});
+
+// The search once looped forever here, when it rounded only one end of the
+// bisection.
+test("a change in the last partial minute of a search step is found", () => {
+  assert.equal(
+    nextOffsetChange(new Date("2026-10-24T19:00:17.250Z"), "Europe/London").toISOString(),
+    "2026-10-25T01:00:00.000Z",
+  );
 });
