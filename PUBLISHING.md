@@ -75,21 +75,27 @@ What the first upload needs:
 
 ## 4. Package it
 
-The store takes a ZIP with `manifest.json` at its top level. Leave out the
-tests and anything only development needs:
+The store takes a ZIP with `manifest.json` at its top level, which GitHub's
+**Download ZIP** isn't: that wraps everything in a `tico-main/` folder and
+includes the tests. Build the store's from a checkout:
 
 ```sh
-version=$(node -p "require('./manifest.json').version")
-rm -f "tico-$version.zip"
-zip -r "tico-$version.zip" manifest.json src icons/*.png \
-    -x 'src/*_test.js' -x 'src/fake_chrome.js'
-unzip -l "tico-$version.zip"   # check what went in
+make zip     # dist/tico-<version>.zip; `unzip -l` it to see what went in
 ```
 
-Before zipping an update, raise `version` in `manifest.json`. The store
-refuses an upload whose version isn't higher than the published one.
-Version changes go through a pull request like any other change, so the
-ZIP is always built from `main`.
+Or let GitHub build it. Raise `version` in `manifest.json` through a pull
+request like any other change, since the store refuses an upload whose
+version isn't higher than the published one. Once that's merged, tag it:
+
+```sh
+git tag v0.2.0 origin/main && git push origin v0.2.0
+```
+
+The `release` workflow then runs the tests, builds the ZIP and attaches it
+to a GitHub release, under **Releases** on the repository page. It stops if
+the tag doesn't match the manifest's version. Running the workflow by hand
+(**Actions › release › Run workflow**) builds the ZIP as a download on that
+run instead, without a release.
 
 ## 5. Upload and submit
 

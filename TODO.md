@@ -103,3 +103,7 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - Profile keys (SPEC.md §9.2).
 - Check the setup checklist's `chrome://os-settings` addresses on a
   Chromebook: desktop Chromium has no such pages, so they're unverified.
+- Upload each release to the Chrome Web Store from the `release` workflow,
+  through the Chrome Web Store API: it needs the listing created by hand
+  first, and an OAuth client ID, secret and refresh token as repository
+  secrets.
