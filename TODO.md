@@ -98,8 +98,7 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   waiting then would also catch "closed every window" (SPEC.md §14.2).
 - Frame offsets (SPEC.md §5.3): tiles use the bounds as given; measuring
   and correcting each window type's frame waits for a device.
-- Profile keys (SPEC.md §9.2), and the options page's workspaces page
-  (§13).
+- Profile keys (SPEC.md §9.2).
 - Check the setup checklist's `chrome://os-settings` addresses on a
   Chromebook: desktop Chromium has no such pages, so they're unverified.
 - A month calendar with ISO week numbers under the clocks, as tide's

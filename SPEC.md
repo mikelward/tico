@@ -885,7 +885,11 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   `storage.local`), and import, export and reset of the shared settings.
   `src/settings.js` checks every value, and the dashboard and home page pick
   up a change at once through `storage.onChanged`; tico reads its settings
-  on each step. Workspaces is still to do.
+  on each step. The workspaces page sets the layout a workspace starts in,
+  on an ultrawide and on any other display, and each layout's main share
+  and main-window count, under tide's names (`defaultMode`, `modes`). A
+  change reaches every workspace and replaces what the keys set there, as
+  in tide.
 
 ## 14. The extension
 

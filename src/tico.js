@@ -184,6 +184,9 @@ export class Tico {
     // with windows renamed if the browser restarted.
     const { state: before, renamed, waiting } = this.restarted(this.state, all);
     let s = before ? ws.setDisplays(before, ids) : ws.create(ids);
+    // Workspaces from before this setting existed began with the defaults.
+    const modes = { ...ws.DEFAULT_MODE_SETTINGS, ...this.settings.modes };
+    if (JSON.stringify(s.modesFrom ?? ws.DEFAULT_MODE_SETTINGS) !== JSON.stringify(modes)) s = ws.setModes(s, modes);
     const appPopups = new Set((before?.appPopups ?? []).map(Number));
     const refused = new Set((before?.refused ?? []).filter((id) => all.some((w) => w.id === id)));
     const wins = all.filter((w) => managed(w, appPopups, refused));
@@ -326,10 +329,12 @@ export class Tico {
   }
 
   modeOf(n, display) {
-    const layout = this.state.workspaces[n].layout;
-    if (layout) return layout;
+    return this.state.workspaces[n].layout ?? this.defaultModeOf(display);
+  }
+
+  defaultModeOf(display) {
     const a = display.workArea;
-    return a.width / a.height >= this.settings.ultrawideAspect ? "threecol" : "tile";
+    return this.settings.defaultMode[a.width / a.height >= this.settings.ultrawideAspect ? "ultrawide" : "normal"];
   }
 
   // A floating window keeps its size and its place relative to its display,
@@ -394,7 +399,7 @@ export class Tico {
     else if (name === "shrink") this.state = ws.adjust(s, n, mode, { mfact: -0.025 });
     else if (name === "master-add") this.state = ws.adjust(s, n, mode, { nmaster: 1 });
     else if (name === "master-remove") this.state = ws.adjust(s, n, mode, { nmaster: -1 });
-    else if (name === "monocle") this.state = ws.toggleMonocle(s, n, mode);
+    else if (name === "monocle") this.state = ws.toggleMonocle(s, n, mode, this.defaultModeOf(disp));
     else if (name === "layout-next" || name === "layout-prev") {
       const i = geometry.modes.indexOf(mode);
       const k = name === "layout-next" ? 1 : -1;
