@@ -30,15 +30,24 @@ chrome.permissions.onAdded.addListener((granted) => {
   else changed();
 });
 chrome.permissions.onRemoved.addListener(changed);
+// The toolbar button opens the dashboard, as its key does (§8.1).
+chrome.action.onClicked.addListener(() => tico.command("popup"));
 
-// The popup and home window run commands too, but only ones the manifest
-// declares. Pages on the watched origins report their titles (§10.3). The
+// The launcher runs commands too, but only ones the manifest declares. Pages on the watched origins report their titles (§10.3). The
 // popup turns the dim on and off, answering once it's done so the popup can
 // give back the access only after every page is undimmed.
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const fromTico = sender.url?.startsWith(chrome.runtime.getURL(""));
-  if (commands.has(message?.command)) tico.command(message.command);
-  else if (typeof message?.title === "string" && sender.tab) tico.title(sender.tab.id, sender.tab.windowId, message.title, message.first === true);
+  const done = (p) => {
+    p.then(() => respond(true), () => respond(false));
+    return true;
+  };
+  // The launcher waits for each step before it closes itself (§9.4).
+  if (commands.has(message?.command)) return done(tico.command(message.command));
+  if (fromTico && Number.isInteger(message?.tabId) && Number.isInteger(message?.windowId)) {
+    return done(tico.activateTab(message.tabId, message.windowId));
+  }
+  if (typeof message?.title === "string" && sender.tab) tico.title(sender.tab.id, sender.tab.windowId, message.title, message.first === true);
   else if (typeof message?.dim === "boolean" && fromTico) {
     tico.setDim(message.dim).then(() => respond(true), () => respond(false));
     return true;

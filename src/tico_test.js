@@ -4,10 +4,11 @@ import assert from "node:assert/strict";
 import { Tico } from "./tico.js";
 import { FakeChrome, HD, UW } from "./fake_chrome.js";
 
-const HOME = "chrome-extension://tico/src/home.html";
+const HOME = "chrome-extension://tico/src/launcher.html?mode=home";
+const DASHBOARD = "chrome-extension://tico/src/launcher.html?mode=dashboard";
 const homes = (chrome) => chrome.wins.filter((w) => w.url === HOME);
 // The windows tico opened, other than home windows.
-const opened = (chrome) => chrome.created.filter((c) => c.url !== HOME).map(({ id, ...c }) => c);
+const opened = (chrome) => chrome.created.filter((c) => c.url !== HOME && c.url !== DASHBOARD).map(({ id, ...c }) => c);
 
 function on(display, id, extra = {}) {
   const a = display.workArea;
@@ -333,6 +334,8 @@ test("an empty workspace gets a focused home window, and loses it when a window 
   assert.ok(home, "a home window opened");
   assert.equal(home.focused, true);
   assert.equal(home.type, "popup");
+  assert.equal(home.state, "fullscreen");
+  assert.deepEqual(chrome.box(home.id), { x: 0, y: 0, w: 1920, h: 1080 }, "it covers its display");
   assert.equal(2 in tico.state.windows, false, "it isn't tracked or tiled");
   // A key pressed in the home window acts on its display.
   await tico.command("app-browser");
@@ -402,17 +405,48 @@ test("the badge shows the focused display's workspace", async () => {
   assert.equal(chrome.badge, "7");
 });
 
-test("the popup opens from the toolbar, or as a window where there's none", async () => {
-  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2, { type: "app", url: "https://chat.google.com/" })]);
+test("the dashboard opens full screen on the focused display, and its key closes it", async () => {
+  const { chrome, tico } = await setup([HD, UW], [on(HD, 1), on(UW, 2, { focused: true })]);
   await tico.command("popup");
-  assert.equal(chrome.popups, 1);
+  const [d] = chrome.wins.filter((w) => w.url === DASHBOARD);
+  assert.ok(d, "the dashboard opened");
+  assert.equal(d.state, "fullscreen");
+  assert.equal(d.focused, true);
+  assert.deepEqual(chrome.box(d.id), { x: 1920, y: 0, w: 3440, h: 1440 }, "on the ultrawide, where the focus was");
+  assert.equal(d.id in tico.state.windows, false, "it isn't tiled or tracked");
+  await tico.command("popup");
+  assert.equal(chrome.wins.some((w) => w.url === DASHBOARD), false, "the key again closes it");
+});
+
+test("a command from the dashboard acts on the window you were last in", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1), on(HD, 2, { focused: true })]);
+  await tico.command("popup");
+  assert.ok(chrome.wins.find((w) => w.url === DASHBOARD).focused, "the dashboard has focus");
+  await tico.command("send-3");
+  assert.equal(tico.state.windows[2].ws, 3, "the window behind the dashboard moved");
+  assert.equal(tico.state.windows[1].ws, 1);
+});
+
+test("a dashboard that closed itself is forgotten", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
+  await tico.command("popup");
+  chrome.wins = chrome.wins.filter((w) => w.url !== DASHBOARD);
+  await tico.event();
+  assert.equal(tico.state.dashboard, undefined);
+  await tico.command("popup");
+  assert.equal(chrome.wins.filter((w) => w.url === DASHBOARD).length, 1, "the next press opens a new one");
+});
+
+test("a tab chosen in the launcher comes forward with its window and workspace", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  await tico.command("send-4");
   chrome.focus(2);
   await tico.event();
-  await tico.command("popup");
-  assert.equal(chrome.popups, 1);
-  assert.deepEqual(opened(chrome), [{ url: "chrome-extension://tico/src/popup.html?window=1", type: "popup" }]);
-  const w = chrome.wins.find((x) => x.url?.includes("popup.html"));
-  assert.equal(w.width, 800, "wide enough for the popup's one row");
+  await tico.tabLoaded(0);
+  await tico.activateTab(10, 1);
+  assert.equal(tico.state.displays.hd, 4, "its workspace comes up");
+  assert.equal(chrome.win(1).focused, true);
+  assert.deepEqual(chrome.tabUpdates, [{ id: 10, active: true }]);
 });
 
 test("the view lists each display's workspace and layout", async () => {

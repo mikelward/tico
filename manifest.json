@@ -44,12 +44,15 @@
         "default": "Alt+Shift+K"
       }
     },
-    "swap-master": {
-      "description": "Swap the window with the master (Search+Space)",
+    "popup": {
+      "description": "Open the dashboard: workspaces, clocks and the launcher (Search+Space)",
       "suggested_key": {
         "chromeos": "Search+Space",
         "default": "Alt+Shift+Space"
       }
+    },
+    "swap-master": {
+      "description": "Swap the window with the master (Search+Shift+M)"
     },
     "attention": {
       "description": "Go to the window wanting attention, else the last window (Search+Tab)",
@@ -168,13 +171,9 @@
     },
     "app-music": {
       "description": "Focus or open YouTube Music (Search+Y)"
-    },
-    "popup": {
-      "description": "Show workspaces and clocks (Search+B)"
     }
   },
   "action": {
-    "default_title": "tico",
-    "default_popup": "src/popup.html"
+    "default_title": "tico"
   }
 }
