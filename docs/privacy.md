@@ -74,5 +74,5 @@ icon in the launcher loads that icon the way Chrome's own tab strip does.
 ## Changes and contact
 
 Changes to this policy are made in this file, and its history is public in
-[tico's repository](https://github.com/mikelward/tico/commits/main/PRIVACY.md).
+[tico's repository](https://github.com/mikelward/tico/commits/main/docs/privacy.md).
 Questions go to [tico's issues](https://github.com/mikelward/tico/issues).
