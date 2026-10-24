@@ -162,19 +162,19 @@
       "description": "Send the window to workspace 9 (Search+Shift+9)"
     },
     "app-browser": {
-      "description": "Focus or open a browser window (Search+G)"
+      "description": "Open a new browser window (Search+G)"
     },
     "app-calendar": {
-      "description": "Focus or open app 1, Google Calendar unless changed in tico's options (Search+C)"
+      "description": "Open app 1, Google Calendar unless changed in tico's options (Search+C)"
     },
     "app-chat": {
-      "description": "Focus or open app 2, Google Chat unless changed in tico's options (Search+Shift+C)"
+      "description": "Open app 2, Google Chat unless changed in tico's options (Search+Shift+C)"
     },
     "app-meet": {
-      "description": "Focus or open app 3, Google Meet unless changed in tico's options (Search+M)"
+      "description": "Open app 3, Google Meet unless changed in tico's options (Search+M)"
     },
     "app-music": {
-      "description": "Focus or open app 4, YouTube Music unless changed in tico's options (Search+Y)"
+      "description": "Open app 4, YouTube Music unless changed in tico's options (Search+Y)"
     }
   },
   "action": {

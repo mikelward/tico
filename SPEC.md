@@ -479,7 +479,7 @@ workspace is showing on some display and you haven't minimized it.
 |---|---|---|
 | **Show N** (`Search+N`) on display D | D shows N. If N was showing on another display, that display takes D's old workspace (a swap, as in tide). | N's stored window |
 | **Send** a window to N (`Search+Shift+N`) | The window moves to the end of N's stack. If N is showing on any display, the window appears there at once; if not, it's hidden. | stays put, as in tide |
-| **Activate** a window: app keys (§9.1), `Search+Tab` (§10.3) | If its workspace isn't showing, show it on the focused display, as Show N. Clear the window's minimized-by-you flag. | that window |
+| **Activate** a window: a tab from the launcher (§9.4), `Search+Tab` (§10.3) | If its workspace isn't showing, show it on the focused display, as Show N. Clear the window's minimized-by-you flag. | that window |
 | **Moved to another display** by you: the native `Search+Alt+M`, or a drag ending with the window's center on another display, seen as an `onBoundsChanged` tico didn't cause | The window joins the end of the stack of the workspace showing on that display. | that window |
 | **Minimize** by you | Set the flag. | ChromeOS picks |
 | **Restore** by you: any un-minimize tico didn't cause, from the shelf or Alt+Tab | Clear the window's minimized-by-you flag. If its workspace is hidden, this is Activate, so the workspace comes with it. | that window |
@@ -656,8 +656,10 @@ tide's clock rules, in the bar of the dashboard and the home page, with the deta
 
 ### 9.1 Web apps
 
-Each letter **activates the app's window if one exists** (§6.1, bringing
-its workspace with it), **else opens it** on the current workspace:
+Each letter **opens a new window** of its app on the current workspace,
+even when one is already open, as tide's and KDE's keys launch the app
+(maintainer, 2026-10-24). Getting back to an open window is the launcher's
+Tabs scope (§9.4) or `Search+Tab` (§10.3):
 
 | Key | App | How |
 |---|---|---|
@@ -674,22 +676,16 @@ its workspace with it), **else opens it** on the current workspace:
   its manifest, so `app-calendar`, `app-chat`, `app-meet` and `app-music`
   are named for their defaults, and the options page gives each any website
   (a name and an address), or none, which turns the key off.
-- **Browser windows**, for `Search+G`: these are `type: "normal"` and have
-  no origin to match, so the key focuses the most recently focused normal
-  window on the current workspace, and opens one with `windows.create({})`
-  only when there's none. Profiles (`Search+F`, `Search+Shift+G`) follow
+- **Browser windows**, for `Search+G`: a new `type: "normal"` window, with
+  `windows.create({})`. Profiles (`Search+F`, `Search+Shift+G`) follow
   §9.2.
-- **Focus**, for web apps: the app's newest window whose tab URL is on the app's
-  origin, and which is either `type: "app"` or a popup tico opened for that
-  app. That reads the URL, so it needs the `tabs` permission.
 - **Open**: `chrome.management.launchApp(id)` with the installed app's ID.
   Whether it opens web apps, rather than only legacy Chrome Apps, is
   *(unverified)*. If it doesn't, tico opens the URL with
   `windows.create({url, type: "popup"})`, which is a frameless-ish app
   window, but not the installed app. tico records that window's ID (in
   `chrome.storage`, §14.2) as the app's, so it tiles like an app window
-  (§5.1) and the next press focuses it rather than opening another.
-  Other popups still float.
+  (§5.1). Other popups still float.
 - The app list is a setting: letter, name, URL, app ID.
 
 ### 9.2 Profiles
@@ -737,13 +733,15 @@ tabs and running tico's commands.
   but tico's own, with its workspace). The home page opens on Launch, the
   dashboard on Tabs.
 - **Fuzzy matching:** every query letter in order, with word starts and runs
-  scoring higher, so "gc" finds Google Calendar. A tab matches by title and,
-  for less, by host. Ties go to the most recently used (`tab.lastAccessed`).
+  scoring higher, so "gc" finds Google Calendar. A tab matches by title,
+  by the name of the app whose site it's on (so "calendar" finds Calendar's
+  tabs), and, for less, by host. Ties go to the most recently used (`tab.lastAccessed`).
 - **Empty query:** tabs most recent first; apps before commands.
 - **Nothing in scope:** a query that matches nothing in its scope searches
   both, so a tab still turns up from Launch.
 - **Enter** goes there: a tab comes forward with its window and workspace
-  (§6.1 Activate); an app or command runs as its key would. Arrows choose,
+  (§6.1 Activate); an app or command runs as its key would, so an app
+  opens a new window (§9.1). Arrows choose,
   Esc clears, then closes the dashboard.
 
 It only opens from a Chrome window or an empty workspace (§2.2): over an
@@ -1000,7 +998,7 @@ tidal would ship on the **Play Store** (§20.4).
 |---|---|---|
 | **M1** | This spec | agreed; open questions answered |
 | **M2** | Device checks + layouts | every *(unverified)* claim in §2, §7.2, §9 and §11 is checked on a Chromebook, with the ChromeOS version, and this spec updated. The four layouts and the lone-window rule tile Chrome and web app windows on the laptop panel and on an ultrawide. Frame offsets are measured and tiles meet. State survives the worker sleeping and a browser restart. |
-| **M3** | Workspaces + keys | nine workspaces switch and send on one and two displays, with the home window on empty ones. Every key in §7.1 is bound or listed by the checklist. App keys focus or open each web app and profile. |
+| **M3** | Workspaces + keys | nine workspaces switch and send on one and two displays, with the home window on empty ones. Every key in §7.1 is bound or listed by the checklist. App keys open a new window of each web app and profile. |
 | **M4** | Dashboard, clocks, attention | the dashboard shows workspaces and urgency from live state, the clocks follow tide's rules across a DST fixture, and a Chat message marks its window and `Search+Tab` goes there. |
 | **M5** | Dim + settings | the optional dim works and is off without the permission. The options page edits everything live, syncs, and imports tide's JSON. |
 | **M6** | Linux | `setup` runs in Crostini; the nested-sway experiment is tried and written up, keep or drop. |
