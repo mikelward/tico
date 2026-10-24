@@ -592,13 +592,28 @@ table:
 
 | Combo | ChromeOS default | Plan |
 |---|---|---|
-| Search+Left / Right | Home / End | rebind in Settings › Keyboard ("Six-pack keys") if offered, else Alt+Shift+Left/Right |
-| Search+Up / Down | Page Up / Down | same |
+| Search+Left / Right, and with Shift | Home / End, and Shift to select to the beginning or end of the line, remapped before Chrome sees them, so `chrome://extensions/shortcuts` refuses Search+Right and Search+Shift+Right ("include Ctrl, Alt, or Search") | the Shortcuts app lists them as the beginning and end of line under Text, but can't edit them; so Search+Page Down / Page Up, which the shortcuts page accepts, step the workspaces |
+| Search+Up / Down | Page Up / Down, at the keyboard level: the Shortcuts app doesn't list them, and the shortcuts page refuses them the same way | Search+Page Up / Page Down for the workspace steps |
 | Search+1…= | F1–F12 when "top row as function keys" is off *(unverified on current builds)* | turn the setting off; else Alt+Shift+1…9 |
 | Search+Shift+G | Snap Group | unbind in the Shortcuts app, freeing it for the third profile |
 | Search+Shift+D | minimize Snap Group | unbind in the Shortcuts app, freeing it for remove-a-master |
-| Search+Space, Search+Shift+Space | none known *(unverified)* | keep |
+| Search+Space | none known *(unverified)* | keep |
+| Search+Shift+Space | emoji picker | remove it in the Shortcuts app, freeing it for monocle |
+| Search+C | calendar panel | remove it in the Shortcuts app (Device), freeing it for app 1 |
+| Search+M | microphone mute | remove it in the Shortcuts app (Device), freeing it for app 3 |
+| Search+X | picture-in-picture | keep; tico doesn't use it |
+| Search+F | Quick Insert | remove it in the Shortcuts app, freeing it for the second profile (§9.1) |
+| Search+V | clipboard history | keep; tico doesn't use it |
+| Search+Backspace | Delete, locked | keep; tico doesn't use it |
 | Search+Z, Search+Alt+F | layout menu, float | keep; they don't clash |
+| Search+Alt+M | move the window to another display | keep; tico follows the move (§6.1) |
+| Search+/ and Search+= on Dvorak (Search+[ and ] on QWERTY) | the desk to the left and right | keep; with one desk (§6.3) they do nothing, and tico doesn't use them |
+| Search+Shift+A | assign the window to all desks | keep; tico doesn't use it |
+
+The Shortcuts app's settings are in Settings › Keyboard and inputs ›
+View keyboard shortcuts; Calendar and microphone mute (under Device), the emoji picker and
+Quick Insert are editable there; Search+Left / Right are listed under Text but locked. A padlock marks a shortcut that can't be changed; an editable one shows a pencil on hover. ChromeOS takes its own shortcuts before Chrome sees them, so a
+tico key on one does nothing until it's removed there.
 
 Whatever moves to Alt+Shift moves as a set, so the map stays learnable.
 
