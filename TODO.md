@@ -69,15 +69,37 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - **Secure Shell's popup windows tile**, by its extension ID in a built-in
   list, until the options page has tile and float rules (SPEC.md §5.4).
   Reversible: `TILED_POPUP_ORIGINS`.
+- **A restart is when every stored window ID is gone**, and windows match
+  by shared tab URLs, closest fit first (SPEC.md §14.2). A session with
+  one window whose tabs all changed comes back unmatched, on the showing
+  workspace. The alternative is `runtime.onStartup` as the signal, which
+  can arrive after the first window event. Reversible: `Tico.restarted`
+  and `src/restart.js`.
 - **The app list is built in** (Calendar, Chat, Meet, YouTube Music), until
   the options page can edit it. Reversible: `src/apps.js`.
 
+- **The wait for restored windows ends at your first command**, not after
+  a time. A window that never returns is forgotten then; one opened before
+  you press a key, with a matching tab, takes the old window's place. The
+  alternative is a timeout. To decide after trying it on a device.
+  Reversible: `Tico.command`.
+
+- **Two restart edge cases are deferred, not fixed** (Codex on PR 14): a
+  restored window that closes before the rest return drops the placements
+  still waiting, and a window first seen on a placeholder page such as
+  `about:blank` is never matched again. Eight findings came from matching
+  incrementally; the alternative is rematching every window against a saved
+  snapshot on each sync until the first command, which deletes the class.
+  To decide after trying restarts on a device. Reversible: `Tico.restarted`.
+
 ## Later
+
+- If the service worker syncs before Chrome has restored any window after a
+  restart, nothing matches and the old places are lost; keeping them
+  waiting then would also catch "closed every window" (SPEC.md §14.2).
 
 - Frame offsets (SPEC.md §5.3): tiles use the bounds as given; measuring
   and correcting each window type's frame waits for a device.
-- Window IDs change across a browser restart (SPEC.md §14.2): windows come
-  back on the current workspace; matching them by tab URL is still to do.
 - Profile keys (SPEC.md §9.2) and the options page (§13), which takes the
   clock zones and hours.
 - A month calendar with ISO week numbers under the clocks, as tide's
