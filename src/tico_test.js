@@ -421,5 +421,99 @@ test("the view lists each display's workspace and layout", async () => {
     focusedDisplay: "hd",
     displays: { hd: { workspace: 1, mode: "tile" }, uw: { workspace: 2, mode: "threecol" } },
     counts: { 1: 1, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 },
+    urgent: [],
   });
+});
+
+test("a rising unread count marks its window, and Search+Tab goes there", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true }),
+    on(HD, 2, { type: "app", url: "https://chat.google.com/" }),
+  ]);
+  await tico.command("send-3");
+  chrome.focus(2);
+  await tico.event();
+  await tico.command("send-4");
+  chrome.focus(1);
+  await tico.event();
+  // Chat sits alone on hidden workspace 4.
+  await tico.title(20, 2, "Chat");
+  assert.deepEqual(tico.state.marks, [], "a first title with no count marks nothing");
+  await tico.title(20, 2, "Chat (1)");
+  assert.deepEqual(tico.state.marks, [2]);
+  assert.ok(chrome.updates.some((u) => u.id === 2 && u.drawAttention), "its shelf icon flashes");
+  assert.equal(chrome.badgeColor, "#e5a50a", "the badge turns amber");
+  assert.deepEqual(chrome.store.view.urgent, [4]);
+  await tico.command("attention");
+  assert.equal(tico.state.displays.hd, 4, "its workspace comes up");
+  assert.equal(chrome.win(2).focused, true);
+  assert.deepEqual(tico.state.marks, []);
+  assert.equal(chrome.badgeColor, "#3584e4");
+});
+
+test("a count that falls or holds, or rises in the window you're in, marks nothing", async () => {
+  const { tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  await tico.title(20, 2, "Inbox (5) - Gmail");
+  assert.deepEqual(tico.state.marks, [], "a page loading with unread mail sets the baseline");
+  await tico.title(20, 2, "Inbox (5) - Gmail");
+  await tico.title(20, 2, "Inbox (4) - Gmail");
+  await tico.title(10, 1, "Inbox (0) - Gmail");
+  await tico.title(10, 1, "Inbox (9) - Gmail");
+  assert.deepEqual(tico.state.marks, []);
+});
+
+test("a tab loading another page sets a new baseline", async () => {
+  const { tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  await tico.title(20, 2, "Inbox (2) - Gmail", true);
+  // The tab moves to another account with more old mail.
+  await tico.title(20, 2, "Inbox (30) - Gmail", true);
+  assert.deepEqual(tico.state.marks, []);
+  await tico.title(20, 2, "Inbox (31) - Gmail");
+  assert.deepEqual(tico.state.marks, [2], "a rise after that still marks");
+});
+
+test("Search+Tab goes to the newest mark, then the next", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2), on(HD, 3)]);
+  await tico.title(20, 2, "Chat");
+  await tico.title(30, 3, "Inbox - Gmail");
+  await tico.title(20, 2, "Chat (1)");
+  await tico.title(30, 3, "Inbox (1) - Gmail");
+  await tico.command("attention");
+  assert.equal(chrome.win(3).focused, true);
+  await tico.command("attention");
+  assert.equal(chrome.win(2).focused, true);
+  assert.deepEqual(tico.state.marks, []);
+});
+
+test("going to a marked window yourself clears its mark", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  await tico.title(20, 2, "Chat");
+  await tico.title(20, 2, "Chat (2)");
+  assert.deepEqual(tico.state.marks, [2]);
+  chrome.focus(2);
+  await tico.event();
+  assert.deepEqual(tico.state.marks, []);
+});
+
+test("with nothing marked, Search+Tab goes back to the last window", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2), on(HD, 3)]);
+  chrome.focus(2);
+  await tico.event();
+  chrome.focus(3);
+  await tico.event();
+  await tico.command("attention");
+  assert.equal(chrome.win(2).focused, true);
+  await tico.command("attention");
+  assert.equal(chrome.win(3).focused, true, "again goes back");
+});
+
+test("a closed window's mark and counts go with it", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  await tico.title(20, 2, "Chat");
+  await tico.title(20, 2, "Chat (2)");
+  assert.deepEqual(tico.state.marks, [2]);
+  chrome.wins = chrome.wins.filter((w) => w.id !== 2);
+  await tico.event();
+  assert.deepEqual(tico.state.marks, []);
+  assert.deepEqual(tico.state.unread, {});
 });

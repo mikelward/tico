@@ -12,6 +12,19 @@
     "system.display",
     "tabs"
   ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*",
+        "https://chat.google.com/*",
+        "https://calendar.google.com/*"
+      ],
+      "js": [
+        "src/unread_watch.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
   "commands": {
     "focus-next": {
       "description": "Focus the next window in the stack (Search+J)",
@@ -34,12 +47,15 @@
         "default": "Alt+Shift+Space"
       }
     },
-    "layout-next": {
-      "description": "Next layout (Search+.)",
+    "attention": {
+      "description": "Go to the window wanting attention, else the last window (Search+Tab)",
       "suggested_key": {
-        "chromeos": "Search+Period",
-        "default": "Alt+Shift+Period"
+        "chromeos": "Search+Tab",
+        "default": "Alt+Shift+U"
       }
+    },
+    "layout-next": {
+      "description": "Next layout (Search+.)"
     },
     "move-next": {
       "description": "Move the window down the stack (Search+Shift+J)"

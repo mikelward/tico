@@ -6,6 +6,7 @@
   --surface: #ebebeb;
   --accent: #3584e4;
   --on-accent: #ffffff;
+  --urgent: #e5a50a;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -15,6 +16,7 @@
     --surface: #303030;
     --accent: #78aeed;
     --on-accent: #1e1e1e;
+    --urgent: #f8e45c;
   }
 }
 body {
@@ -53,6 +55,10 @@ button.occupied {
 }
 button.elsewhere {
   border-color: var(--accent);
+}
+button.urgent {
+  background: var(--urgent);
+  color: var(--on-accent);
 }
 button.current {
   background: var(--accent);

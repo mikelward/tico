@@ -52,11 +52,15 @@ export class FakeChrome {
     };
     this.runtime = { getURL: (path) => `chrome-extension://tico/${path}` };
     this.badge = "";
+    this.badgeColor = null;
     this.toolbar = true;
     this.popups = 0;
     this.action = {
       setBadgeText: async ({ text }) => {
         fake.badge = text;
+      },
+      setBadgeBackgroundColor: async ({ color }) => {
+        fake.badgeColor = color;
       },
       openPopup: async () => {
         const w = fake.wins.find((x) => x.focused);

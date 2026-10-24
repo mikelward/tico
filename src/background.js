@@ -19,7 +19,8 @@ chrome.runtime.onStartup.addListener(changed);
 chrome.runtime.onInstalled.addListener(changed);
 
 // The popup and home window run commands too, but only ones the manifest
-// declares.
-chrome.runtime.onMessage.addListener((message) => {
+// declares. Pages on the watched origins report their titles (§10.3).
+chrome.runtime.onMessage.addListener((message, sender) => {
   if (commands.has(message?.command)) tico.command(message.command);
+  else if (typeof message?.title === "string" && sender.tab) tico.title(sender.tab.id, sender.tab.windowId, message.title, message.first === true);
 });
