@@ -56,3 +56,31 @@ test("load reads sync, then local", async () => {
   const { settings } = await load({ sync: area("sync"), local: area("local") });
   assert.deepEqual(settings.work, [8, 16]);
 });
+
+test("each app key can be given any website, or none", () => {
+  const { settings, errors } = resolve({
+    apps: [{ command: "app-meet", name: " Linear ", url: "https://linear.app" }],
+  });
+  assert.deepEqual(errors, []);
+  assert.deepEqual(settings.apps, [{ command: "app-meet", name: "Linear", url: "https://linear.app/" }]);
+});
+
+test("a bad app is an error naming it", () => {
+  const errors = (apps) => resolve({ apps }).errors;
+  assert.deepEqual(errors([{ command: "app-mail", name: "Mail", url: "https://mail.google.com/" }]), [
+    "apps: app 1's command must be one of app-calendar, app-chat, app-meet, app-music",
+  ]);
+  assert.deepEqual(errors([{ command: "app-meet", name: "Meet", url: "meet" }]), [`apps: app 1's address "meet" isn't a URL`]);
+  assert.deepEqual(errors([{ command: "app-meet", name: "Files", url: "file:///home" }]), ["apps: app 1's address must be a website"]);
+  assert.deepEqual(errors([{ command: "app-meet", url: "https://meet.google.com/" }]), ["apps: app 1 has no name"]);
+  const twice = { command: "app-meet", name: "Meet", url: "https://meet.google.com/" };
+  assert.deepEqual(errors([twice, twice]), ["apps: app 2: app-meet has two apps"]);
+  assert.deepEqual(
+    errors([
+      { command: "app-meet", name: "A", url: "https://example.com/a" },
+      { command: "app-music", name: "B", url: "https://example.com/b" },
+    ]),
+    ["apps: app 2: https://example.com is already app 1's site"],
+    "windows match apps by origin, so two can't share one",
+  );
+});

@@ -4,6 +4,7 @@
 // promise-returning calls are used.
 
 import { appOf, DEFAULT_APPS } from "./apps.js";
+import { load as loadSettings } from "./settings.js";
 import { overlay } from "./dim.js";
 import { matchWindows, windowUrls } from "./restart.js";
 import * as geometry from "./geometry.js";
@@ -55,8 +56,8 @@ export function displayFor(win, displays) {
 }
 
 export class Tico {
-  constructor(api, settings = DEFAULTS, apps = DEFAULT_APPS) {
-    this.apps = apps;
+  constructor(api, settings = DEFAULTS) {
+    this.apps = DEFAULT_APPS;
     this.api = api;
     this.settings = settings;
     this.state = null;
@@ -176,6 +177,8 @@ export class Tico {
   // windows, and what you did to windows yourself since the last step.
   async sync() {
     await this.load();
+    // The options page reports bad settings; here the defaults stand in.
+    this.apps = (await loadSettings(this.api.storage)).settings.apps;
     this.displays = await this.api.system.display.getInfo();
     const ids = this.displays.map((d) => d.id);
     // Every window type, so a focused popup or devtools window still says

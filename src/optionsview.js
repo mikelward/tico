@@ -2,12 +2,16 @@
 // to chrome.storage.sync; a bad one is reported, naming the setting, and
 // isn't saved.
 
+import { APP_COMMANDS } from "./apps.js";
 import { DEFAULT_SETTINGS, resolve, SETTINGS_KEY } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
 const rows = $("clocks").tBodies[0];
 const errors = $("errors");
 const json = $("json");
+const appRows = $("apps").tBodies[0];
+// The keys as bound, which can differ from the manifest's suggestions.
+let shortcuts = {};
 const HOURS = { day: ["day-from", "day-to"], work: ["work-from", "work-to"] };
 
 function showErrors(list) {
@@ -61,6 +65,25 @@ function clockRow(c) {
   return tr;
 }
 
+// The app keys are fixed in the manifest, so each has a row; leaving one's
+// name and address empty turns it off.
+function appRow(command, app) {
+  const tr = document.createElement("tr");
+  tr.dataset.command = command;
+  const key = shortcuts[command] || "No key";
+  const cells = [
+    Object.assign(document.createElement("kbd"), { textContent: key }),
+    input(app?.name, { className: "name", ariaLabel: `${key} app's name`, placeholder: "off" }),
+    input(app?.url, { className: "url", ariaLabel: `${key} app's address`, type: "url", placeholder: "https://" }),
+  ];
+  for (const c of cells) {
+    const td = document.createElement("td");
+    td.append(c);
+    tr.append(td);
+  }
+  return tr;
+}
+
 // An emptied hour field is NaN, an error, not Number("")'s midnight.
 function fromForm() {
   const clocks = [...rows.rows].map((tr) => {
@@ -68,11 +91,16 @@ function fromForm() {
     return city ? { label, zone, city } : { label, zone };
   });
   const hours = Object.fromEntries(Object.entries(HOURS).map(([k, ids]) => [k, ids.map((id) => ($(id).value.trim() === "" ? NaN : Number($(id).value)))]));
-  return { clocks, ...hours };
+  const apps = [...appRows.rows].flatMap((tr) => {
+    const [name, url] = [...tr.querySelectorAll("input")].map((i) => i.value.trim());
+    return name || url ? [{ command: tr.dataset.command, name, url }] : [];
+  });
+  return { clocks, ...hours, apps };
 }
 
 function toForm(settings) {
   rows.replaceChildren(...settings.clocks.map(clockRow));
+  appRows.replaceChildren(...APP_COMMANDS.map((c) => appRow(c, settings.apps.find((a) => a.command === c))));
   for (const [k, ids] of Object.entries(HOURS)) ids.forEach((id, i) => ($(id).value = settings[k][i]));
   json.value = JSON.stringify(settings, null, 2);
 }
@@ -122,6 +150,7 @@ $("zones").replaceChildren(
 // The page edits the shared settings alone, so saving never copies this
 // machine's overrides to the others. What's stored may predate a check, so
 // say what was wrong with it.
+shortcuts = Object.fromEntries((await chrome.commands.getAll()).map((c) => [c.name, c.shortcut]));
 const shared = (await chrome.storage.sync.get(SETTINGS_KEY))[SETTINGS_KEY];
 const { settings, errors: stored } = resolve(shared);
 toForm(settings);

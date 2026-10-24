@@ -668,6 +668,10 @@ its workspace with it), **else opens it** on the current workspace:
 | `Search+Y` | YouTube Music | installed web app |
 | `Search+I` | IRC | installed web app, or the Linux client by shelf slot |
 
+- **The four app keys are slots.** Chrome fixes an extension's commands in
+  its manifest, so `app-calendar`, `app-chat`, `app-meet` and `app-music`
+  are named for their defaults, and the options page gives each any website
+  (a name and an address), or none, which turns the key off.
 - **Browser windows**, for `Search+G`: these are `type: "normal"` and have
   no origin to match, so the key focuses the most recently focused normal
   window on the current workspace, and opens one with `windows.create({})`
@@ -862,10 +866,12 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   `~/.config/tide/*.json`, so one clocks list and one layouts file serve
   both.
 - **Built so far:** the clocks page (zones, labels, cities and order, and
-  each zone's daytime and working hours) and import, export and reset.
+  each zone's daytime and working hours), the apps page (each app key's
+  name and address, beside the key Chrome has bound), and import, export
+  and reset.
   `src/settings.js` checks every value, and the dashboard and home page pick
-  up a change at once through `storage.onChanged`. The other pages are still
-  to do.
+  up a change at once through `storage.onChanged`; tico reads the apps on
+  each step. The other pages are still to do.
 
 ## 14. The extension
 
