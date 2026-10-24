@@ -60,6 +60,13 @@ export const ITEMS = [
     ref: "§11",
   },
   {
+    id: "focus",
+    title: "Turn on focus follows cursor",
+    where: "chrome://flags/#focus-follows-cursor",
+    how: "Set \u201cFocus follows cursor\u201d to Enabled and restart, so the window under the pointer takes focus without a click, as in KDE. It doesn't raise the window.",
+    ref: "§10.2",
+  },
+  {
     id: "mouse",
     title: "Set up the mouse",
     where: "chrome://os-settings/per-device-mouse",

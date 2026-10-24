@@ -10,6 +10,10 @@ test("every item has an id of its own, a title, what to do, and its spec section
   }
 });
 
+test("focus follows cursor is on the list, at its flag", () => {
+  assert.equal(ITEMS.find((i) => i.id === "focus")?.where, "chrome://flags/#focus-follows-cursor");
+});
+
 test("progress counts what's ticked, ignoring items that are gone", () => {
   assert.deepEqual(progress(undefined), { done: [], left: ITEMS.length });
   assert.deepEqual(progress(["dark", "gone", "desks"]), { done: ["desks", "dark"], left: ITEMS.length - 2 });
