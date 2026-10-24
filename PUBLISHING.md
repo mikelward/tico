@@ -54,11 +54,12 @@ Search+Space, the dim, and that Android and Linux windows are left alone.
 
 ## 3. Before the first upload
 
-These are one-time gaps tico has today:
+What the first upload needs:
 
-- **Icons.** The store needs a 128×128 PNG icon in the package, named in
-  `manifest.json`'s `icons`, plus 16 and 48 for the toolbar and
-  `chrome://extensions`. tico has none yet.
+- **Icons.** Done: `icons/tico.svg` (three columns under a bar, a T),
+  rendered to the 16, 32, 48 and 128 px PNGs the manifest names. After
+  changing the SVG, `make icons` renders them again. The store's own
+  listing icon is the 128 px one.
 - **A privacy policy URL.** The store asks for one when an extension
   handles user data, and reading tab titles and URLs counts. tico has no
   server and collects nothing for its developer. It keeps its state in
@@ -82,7 +83,7 @@ tests and anything only development needs:
 ```sh
 version=$(node -p "require('./manifest.json').version")
 rm -f "tico-$version.zip"
-zip -r "tico-$version.zip" manifest.json src \
+zip -r "tico-$version.zip" manifest.json src icons/*.png \
     -x 'src/*_test.js' -x 'src/fake_chrome.js'
 unzip -l "tico-$version.zip"   # check what went in
 ```

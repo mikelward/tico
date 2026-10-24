@@ -17,6 +17,19 @@ test("the options page exists and opens in a tab", () => {
   assert.match(html, /src="optionsview\.js"/);
 });
 
+// A PNG's width and height, from its IHDR chunk.
+function pngSize(path) {
+  const b = readFileSync(new URL(`../${path}`, import.meta.url));
+  assert.equal(b.toString("ascii", 1, 4), "PNG", `${path} isn't a PNG`);
+  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+}
+
+test("every icon the manifest names is a PNG of its size", () => {
+  const all = { ...manifest.icons, ...manifest.action.default_icon };
+  assert.ok(manifest.icons["128"], "the store needs a 128 px icon");
+  for (const [size, path] of Object.entries(all)) assert.deepEqual(pngSize(path), [Number(size), Number(size)], path);
+});
+
 test("at most four commands suggest a key, as Chromium allows", () => {
   const suggested = Object.values(manifest.commands).filter((c) => c.suggested_key);
   assert.ok(suggested.length <= 4, `${suggested.length} suggest keys`);
