@@ -83,18 +83,19 @@ includes the tests. Build the store's from a checkout:
 make zip     # dist/tico-<version>.zip; `unzip -l` it to see what went in
 ```
 
-Or let GitHub build it: releases are automatic. Raise `version` in
-`manifest.json` through a pull request like any other change (the store
-refuses an upload whose version isn't higher than the published one). When
-it merges, the `release` workflow sees a version with no release yet, runs
-the tests, builds the ZIP and publishes it as release `v<version>`, tag
-included, under **Releases** on the repository page. A merge that leaves
-the version alone builds the ZIP and releases nothing.
+The version is automatic: the number of commits, so `46` for the 46th.
+Chrome takes a version of one to four numbers, and every commit on `main` is
+a higher version than the last, as the store requires of an update (46 is
+higher than the first release's 0.1.0). `manifest.json` holds a placeholder,
+`0`, which is what an unpacked copy shows. Counting
+needs the whole history, so `make zip` refuses a shallow clone; run
+`git fetch --unshallow` first. `make version` prints the version.
 
-Pushing a `v<version>` tag by hand does the same, and stops if the tag
-doesn't match the manifest's version. Running the workflow by hand
-(**Actions › release › Run workflow**) builds the ZIP as a download on that
-run instead, without a release.
+Or let GitHub build it: every merge to `main` is released. The `release`
+workflow runs the tests, builds the ZIP and publishes it as release
+`v<version>`, tag included, under **Releases** on the repository page.
+Running the workflow by hand (**Actions › release › Run workflow**) builds
+the ZIP as a download on that run instead, without a release.
 
 ## 5. Upload and submit
 
