@@ -16,6 +16,7 @@ export const DEFAULTS = {
 // except the app popups tico opens itself (§9.1).
 const MANAGED = ["normal", "app"];
 const STATE_KEY = "state";
+const VIEW_KEY = "view";
 
 function area(display) {
   const a = display.workArea;
@@ -76,7 +77,21 @@ export class Tico {
   }
 
   async save() {
-    await this.api.storage.local.set({ [STATE_KEY]: this.state });
+    await this.api.storage.local.set({ [STATE_KEY]: this.state, [VIEW_KEY]: this.view() });
+  }
+
+  // What the popup and home window show: each display's workspace and
+  // layout, and how many windows each workspace holds.
+  view() {
+    const s = this.state;
+    const displays = {};
+    for (const d of this.displays) {
+      const n = ws.showing(s, d.id);
+      displays[d.id] = { workspace: n, mode: n === null ? null : this.modeOf(n, d) };
+    }
+    const counts = {};
+    for (let n = 1; n <= ws.WORKSPACES; n++) counts[n] = s.workspaces[n].windows.length;
+    return { focusedDisplay: this.focusedDisplay() ?? null, displays, counts };
   }
 
   // Bring the state up to date with Chrome: displays, new and closed
@@ -195,6 +210,7 @@ export class Tico {
     if ((m = name.match(/^workspace-([1-9])$/))) return this.showWorkspace(display, Number(m[1]));
     if (name === "workspace-next") return this.showWorkspace(display, step(1));
     if (name === "workspace-prev") return this.showWorkspace(display, step(-1));
+    if (name === "popup") return this.popup(display);
     if (name === "app-browser") return this.browser(display, n);
     const app = this.apps.find((a) => a.command === name);
     if (app) return this.app(app, display);
@@ -220,6 +236,39 @@ export class Tico {
       const k = name === "layout-next" ? 1 : -1;
       this.state = ws.setLayout(s, n, geometry.modes[(i + k + geometry.modes.length) % geometry.modes.length]);
     }
+    return null;
+  }
+
+  // The toolbar badge shows the focused display's workspace (§8.1).
+  async badge() {
+    const n = ws.showing(this.state, this.focusedDisplay());
+    await this.api.action?.setBadgeText({ text: n === null ? "" : String(n) });
+  }
+
+  // The popup, from the toolbar where there is one. A web app window has no
+  // toolbar, and Chrome refuses to open the popup there, so it opens as a
+  // small window instead (§8.1).
+  async popup(display) {
+    try {
+      await this.api.action.openPopup();
+      return null;
+    } catch {
+      // "Browser window has no toolbar": fall through to the window
+    }
+    const d = this.displays.find((x) => x.id === display) ?? this.displays[0];
+    const a = d.workArea;
+    // Wide enough for the popup's one row; narrower work areas wrap it.
+    const width = Math.min(800, a.width);
+    const height = Math.min(160, a.height);
+    await this.api.windows.create({
+      url: this.api.runtime.getURL("src/popup.html?window=1"),
+      type: "popup",
+      focused: true,
+      left: a.left + Math.round((a.width - width) / 2),
+      top: a.top + Math.round((a.height - height) / 2),
+      width,
+      height,
+    });
     return null;
   }
 
@@ -352,6 +401,7 @@ export class Tico {
       this.state = ws.focused(this.state, focus);
     }
     await this.homes(focus);
+    await this.badge();
     await this.save();
   }
 }

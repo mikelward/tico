@@ -148,6 +148,13 @@
     },
     "app-music": {
       "description": "Focus or open YouTube Music (Search+Y)"
+    },
+    "popup": {
+      "description": "Show workspaces and clocks (Search+B)"
     }
+  },
+  "action": {
+    "default_title": "tico",
+    "default_popup": "src/popup.html"
   }
 }

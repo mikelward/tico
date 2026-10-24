@@ -7,6 +7,7 @@ import { Tico } from "./tico.js";
 
 const tico = new Tico(chrome);
 const changed = () => tico.event();
+const commands = new Set(Object.keys(chrome.runtime.getManifest().commands));
 
 chrome.commands.onCommand.addListener((name) => tico.command(name));
 chrome.windows.onCreated.addListener(changed);
@@ -16,3 +17,9 @@ chrome.windows.onBoundsChanged.addListener(changed);
 chrome.system.display.onDisplayChanged.addListener(changed);
 chrome.runtime.onStartup.addListener(changed);
 chrome.runtime.onInstalled.addListener(changed);
+
+// The popup and home window run commands too, but only ones the manifest
+// declares.
+chrome.runtime.onMessage.addListener((message) => {
+  if (commands.has(message?.command)) tico.command(message.command);
+});

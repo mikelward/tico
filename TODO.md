@@ -35,6 +35,8 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   and correcting each window type's frame waits for a device.
 - Window IDs change across a browser restart (SPEC.md §14.2): windows come
   back on the current workspace; matching them by tab URL is still to do.
-- Profile keys (SPEC.md §9.2), the
-  popup and clocks (§8), attention (§10.3), the dim (§10.1) and the
-  options page (§13).
+- Profile keys (SPEC.md §9.2), the clocks popover's strips and DST note
+  (§8.2), attention (§10.3), the dim (§10.1) and the options page (§13).
+- A Playwright smoke test in CI (SPEC.md §17): loading the extension in
+  Chromium and opening its pages worked by hand on 2026-10-24, but would
+  add the first dependency.

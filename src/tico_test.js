@@ -394,3 +394,32 @@ test("the last window leaving a workspace brings the home window", async () => {
   await tico.command("send-2");
   assert.equal(homes(chrome).length, 1);
 });
+
+test("the badge shows the focused display's workspace", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
+  assert.equal(chrome.badge, "1");
+  await tico.command("workspace-7");
+  assert.equal(chrome.badge, "7");
+});
+
+test("the popup opens from the toolbar, or as a window where there's none", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2, { type: "app", url: "https://chat.google.com/" })]);
+  await tico.command("popup");
+  assert.equal(chrome.popups, 1);
+  chrome.focus(2);
+  await tico.event();
+  await tico.command("popup");
+  assert.equal(chrome.popups, 1);
+  assert.deepEqual(opened(chrome), [{ url: "chrome-extension://tico/src/popup.html?window=1", type: "popup" }]);
+  const w = chrome.wins.find((x) => x.url?.includes("popup.html"));
+  assert.equal(w.width, 800, "wide enough for the popup's one row");
+});
+
+test("the view lists each display's workspace and layout", async () => {
+  const { chrome } = await setup([HD, UW], [on(HD, 1, { focused: true }), on(UW, 2)]);
+  assert.deepEqual(chrome.store.view, {
+    focusedDisplay: "hd",
+    displays: { hd: { workspace: 1, mode: "tile" }, uw: { workspace: 2, mode: "threecol" } },
+    counts: { 1: 1, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 },
+  });
+});
