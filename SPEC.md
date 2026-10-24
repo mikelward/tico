@@ -556,10 +556,10 @@ Bound by tico, unless the column says the Shortcuts app:
 | `Search+J` / `K`, with Shift | focus / move down and up the stack | tico |
 | `Search+Space` | the dashboard: tico's bar and launcher, full screen (§8.1) | tico |
 | `Search+Shift+M` (tide: `Super+Return`) | swap with master | tico |
-| `Search+Shift+.` / `Search+Shift+,` (tide: `Super+\` / `Super+/`) | grow / shrink master | tico |
-| `Search+Shift+I` / `Search+Shift+D` (tide: `Super+=` / `Super+-`) | add / remove a master, dwm's letters | tico |
+| `Search+N` / `Search+H` (tide: `Super+\` / `Super+/`) | grow / shrink master | tico |
+| `Search+I` / `Search+D` (tide: `Super+=` / `Super+-`) | add / remove a master, dwm's letters | tico (Search+D after removing dictation's shortcut; §7.2) |
 | `Search+.` / `Search+,` | next / previous layout | tico |
-| `Search+Shift+Space` (tide: ``Super+` ``) | toggle monocle | tico |
+| `Search+O` (tide: ``Super+` ``) | toggle monocle | tico |
 | `Search+Up` / `Search+Shift+Up` / `Search+Down` | maximize / fullscreen / restore | Shortcuts app (Search+Up is Page Up today; §7.2) |
 | `Search+Shift+F` | toggle floating | tico |
 | `Ctrl+Shift+W` (tide: `Super+Backspace`) | close window | native Chrome |
@@ -596,9 +596,9 @@ table:
 | Search+Up / Down | Page Up / Down, at the keyboard level: the Shortcuts app doesn't list them, and the shortcuts page refuses them the same way | Search+Page Up / Page Down for the workspace steps |
 | Search+1…= | F1–F12 when "top row as function keys" is off *(unverified on current builds)* | turn the setting off; else Alt+Shift+1…9 |
 | Search+Shift+G | Snap Group | unbind in the Shortcuts app, freeing it for the third profile |
-| Search+Shift+D | minimize Snap Group | unbind in the Shortcuts app, freeing it for remove-a-master |
+| Search+Shift+D | minimize Snap Group | keep; tico doesn't use it (remove a master is Search+D) |
 | Search+Space | none known *(unverified)* | keep |
-| Search+Shift+Space | emoji picker | remove it in the Shortcuts app, freeing it for monocle |
+| Search+Shift+Space | emoji picker | removable; tico doesn't use it (monocle is Search+O) |
 | Search+C | calendar panel | remove it in the Shortcuts app (Device), freeing it for app 1 |
 | Search+M | microphone mute | remove it in the Shortcuts app (Device), freeing it for app 3 |
 | Search+X | picture-in-picture | keep; tico doesn't use it |
@@ -611,7 +611,7 @@ table:
 | Search+Shift+A | assign the window to all desks | keep; tico doesn't use it |
 | Search+D | dictation | remove it in the Shortcuts app, under Accessibility, to use Search+D |
 | Search+S | select to speak | keep; tico doesn't use it |
-| Search+I | none | free |
+| Search+I | none | free; tico's add-a-master key |
 
 The Shortcuts app's settings are in Settings › Keyboard and inputs ›
 View keyboard shortcuts; Calendar and microphone mute (under Device), the emoji picker and
@@ -642,18 +642,18 @@ Search+Alt and Search+Ctrl are allowed too, and untried unless listed.
 | A | | OS: assign to all desks | |
 | B | | | |
 | C | tico: app 1 (Calendar); OS calendar panel, removable | tico: app 2 (Chat) | |
-| D | OS: dictation, removable (Accessibility) | tico: remove a master; OS: minimize Snap Group (§7.2) | |
+| D | tico: remove a master; OS dictation, removable (Accessibility) | OS: minimize Snap Group (§7.2) | |
 | E | | | |
 | F | OS: Quick Insert, removable; tico planned: second profile (§9.1) | tico: toggle floating | OS: float |
 | G | tico: browser | OS: Snap Group; tico planned: third profile | |
-| H | free once the Explore app's shortcut is removed | | |
-| I | free; tico planned: IRC (§9.1) | tico: add a master | |
+| H | tico: shrink master; OS Explore app, removable | | |
+| I | tico: add a master | | |
 | J | tico: focus next | tico: move down the stack | |
 | K | tico: focus previous | tico: move up the stack | |
 | L | OS: lock, editable, kept | | |
 | M | tico: app 3 (Meet); OS microphone mute, removable | tico: swap with master | OS: move to other display |
-| N | | OS: notification center *(unverified)* | |
-| O | | | |
+| N | tico: grow master | OS: notification center *(unverified)* | |
+| O | tico: monocle | | |
 | P | | | |
 | Q | | | |
 | R | | | |
@@ -667,9 +667,9 @@ Search+Alt and Search+Ctrl are allowed too, and untried unless listed.
 | Z | OS: window layout menu | | |
 | 1–9 | tico: go to workspace | tico: send to workspace | |
 | 0 | | | |
-| Comma | tico: previous layout | tico: shrink master | |
-| Period | tico: next layout | tico: grow master | |
-| Space | tico: dashboard | tico: monocle; OS emoji picker, removable | |
+| Comma | tico: previous layout | | |
+| Period | tico: next layout | | |
+| Space | tico: dashboard | OS: emoji picker, removable | |
 | Tab | tico: attention | | |
 | Left / Right | OS, locked: Home / End | OS, locked: select to line start / end | |
 | Up / Down | OS, locked: Page Up / Page Down | OS, locked | |
@@ -748,7 +748,7 @@ Tabs scope (§9.4) or `Search+Tab` (§10.3):
 | `Search+Shift+C` | Google Chat | installed web app |
 | `Search+M` | Google Meet | installed web app |
 | `Search+Y` | YouTube Music | installed web app |
-| `Search+I` | IRC | installed web app, or the Linux client by shelf slot |
+| *unassigned* | IRC | installed web app, or the Linux client by shelf slot; Search+I went to add a master (§7.1) |
 
 - **The four app keys are slots.** Chrome fixes an extension's commands in
   its manifest, so `app-calendar`, `app-chat`, `app-meet` and `app-music`
@@ -1131,10 +1131,10 @@ tidal would ship on the **Play Store** (§20.4).
    chrometile until M3 and sending it two fixes.
 4. **How much of the off-ramp (§3.6) should this repo document**, given the
    tide spec already covers the desktop it would run?
-5. **The five moved keys** (§7.1): `Search+Space`, `Search+Shift+.` and
-   `,`, `Search+Shift+I` and `D`, and `Search+Shift+Space` are placeholders.
-   Better combos, from the keys §2.2 allows, are welcome. An upstream
-   patch could restore `Search+Return` only (§19.1).
+5. **The moved keys** (§7.1): settled on a Chromebook (maintainer,
+   2026-10-24) as Search+H / N, Search+I / D and Search+O, by §7.3's rule.
+   `Search+Space` for the dashboard is the one left from the first guess.
+   An upstream patch could restore `Search+Return` only (§19.1).
 6. **Googlebook**: the target is a work machine. Accessibility services
    and sideloading aren't ruled out; adb is unknown. That decides whether
    tidal (§20.4) could re-tile, or only place apps at launch. The same

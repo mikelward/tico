@@ -60,6 +60,20 @@ test("no command's key is a Search+arrow", () => {
   }
 });
 
+// Frequent actions take Search and one key; Shift is for moving a window
+// and for rare actions (§7.3).
+test("frequent actions take no modifier but Search, and no two commands share a key", () => {
+  const keyOf = (c) => /\(([^)]*)\)$/.exec(c.description ?? "")?.[1] ?? "";
+  const frequent = /^(focus-|grow|shrink|master-|monocle|layout-|workspace-|popup|attention)/;
+  const seen = new Map();
+  for (const [name, c] of Object.entries(manifest.commands)) {
+    const key = keyOf(c);
+    if (frequent.test(name)) assert.match(key, /^Search\+[^+]+$/, `${name}: ${key}`);
+    assert.ok(!seen.has(key), `${name} and ${seen.get(key)} both take ${key}`);
+    seen.set(key, name);
+  }
+});
+
 test("the title watcher runs on the watched origins and nowhere else", () => {
   assert.deepEqual(manifest.content_scripts, [{ matches: WATCHED, js: ["src/unread_watch.js"], run_at: "document_idle" }]);
   assert.equal(manifest.host_permissions, undefined, "no host access beyond the content script's");
