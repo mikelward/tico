@@ -71,7 +71,7 @@ function checkHours(hours) {
 function checkApps(apps) {
   if (!Array.isArray(apps)) throw new Error("must be a list");
   const seen = new Set();
-  // Windows belong to an app by their origin, so two apps can't share one.
+  // Tabs belong to an app by their origin (§9.4), so two apps can't share one.
   const origins = new Map();
   return apps.map((a, i) => {
     const at = `app ${i + 1}`;

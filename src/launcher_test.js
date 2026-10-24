@@ -19,10 +19,10 @@ const tabs = [
   { id: 20, windowId: 2, title: "Design doc", url: "https://docs.google.com/document/d/1", lastAccessed: 500 },
   { id: 30, windowId: 3, title: "tico", url: "chrome-extension://tico/src/launcher.html" },
 ];
-const apps = [{ name: "Google Calendar", command: "app-calendar", key: "Search+C" }];
+const apps = [{ name: "Google Calendar", url: "https://calendar.google.com/", command: "app-calendar", key: "Search+C" }];
 const commands = {
   "workspace-4": { description: "Go to workspace 4 (Search+4)" },
-  "app-calendar": { description: "Focus or open Google Calendar (Search+C)" },
+  "app-calendar": { description: "Open Google Calendar (Search+C)" },
 };
 const all = items({ tabs, apps, commands, workspaceOf: (w) => ({ 1: 2, 2: 1 })[w] ?? null, ownOrigin: "chrome-extension://tico/" });
 
@@ -58,4 +58,13 @@ test("a scope keeps to its kinds: launch is apps and commands, tabs is tabs", ()
 test("a query with no match in its scope looks in every scope", () => {
   assert.equal(rank("gmail", all, { scope: "launch" })[0].title, "Inbox (3) - Gmail");
   assert.deepEqual(rank("zzz", all, { scope: "launch" }), []);
+});
+
+test("a tab on an app's site matches by the app's name", () => {
+  // A name that's in neither the tab's title nor its host.
+  const agenda = [{ name: "Agenda", url: "https://calendar.google.com/", command: "app-calendar" }];
+  const week = { id: 40, windowId: 4, title: "Week of October 19", url: "https://calendar.google.com/calendar/u/0/r" };
+  const found = items({ tabs: [...tabs, week], apps: agenda });
+  assert.deepEqual(rank("agenda", found, { scope: "tabs" }).map((i) => i.title), ["Week of October 19"]);
+  assert.equal(found.find((i) => i.tabId === 20).app, null, "a site no app has");
 });

@@ -82,7 +82,7 @@ async function refresh() {
   const keyOf = (command) => /\(([^)]*)\)$/.exec(commands[command]?.description ?? "")?.[1] ?? "";
   const apps = [
     { name: "Browser window", command: "app-browser", key: keyOf("app-browser") },
-    ...current.apps.map((a) => ({ name: a.name, command: a.command, key: keyOf(a.command) })),
+    ...current.apps.map((a) => ({ name: a.name, url: a.url, command: a.command, key: keyOf(a.command) })),
   ];
   all = items({
     tabs,
