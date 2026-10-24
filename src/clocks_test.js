@@ -83,6 +83,10 @@ test("a zone's strip sits on local hours and splits at midnight", () => {
     { kind: "work", start: 18, end: 24 },
     { kind: "work", start: 0, end: 2 },
   ]);
+  assert.deepEqual(strip(T, "Europe/Paris", "Europe/Paris", { day: [6, 22], work: [8, 16] }), [
+    { kind: "day", start: 6, end: 22 },
+    { kind: "work", start: 8, end: 16 },
+  ], "the hours come from settings");
   assert.deepEqual(strip(T, "Europe/Paris", "Europe/Paris"), [
     { kind: "day", start: 7, end: 19 },
     { kind: "work", start: 9, end: 17 },

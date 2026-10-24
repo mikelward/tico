@@ -77,13 +77,11 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   and `src/restart.js`.
 - **The app list is built in** (Calendar, Chat, Meet, YouTube Music), until
   the options page can edit it. Reversible: `src/apps.js`.
-
 - **The wait for restored windows ends at your first command**, not after
   a time. A window that never returns is forgotten then; one opened before
   you press a key, with a matching tab, takes the old window's place. The
   alternative is a timeout. To decide after trying it on a device.
   Reversible: `Tico.command`.
-
 - **Two restart edge cases are deferred, not fixed** (Codex on PR 14): a
   restored window that closes before the rest return drops the placements
   still waiting, and a window first seen on a placeholder page such as
@@ -91,17 +89,22 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   incrementally; the alternative is rematching every window against a saved
   snapshot on each sync until the first command, which deletes the class.
   To decide after trying restarts on a device. Reversible: `Tico.restarted`.
+- **The options page started with clocks, built without a mock**, in the
+  dashboard's colors: a table of clocks with up, down and remove, the two
+  hour spans, and the JSON. Each change saves at once to `storage.sync`, so
+  it follows you to other Chromebooks; a bad one shows an error and isn't
+  saved. Labels are at most four letters, to fit the bar. The alternative is
+  a mock first, or a Save button. Reversible: `src/options*`.
 
 ## Later
 
 - If the service worker syncs before Chrome has restored any window after a
   restart, nothing matches and the old places are lost; keeping them
   waiting then would also catch "closed every window" (SPEC.md §14.2).
-
 - Frame offsets (SPEC.md §5.3): tiles use the bounds as given; measuring
   and correcting each window type's frame waits for a device.
-- Profile keys (SPEC.md §9.2) and the options page (§13), which takes the
-  clock zones and hours.
+- Profile keys (SPEC.md §9.2), and the options page's other pages (§13):
+  layouts, workspaces, keys, apps, dim and attention.
 - A month calendar with ISO week numbers under the clocks, as tide's
   popover has.
 - A Playwright smoke test in CI (SPEC.md §17): loading the extension in

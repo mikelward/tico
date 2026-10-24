@@ -1,0 +1,143 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f2f4f6;
+  --fg: #1e1e1e;
+  --muted: #5e5e5e;
+  --surface: #ffffff;
+  --raised: #e6e9ec;
+  --accent: #3584e4;
+  --error: #c01c28;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11181f;
+    --fg: #f6f5f4;
+    --muted: #9a9996;
+    --surface: #1e1e1e;
+    --raised: #303030;
+    --accent: #78aeed;
+    --error: #ff7b63;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.4 Inter, system-ui, sans-serif;
+}
+main {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.muted {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+section {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+#errors {
+  padding: 8px 12px;
+  border-left: 3px solid var(--error);
+  color: var(--error);
+}
+#errors p {
+  margin: 4px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--muted);
+}
+td {
+  padding: 2px 4px 2px 0;
+}
+input,
+textarea,
+button {
+  font: inherit;
+  color: inherit;
+}
+input,
+textarea {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--raised);
+  border-radius: 6px;
+  background: var(--bg);
+}
+input:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+input.label {
+  width: 6ch;
+}
+.hours input {
+  width: 6ch;
+}
+.order {
+  white-space: nowrap;
+}
+button {
+  padding: 4px 10px;
+  border: 1px solid var(--raised);
+  border-radius: 6px;
+  background: var(--raised);
+  cursor: pointer;
+}
+.order button {
+  padding: 2px 8px;
+}
+#add-clock {
+  margin-top: 8px;
+}
+fieldset {
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+legend {
+  margin-bottom: 4px;
+  color: var(--muted);
+}
+textarea {
+  font-family: "Ubuntu Mono", ui-monospace, monospace;
+  resize: vertical;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

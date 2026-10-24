@@ -6,6 +6,7 @@
 import { scrub } from "./clocks.js";
 import { renderClocks, renderDetail } from "./clockview.js";
 import { items, rank } from "./launcher.js";
+import { load as loadSettings, SETTINGS_KEY } from "./settings.js";
 
 const SYMBOLS = { tile: "[]=", threecol: "|M|", twocol: "||=", monocle: "[M]" };
 const mode = new URLSearchParams(location.search).get("mode") === "home" ? "home" : "dashboard";
@@ -168,10 +169,16 @@ for (const b of document.querySelectorAll(".scopes button")) b.addEventListener(
 // The clocks: the home page shows each zone's day; the dashboard opens it on
 // a click. Scrolling over them scrubs time until the pointer leaves (§8.2).
 let scrubbed = null;
+let settings;
 function renderTime() {
   const at = scrubbed ?? new Date();
-  renderClocks(clocks, at, scrubbed !== null);
-  if (!detail.hidden) renderDetail(detail, at, scrubbed !== null);
+  renderClocks(clocks, at, scrubbed !== null, settings);
+  if (!detail.hidden) renderDetail(detail, at, scrubbed !== null, settings);
+}
+// The options page reports bad settings; here the defaults stand in.
+async function loadClocks() {
+  settings = (await loadSettings(chrome.storage)).settings;
+  renderTime();
 }
 function toggleDetail() {
   detail.hidden = !detail.hidden;
@@ -222,6 +229,7 @@ if (home) {
 
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.view || changes.state) refresh();
+  if (changes[SETTINGS_KEY]) loadClocks();
 });
 // The home page can sit for hours; look again whenever it comes back.
 window.addEventListener("focus", () => {
@@ -229,6 +237,6 @@ window.addEventListener("focus", () => {
   query.focus();
 });
 refresh();
-renderTime();
+loadClocks();
 setInterval(renderTime, 10000);
 query.focus();

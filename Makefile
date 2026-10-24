@@ -7,6 +7,7 @@ TESTS = \
 	src/geometry_test.js \
 	src/launcher_test.js \
 	src/restart_test.js \
+	src/settings_test.js \
 	src/unread_test.js \
 	src/workspaces_test.js \
 	src/tico_test.js \
