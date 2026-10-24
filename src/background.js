@@ -3,11 +3,28 @@
 // first runs, so every listener is added here, at the top level, and tico
 // loads its saved state on the first event it handles.
 
-import { settingsChanged } from "./settings.js";
+import { load as loadSettings, settingsChanged } from "./settings.js";
+import { isWatched, serialized, syncWatchers } from "./watchers.js";
 import { DIM_ORIGINS, Tico } from "./tico.js";
 
 const tico = new Tico(chrome);
 const changed = () => tico.event();
+// The extra watched sites (§10.3) follow the settings and this Chromebook's
+// grants, one update at a time so an older one can't undo a newer one.
+const watch = serialized(() =>
+  loadSettings(chrome.storage)
+    .then(({ settings }) => syncWatchers(chrome, settings.watched))
+    .catch((e) => console.error("tico: couldn't update the watched sites:", e)),
+);
+// A title report counts only from a site watched now; in order, so a tab's
+// reports reach tico as they were sent.
+const report = serialized((tab, url, title, first) =>
+  loadSettings(chrome.storage)
+    .then(({ settings }) => {
+      if (isWatched(url, settings.watched)) return tico.title(tab.id, tab.windowId, title, first);
+    })
+    .catch((e) => console.error("tico: couldn't take a title report:", e)),
+);
 const commands = new Set(Object.keys(chrome.runtime.getManifest().commands));
 
 chrome.commands.onCommand.addListener((name) => tico.command(name));
@@ -16,8 +33,14 @@ chrome.windows.onRemoved.addListener(changed);
 chrome.windows.onFocusChanged.addListener(changed);
 chrome.windows.onBoundsChanged.addListener(changed);
 chrome.system.display.onDisplayChanged.addListener(changed);
-chrome.runtime.onStartup.addListener(changed);
-chrome.runtime.onInstalled.addListener(changed);
+chrome.runtime.onStartup.addListener(() => {
+  changed();
+  watch();
+});
+chrome.runtime.onInstalled.addListener(() => {
+  changed();
+  watch();
+});
 // A newly active tab needs the dim if its window has it, and so does a
 // dimmed tab that loaded a new page.
 chrome.tabs.onActivated.addListener(changed);
@@ -29,12 +52,18 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
 chrome.permissions.onAdded.addListener((granted) => {
   if (DIM_ORIGINS.every((o) => granted.origins?.includes(o))) tico.setDim(true);
   else changed();
+  watch();
 });
-chrome.permissions.onRemoved.addListener(changed);
+chrome.permissions.onRemoved.addListener(() => {
+  changed();
+  watch();
+});
 // A setting saved on the options page applies at once, not at the next
 // window event; tico's own state writes aren't settings, so don't loop.
 chrome.storage.onChanged.addListener((changes) => {
-  if (settingsChanged(changes)) changed();
+  if (!settingsChanged(changes)) return;
+  changed();
+  watch();
 });
 // The toolbar button opens the dashboard, as its key does (§8.1).
 chrome.action.onClicked.addListener(() => tico.command("popup"));
@@ -53,7 +82,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (fromTico && Number.isInteger(message?.tabId) && Number.isInteger(message?.windowId)) {
     return done(tico.activateTab(message.tabId, message.windowId));
   }
-  if (typeof message?.title === "string" && sender.tab) tico.title(sender.tab.id, sender.tab.windowId, message.title, message.first === true);
+  if (typeof message?.title === "string" && sender.tab) report(sender.tab, sender.url ?? sender.tab.url, message.title, message.first === true);
   else if (typeof message?.dim === "boolean" && fromTico) {
     tico.setDim(message.dim).then(() => respond(true), () => respond(false));
     return true;

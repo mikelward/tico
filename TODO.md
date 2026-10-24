@@ -34,10 +34,13 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   doesn't mark it; only a rise tico sees marks. The alternative marks any
   nonzero first count.
   Reversible: one line in `Tico.title`.
-- **The watched origins are built in** (Gmail, Chat, Calendar), in the
-  manifest's `content_scripts`, until the options page can request others
-  as optional host permissions. Reversible: `src/unread.js` and the
-  manifest.
+- **Gmail, Chat and Calendar are always watched**, in the manifest's
+  `content_scripts`; the options page adds other sites, each with its own
+  host permission asked for on that Chromebook, and the same title watcher
+  registered at runtime. Settings sync but grants don't, so a site added on
+  one Chromebook shows "needs access here" on the next. Only https sites.
+  The alternative is making the built-in three removable. Reversible:
+  `src/watchers.js`.
 - **Granting all-sites access turns the dim on**, and the toggle lives on
   the dashboard and home page until the options page exists. The prompt
   takes focus, which closes the dashboard that asked, so tico treats the
@@ -96,7 +99,7 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - Frame offsets (SPEC.md §5.3): tiles use the bounds as given; measuring
   and correcting each window type's frame waits for a device.
 - Profile keys (SPEC.md §9.2), and the options page's other pages (§13):
-  workspaces, attention, and the rest of the setup checklist (the
+  workspaces, and the rest of the setup checklist (the
   ChromeOS settings in §3.4, beyond the keys).
 - A month calendar with ISO week numbers under the clocks, as tide's
   popover has.

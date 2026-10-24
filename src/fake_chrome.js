@@ -63,12 +63,33 @@ export class FakeChrome {
     this.dimmed = new Set();
     this.strength = new Map();
     this.granted = false;
-    this.permissions = { contains: async () => fake.granted };
+    // `granted` is all-sites access; `grantedOrigins` holds narrower grants.
+    this.grantedOrigins = new Set();
+    this.permissions = {
+      contains: async ({ origins }) => fake.granted || origins.every((o) => fake.grantedOrigins.has(o)),
+    };
+    this.registered = new Map();
+    this.injected = [];
     this.scripting = {
-      executeScript: async ({ target, args }) => {
+      getRegisteredContentScripts: async ({ ids } = {}) =>
+        structuredClone([...fake.registered.values()].filter((s) => !ids || ids.includes(s.id))),
+      registerContentScripts: async (scripts) => {
+        for (const s of scripts) {
+          if (fake.registered.has(s.id)) throw new Error(`Duplicate script ID '${s.id}'`);
+          fake.registered.set(s.id, structuredClone(s));
+        }
+      },
+      unregisterContentScripts: async ({ ids }) => {
+        for (const id of ids) fake.registered.delete(id);
+      },
+      executeScript: async ({ target, args, files }) => {
         const w = fake.wins.find((x) => x.id * 10 === target.tabId);
         if (!w) throw new Error(`No tab with id: ${target.tabId}.`);
         if ((w.url ?? "chrome://newtab/").startsWith("chrome")) throw new Error("Cannot access a chrome:// URL");
+        if (files) {
+          fake.injected.push({ tabId: target.tabId, files });
+          return [{ result: undefined }];
+        }
         if (args[0]) {
           fake.dimmed.add(target.tabId);
           fake.strength.set(target.tabId, args[1]);
@@ -92,6 +113,11 @@ export class FakeChrome {
       update: async (id, props) => {
         fake.tabUpdates.push({ id, ...props });
       },
+      // Patterns here are "origin/*", so a prefix match is enough.
+      query: async ({ url = [] } = {}) =>
+        fake.wins
+          .filter((w) => url.some((p) => (w.url ?? "").startsWith(p.slice(0, -1))))
+          .map((w) => ({ id: w.id * 10, windowId: w.id, url: w.url })),
     };
   }
 

@@ -49,6 +49,16 @@
 </section>
 
 <section>
+<h2>Attention</h2>
+<p class="muted">tico marks a window when a site's unread count goes up in its title. Gmail, Chat and Calendar are always watched; add others here. Each needs access to its site, asked for on this Chromebook when you add it.</p>
+<ul id="watched"></ul>
+<form id="watch-form" class="row">
+<input id="watch-site" type="url" placeholder="https://app.example.com" aria-label="Site to watch" required>
+<button type="submit">Watch</button>
+</form>
+</section>
+
+<section>
 <h2>Dim</h2>
 <p class="muted">How dark the dim makes the windows you're not in, when it's on (turn it on from the dashboard).</p>
 <label>Strength <input id="dim-strength" type="number" step="any" min="2" max="50" required> %</label>
