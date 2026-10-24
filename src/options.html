@@ -9,7 +9,7 @@
 <body>
 <main>
 <h1>tico settings</h1>
-<p class="muted">Changes apply as you make them, on every Chromebook you sign in to.</p>
+<p class="muted">Changes apply as you make them. Layouts stay on this Chromebook; the rest follow you to every one you sign in to.</p>
 <p id="overrides" class="muted" hidden></p>
 <div id="errors" role="alert" hidden></div>
 
@@ -36,6 +36,18 @@
 <thead><tr><th>Key</th><th>Name</th><th>Address</th></tr></thead>
 <tbody></tbody>
 </table>
+</section>
+
+<section>
+<h2>Layouts on this Chromebook</h2>
+<p class="muted">These depend on this Chromebook's displays, so they stay here rather than follow you.</p>
+<label>A display is ultrawide, with three columns, from aspect ratio <input id="ultrawide" type="number" step="0.1" min="1" max="10" required></label>
+<p class="muted">A lone window is centered at this width on displays from each aspect ratio up; below them all, it fills the width.</p>
+<table id="rules">
+<thead><tr><th>From aspect ratio</th><th>Width (%)</th><th><span class="visually-hidden">Remove</span></th></tr></thead>
+<tbody></tbody>
+</table>
+<button id="add-rule" type="button">Add a width</button>
 </section>
 
 <section>

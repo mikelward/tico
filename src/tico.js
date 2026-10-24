@@ -4,17 +4,12 @@
 // promise-returning calls are used.
 
 import { appOf, DEFAULT_APPS } from "./apps.js";
-import { load as loadSettings } from "./settings.js";
+import { DEFAULT_SETTINGS, load as loadSettings } from "./settings.js";
 import { overlay } from "./dim.js";
 import { matchWindows, windowUrls } from "./restart.js";
 import * as geometry from "./geometry.js";
 import { unreadCount } from "./unread.js";
 import * as ws from "./workspaces.js";
-
-export const DEFAULTS = {
-  singleRules: [{ minAspect: 2.1, width: 0.8 }],
-  ultrawideAspect: 2.1,
-};
 
 // Window types tico manages. Popups and devtools float untracked (§5.4),
 // except the app popups tico opens itself (§9.1) and Secure Shell's.
@@ -56,10 +51,10 @@ export function displayFor(win, displays) {
 }
 
 export class Tico {
-  constructor(api, settings = DEFAULTS) {
+  constructor(api) {
     this.apps = DEFAULT_APPS;
     this.api = api;
-    this.settings = settings;
+    this.settings = DEFAULT_SETTINGS;
     this.state = null;
     this.displays = [];
     this.windows = new Map();
@@ -178,7 +173,8 @@ export class Tico {
   async sync() {
     await this.load();
     // The options page reports bad settings; here the defaults stand in.
-    this.apps = (await loadSettings(this.api.storage)).settings.apps;
+    this.settings = (await loadSettings(this.api.storage)).settings;
+    this.apps = this.settings.apps;
     this.displays = await this.api.system.display.getInfo();
     const ids = this.displays.map((d) => d.id);
     // Every window type, so a focused popup or devtools window still says

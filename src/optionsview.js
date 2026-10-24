@@ -3,7 +3,7 @@
 // isn't saved.
 
 import { APP_COMMANDS } from "./apps.js";
-import { DEFAULT_SETTINGS, resolve, SETTINGS_KEY } from "./settings.js";
+import { DEFAULT_SETTINGS, PER_MACHINE, pick, resolve, SETTINGS_KEY, SHARED } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
 const rows = $("clocks").tBodies[0];
@@ -19,9 +19,9 @@ function showErrors(list) {
   errors.replaceChildren(...list.map((e) => Object.assign(document.createElement("p"), { textContent: e })));
 }
 
-function input(value, attrs) {
+function input(value, attrs, onChange = () => save()) {
   const i = Object.assign(document.createElement("input"), { value: value ?? "", ...attrs });
-  i.addEventListener("change", () => save());
+  i.addEventListener("change", onChange);
   return i;
 }
 
@@ -102,16 +102,66 @@ function toForm(settings) {
   rows.replaceChildren(...settings.clocks.map(clockRow));
   appRows.replaceChildren(...APP_COMMANDS.map((c) => appRow(c, settings.apps.find((a) => a.command === c))));
   for (const [k, ids] of Object.entries(HOURS)) ids.forEach((id, i) => ($(id).value = settings[k][i]));
-  json.value = JSON.stringify(settings, null, 2);
+  json.value = JSON.stringify(pick(settings, SHARED), null, 2);
 }
 
-// Saves what's on the page, or says why not.
+// Saves the shared settings on the page, or says why not.
 async function save(value = fromForm()) {
   const { settings, errors: found } = resolve(value);
   showErrors(found);
   if (found.length > 0) return false;
-  await chrome.storage.sync.set({ [SETTINGS_KEY]: settings });
-  json.value = JSON.stringify(settings, null, 2);
+  await chrome.storage.sync.set({ [SETTINGS_KEY]: pick(settings, SHARED) });
+  json.value = JSON.stringify(pick(settings, SHARED), null, 2);
+  return true;
+}
+
+// This Chromebook's layouts, kept apart from the shared settings.
+const ruleRows = $("rules").tBodies[0];
+
+// Shown as stored, so saving another field can't round a width away;
+// toPrecision only drops float noise like 33.300000000000004.
+const percent = (fraction) => Number((fraction * 100).toPrecision(12));
+
+function ruleRow(r) {
+  const tr = document.createElement("tr");
+  const local = () => saveLocal();
+  const aspect = input(r.minAspect, { className: "aspect", type: "number", step: "0.1", min: "1", max: "10", ariaLabel: "From aspect ratio" }, local);
+  const width = input(r.width === undefined ? "" : percent(r.width), { className: "width", type: "number", step: "any", min: "10", max: "100", ariaLabel: "Width, percent" }, local);
+  const cells = [aspect, width, button("×", "Remove", () => {
+    tr.remove();
+    saveLocal();
+  })];
+  for (const c of cells) {
+    const td = document.createElement("td");
+    td.append(c);
+    tr.append(td);
+  }
+  return tr;
+}
+
+const num = (input) => (input.value.trim() === "" ? NaN : Number(input.value));
+
+function layoutFromForm() {
+  const singleRules = [...ruleRows.rows].map((tr) => {
+    const [aspect, width] = tr.querySelectorAll("input");
+    return { minAspect: num(aspect), width: Number((num(width) / 100).toPrecision(12)) };
+  });
+  return { singleRules, ultrawideAspect: num($("ultrawide")) };
+}
+
+function layoutToForm(settings) {
+  ruleRows.replaceChildren(...settings.singleRules.map(ruleRow));
+  $("ultrawide").value = settings.ultrawideAspect;
+}
+
+async function saveLocal() {
+  const { settings, errors: found } = resolve(undefined, layoutFromForm());
+  showErrors(found);
+  if (found.length > 0) return false;
+  // Merged in, so other overrides this Chromebook keeps stay.
+  const kept = (await chrome.storage.local.get(SETTINGS_KEY))[SETTINGS_KEY];
+  const base = kept && typeof kept === "object" && !Array.isArray(kept) ? kept : {};
+  await chrome.storage.local.set({ [SETTINGS_KEY]: { ...base, ...pick(settings, PER_MACHINE) } });
   return true;
 }
 
@@ -134,8 +184,13 @@ $("import").addEventListener("click", async () => {
     showErrors(["The settings must be a JSON object, like {\"clocks\": [...]}"]);
     return;
   }
+  const here = Object.keys(value).filter((k) => PER_MACHINE.includes(k));
+  if (here.length > 0) {
+    showErrors([`${here.join(", ")} ${here.length > 1 ? "are" : "is"} set for each Chromebook, under Layouts, not imported`]);
+    return;
+  }
   // Settings left out keep their defaults, as tide's files do.
-  const whole = { ...DEFAULT_SETTINGS, ...value };
+  const whole = { ...pick(DEFAULT_SETTINGS, SHARED), ...value };
   if (await save(whole)) toForm(resolve(whole).settings);
 });
 $("reset").addEventListener("click", async () => {
@@ -154,19 +209,36 @@ shortcuts = Object.fromEntries((await chrome.commands.getAll()).map((c) => [c.na
 const shared = (await chrome.storage.sync.get(SETTINGS_KEY))[SETTINGS_KEY];
 const { settings, errors: stored } = resolve(shared);
 toForm(settings);
-showErrors(stored);
 const local = (await chrome.storage.local.get(SETTINGS_KEY))[SETTINGS_KEY];
-if (local && typeof local === "object" && Object.keys(local).length > 0) {
-  $("overrides").textContent = `This Chromebook overrides ${Object.keys(local).join(", ")}, so those may differ here.`;
+const mine = resolve(undefined, local);
+layoutToForm(mine.settings);
+showErrors([...stored, ...mine.errors]);
+const overrides = local && typeof local === "object" ? Object.keys(local).filter((k) => SHARED.includes(k)) : [];
+if (overrides.length > 0) {
+  $("overrides").textContent = `This Chromebook overrides ${overrides.join(", ")}, so those may differ here.`;
   $("overrides").hidden = false;
 }
+$("ultrawide").addEventListener("change", () => saveLocal());
+$("add-rule").addEventListener("click", () => {
+  ruleRows.append(ruleRow({}));
+  ruleRows.lastElementChild.querySelector("input").focus();
+});
 
-// Another tab or Chromebook changed the shared settings: show theirs, so the
+// Another tab or Chromebook changed the settings: show theirs, so the
 // next save here builds on them rather than undoing them. A change the page
 // already shows, its own save included, leaves the form and its focus be.
 chrome.storage.onChanged.addListener((changes, area) => {
   const change = changes[SETTINGS_KEY];
-  if (area !== "sync" || !change) return;
+  if (!change) return;
+  if (area === "local") {
+    const mine = resolve(undefined, change.newValue);
+    const shown = resolve(undefined, layoutFromForm()).settings;
+    if (JSON.stringify(pick(mine.settings, PER_MACHINE)) !== JSON.stringify(pick(shown, PER_MACHINE))) {
+      layoutToForm(mine.settings);
+    }
+    return;
+  }
+  if (area !== "sync") return;
   const fresh = resolve(change.newValue);
   if (JSON.stringify(fresh.settings) === JSON.stringify(resolve(fromForm()).settings)) return;
   toForm(fresh.settings);
