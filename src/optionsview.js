@@ -4,6 +4,7 @@
 
 import { APP_COMMANDS } from "./apps.js";
 import { checklist } from "./keys.js";
+import { ITEMS, progress, SETUP_KEY, tick } from "./setup.js";
 import { pattern } from "./watchers.js";
 import { DEFAULT_SETTINGS, PER_MACHINE, pick, resolve, SETTINGS_KEY, SHARED } from "./settings.js";
 
@@ -289,9 +290,36 @@ async function renderKeys() {
     }),
   );
 }
+// The setup checklist (§3.4): ticks are this Chromebook's, in storage.local.
+async function renderSetup() {
+  const { done, left } = progress((await chrome.storage.local.get(SETUP_KEY))[SETUP_KEY]);
+  $("setup-summary").textContent = left === 0 ? "All done." : `${left} of ${ITEMS.length} still to do.`;
+  $("setup").replaceChildren(
+    ...ITEMS.map((item) => {
+      const li = document.createElement("li");
+      const box = Object.assign(document.createElement("input"), { type: "checkbox", checked: done.includes(item.id), id: `setup-${item.id}` });
+      box.addEventListener("change", () =>
+        tick(chrome.storage.local, item.id, box.checked)
+          .then(renderSetup)
+          .catch((e) => showErrors([`Couldn't save the checklist: ${e.message}`])),
+      );
+      const label = Object.assign(document.createElement("label"), { htmlFor: box.id, textContent: item.title });
+      const how = Object.assign(document.createElement("p"), { className: "muted", textContent: `${item.how} (${item.ref})` });
+      li.append(box, label);
+      if (item.where) {
+        li.append(" ", button("Open", `Open the settings for: ${item.title}`, () =>
+          chrome.tabs.create({ url: item.where }).catch((e) => showErrors([`Couldn't open ${item.where}: ${e.message}`])),
+        ));
+      }
+      li.append(how);
+      return li;
+    }),
+  );
+}
 $("open-shortcuts").addEventListener("click", () => chrome.tabs.create({ url: "chrome://extensions/shortcuts" }));
 window.addEventListener("focus", () => renderKeys());
 await renderKeys();
+await renderSetup();
 const shared = (await chrome.storage.sync.get(SETTINGS_KEY))[SETTINGS_KEY];
 const { settings, errors: stored } = resolve(shared);
 toForm(settings);
