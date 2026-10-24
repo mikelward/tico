@@ -127,10 +127,19 @@ export class Tico {
       if (w.focused) s = ws.focused(s, w.id);
     }
     s.appPopups = [...appPopups].filter((id) => this.windows.has(id));
+    s.homes = {};
+    for (const [d, id] of Object.entries(this.state?.homes ?? {})) {
+      if (!this.all.has(id)) continue;
+      if (ids.includes(d)) s.homes[d] = id;
+      // ChromeOS moves a gone display's home onto another, where nothing
+      // would ever close it.
+      else await this.api.windows.remove(id);
+    }
     this.state = s;
   }
 
-  // The display of the focused window, of any type.
+  // The display of the focused window, any type: a home window or a popup
+  // counts, so keys pressed there act on its display.
   focusedDisplay() {
     const f = [...(this.all?.values() ?? [])].find((w) => w.focused && w.state !== "minimized");
     return f ? displayFor(f, this.displays) : this.displays[0]?.id;
@@ -258,8 +267,51 @@ export class Tico {
     return w.id;
   }
 
+  // An empty workspace gets a home window, so tico's keys still have a
+  // Chrome window to work in (§6.2). It isn't tiled or counted, and closes
+  // when a window arrives. One you close stays closed until the display
+  // shows another empty workspace.
+  async homes(focus) {
+    const s = this.state;
+    s.homeShownFor ??= {};
+    const target = this.switchedTo ?? this.focusedDisplay();
+    for (const display of this.displays) {
+      const n = ws.showing(s, display.id);
+      const empty = n !== null && !s.workspaces[n].windows.some((id) => ws.isShown(s, id));
+      const home = s.homes[display.id];
+      // Only one display's home may take focus: the one you switched, else
+      // the one you're on.
+      const wantFocus = focus === null && display.id === target;
+      if (!empty) delete s.homeShownFor[display.id];
+      if (empty && home === undefined && s.homeShownFor[display.id] !== n) {
+        s.homeShownFor[display.id] = n;
+        const a = display.workArea;
+        const width = Math.min(480, a.width);
+        const height = Math.min(360, a.height);
+        const w = await this.api.windows.create({
+          url: this.api.runtime.getURL("src/home.html"),
+          type: "popup",
+          focused: wantFocus,
+          left: a.left + Math.round((a.width - width) / 2),
+          top: a.top + Math.round((a.height - height) / 2),
+          width,
+          height,
+        });
+        s.homes[display.id] = w.id;
+      } else if (!empty && home !== undefined) {
+        delete s.homes[display.id];
+        await this.api.windows.remove(home);
+      } else if (empty && home !== undefined) {
+        s.homeShownFor[display.id] = n;
+        if (wantFocus && this.switchedTo !== undefined) await this.api.windows.update(home, { focused: true });
+      }
+    }
+    this.switchedTo = undefined;
+  }
+
   showWorkspace(display, n) {
     if (display === undefined) return null;
+    this.switchedTo = display;
     this.state = ws.show(this.state, display, n);
     const w = this.state.workspaces[n];
     // The remembered window, unless you've minimized it since.
@@ -299,6 +351,7 @@ export class Tico {
       await update(focus, { focused: true });
       this.state = ws.focused(this.state, focus);
     }
+    await this.homes(focus);
     await this.save();
   }
 }
