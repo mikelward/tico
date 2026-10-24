@@ -9,7 +9,8 @@
   },
   "permissions": [
     "storage",
-    "system.display"
+    "system.display",
+    "tabs"
   ],
   "commands": {
     "focus-next": {
@@ -132,6 +133,21 @@
     },
     "send-9": {
       "description": "Send the window to workspace 9 (Search+Shift+9)"
+    },
+    "app-browser": {
+      "description": "Focus or open a browser window (Search+G)"
+    },
+    "app-calendar": {
+      "description": "Focus or open Google Calendar (Search+C)"
+    },
+    "app-chat": {
+      "description": "Focus or open Google Chat (Search+Shift+C)"
+    },
+    "app-meet": {
+      "description": "Focus or open Google Meet (Search+M)"
+    },
+    "app-music": {
+      "description": "Focus or open YouTube Music (Search+Y)"
     }
   }
 }

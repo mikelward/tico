@@ -21,6 +21,13 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   like the rest, and comes back normal**, losing its maximize. The
   alternative is remembering the state and restoring it. Reversible: a
   per-window field.
+- **An app key with no window opens the site in a `popup` window**, which
+  tico then tiles and finds as the app's. It never tries
+  `chrome.management.launchApp`, which SPEC.md §9.1 leaves unverified for
+  web apps. An installed web app's own window is still found and focused.
+  The alternative is launching the installed app. Reversible: one function.
+- **The app list is built in** (Calendar, Chat, Meet, YouTube Music), until
+  the options page can edit it. Reversible: `src/apps.js`.
 
 ## Later
 
@@ -28,6 +35,6 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   and correcting each window type's frame waits for a device.
 - Window IDs change across a browser restart (SPEC.md §14.2): windows come
   back on the current workspace; matching them by tab URL is still to do.
-- The home window on empty workspaces (SPEC.md §6.2), app keys (§9), the
+- The home window on empty workspaces (SPEC.md §6.2), profile keys (§9.2), the
   popup and clocks (§8), attention (§10.3), the dim (§10.1) and the
   options page (§13).

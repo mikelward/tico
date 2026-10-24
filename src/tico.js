@@ -3,6 +3,7 @@
 // `api` is `chrome` in the extension and a fake in the tests; only its
 // promise-returning calls are used.
 
+import { appOf, DEFAULT_APPS } from "./apps.js";
 import * as geometry from "./geometry.js";
 import * as ws from "./workspaces.js";
 
@@ -11,7 +12,8 @@ export const DEFAULTS = {
   ultrawideAspect: 2.1,
 };
 
-// Window types tico manages. Popups and devtools float untracked (§5.4).
+// Window types tico manages. Popups and devtools float untracked (§5.4),
+// except the app popups tico opens itself (§9.1).
 const MANAGED = ["normal", "app"];
 const STATE_KEY = "state";
 
@@ -32,7 +34,8 @@ export function displayFor(win, displays) {
 }
 
 export class Tico {
-  constructor(api, settings = DEFAULTS) {
+  constructor(api, settings = DEFAULTS, apps = DEFAULT_APPS) {
+    this.apps = apps;
     this.api = api;
     this.settings = settings;
     this.state = null;
@@ -85,11 +88,12 @@ export class Tico {
     // The state as the last step left the screen, before displays changed.
     const before = this.state;
     let s = before ? ws.setDisplays(before, ids) : ws.create(ids);
+    const appPopups = new Set((before?.appPopups ?? []).map(Number));
 
     // Every window type, so a focused popup or devtools window still says
     // which display you're on, but only managed ones are tracked.
-    const all = await this.api.windows.getAll({ windowTypes: [...MANAGED, "popup", "devtools"] });
-    const wins = all.filter((w) => MANAGED.includes(w.type));
+    const all = await this.api.windows.getAll({ populate: true, windowTypes: [...MANAGED, "popup", "devtools"] });
+    const wins = all.filter((w) => MANAGED.includes(w.type) || appPopups.has(w.id));
     this.windows = new Map(wins.map((w) => [w.id, w]));
     this.all = new Map(all.map((w) => [w.id, w]));
     for (const id of Object.keys(s.windows).map(Number)) {
@@ -122,6 +126,7 @@ export class Tico {
       }
       if (w.focused) s = ws.focused(s, w.id);
     }
+    s.appPopups = [...appPopups].filter((id) => this.windows.has(id));
     this.state = s;
   }
 
@@ -181,6 +186,9 @@ export class Tico {
     if ((m = name.match(/^workspace-([1-9])$/))) return this.showWorkspace(display, Number(m[1]));
     if (name === "workspace-next") return this.showWorkspace(display, step(1));
     if (name === "workspace-prev") return this.showWorkspace(display, step(-1));
+    if (name === "app-browser") return this.browser(display, n);
+    const app = this.apps.find((a) => a.command === name);
+    if (app) return this.app(app, display);
     if (!tracked && name !== "layout-next" && name !== "layout-prev") return null;
 
     if ((m = name.match(/^send-([1-9])$/))) this.state = ws.send(s, win, Number(m[1]));
@@ -204,6 +212,50 @@ export class Tico {
       this.state = ws.setLayout(s, n, geometry.modes[(i + k + geometry.modes.length) % geometry.modes.length]);
     }
     return null;
+  }
+
+  // Bring up a window, with its workspace (§6.1 Activate).
+  activate(id, display) {
+    this.state = ws.activate(this.state, id, display);
+    return id;
+  }
+
+  async open(props, display) {
+    const w = await this.api.windows.create({ focused: true, ...props });
+    this.windows.set(w.id, w);
+    this.state = ws.addWindow(this.state, w.id, display);
+    return w;
+  }
+
+  // The browser key: the most recently focused browser window on this
+  // workspace, else a new one. Every normal window is a browser, whatever
+  // its tab shows.
+  async browser(display, n) {
+    const w = n === null ? null : this.state.workspaces[n];
+    const recency = (id) => this.state.windows[id]?.lastFocused ?? 0;
+    const found = (w?.windows ?? [])
+      .filter((id) => this.windows.get(id)?.type === "normal")
+      .sort((a, b) => recency(b) - recency(a))[0];
+    if (found !== undefined) return this.activate(found, display);
+    return (await this.open({}, display)).id;
+  }
+
+  // A web app key: its newest window wherever it is, else a new app window.
+  // Only app windows and the popups tico opened for an app count (§9.1).
+  async app(app, display) {
+    let newest = null;
+    for (const w of this.windows.values()) {
+      const eligible = w.type === "app" || (w.type === "popup" && this.state.appPopups.includes(w.id));
+      // Chrome hands out window IDs in increasing order, so the highest is the newest.
+      if (eligible && w.id in this.state.windows && appOf(w, this.apps) === app && (newest === null || w.id > newest)) newest = w.id;
+    }
+    if (newest !== null) return this.activate(newest, display);
+    // Installed web apps open their own windows, but there's no public
+    // way to launch one by origin, so tico opens the site in an app-like
+    // popup and remembers it as the app's (§9.1).
+    const w = await this.open({ url: app.url, type: "popup" }, display);
+    this.state.appPopups.push(w.id);
+    return w.id;
   }
 
   showWorkspace(display, n) {

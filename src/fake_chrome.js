@@ -8,6 +8,7 @@ export class FakeChrome {
     this.wins = windows.map((w) => ({ type: "normal", state: "normal", focused: false, alwaysOnTop: false, ...w }));
     this.store = {};
     this.updates = [];
+    this.created = [];
     const fake = this;
     this.system = { display: { getInfo: async () => structuredClone(fake.displaysList) } };
     this.storage = {
@@ -19,8 +20,19 @@ export class FakeChrome {
       },
     };
     this.windows = {
-      getAll: async ({ windowTypes } = {}) =>
-        structuredClone(fake.wins.filter((w) => !windowTypes || windowTypes.includes(w.type))),
+      getAll: async ({ windowTypes, populate } = {}) =>
+        structuredClone(
+          fake.wins
+            .filter((w) => !windowTypes || windowTypes.includes(w.type))
+            .map((w) => (populate ? { ...w, tabs: [{ url: w.url ?? "chrome://newtab/" }] } : w)),
+        ),
+      create: async ({ url, type = "normal", focused = false } = {}) => {
+        const id = Math.max(0, ...fake.wins.map((w) => w.id)) + 1;
+        fake.created.push({ id, url, type });
+        fake.open({ id, url, type, left: 100, top: 100, width: 800, height: 600 });
+        if (focused) fake.focus(id);
+        return structuredClone(fake.win(id));
+      },
       update: async (id, props) => {
         fake.updates.push({ id, ...props });
         const w = fake.win(id);
