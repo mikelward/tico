@@ -51,6 +51,15 @@ test("every suggested key is one Chromium can bind, on every platform", () => {
   }
 });
 
+// ChromeOS turns Search+arrows into Home, End, Page Up and Page Down before
+// Chrome sees them, so chrome://extensions/shortcuts refuses them (§7.2).
+test("no command's key is a Search+arrow", () => {
+  for (const [name, c] of Object.entries(manifest.commands)) {
+    const key = /\(([^)]*)\)$/.exec(c.description ?? "")?.[1] ?? "";
+    assert.doesNotMatch(key, /^Search\+(Shift\+)?(Left|Right|Up|Down)$/, `${name}: ${key}`);
+  }
+});
+
 test("the title watcher runs on the watched origins and nowhere else", () => {
   assert.deepEqual(manifest.content_scripts, [{ matches: WATCHED, js: ["src/unread_watch.js"], run_at: "document_idle" }]);
   assert.equal(manifest.host_permissions, undefined, "no host access beyond the content script's");
