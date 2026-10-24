@@ -132,3 +132,33 @@ test("every mode covers the area for 2 to 9 windows on odd sizes", () => {
 test("an unknown mode is an error", () => {
   assert.throws(() => geometry.arrange("spiral", UW, 2, {}, RULES));
 });
+
+const AREA = { x: 0, y: 0, w: 1000, h: 800 };
+
+test("a dragged edge between master and stack sets the main share", () => {
+  const o = { mfact: 0.55, nmaster: 1 };
+  // Tile: the master's right edge, or the stack's left, is the border.
+  assert.equal(geometry.mfactFor("tile", AREA, 3, o, [], 0, "right", 700), 0.7);
+  assert.equal(geometry.mfactFor("tile", AREA, 3, o, [], 2, "left", 300), 0.3);
+  // Three columns: the master is centered, so either of its edges sets
+  // the width, and so do the stacks' inner edges.
+  assert.equal(geometry.mfactFor("threecol", AREA, 3, o, [], 0, "left", 200), 0.6);
+  assert.equal(geometry.mfactFor("threecol", AREA, 3, o, [], 0, "right", 900), 0.8);
+  assert.equal(geometry.mfactFor("threecol", AREA, 3, o, [], 2, "right", 100), 0.8);
+  // Two columns: the masters share the main width.
+  assert.equal(geometry.mfactFor("twocol", AREA, 3, { mfact: 0.72, nmaster: 2 }, [], 0, "right", 400), 0.8);
+});
+
+test("a dragged edge the share doesn't move sets nothing", () => {
+  const o = { mfact: 0.55, nmaster: 1 };
+  assert.equal(geometry.mfactFor("tile", AREA, 2, o, [], 0, "left", 100), null, "the screen's edge");
+  assert.equal(geometry.mfactFor("tile", AREA, 1, o, [], 0, "right", 700), null, "a lone window");
+  assert.equal(geometry.mfactFor("monocle", AREA, 2, o, [], 0, "right", 700), null);
+  assert.equal(geometry.mfactFor("tile", AREA, 2, { mfact: 0.55, nmaster: 0 }, [], 0, "right", 700), null, "no master");
+});
+
+test("a share dragged past its bounds stops at them", () => {
+  const o = { mfact: 0.55, nmaster: 1 };
+  assert.equal(geometry.mfactFor("tile", AREA, 2, o, [], 0, "right", 990), 0.95);
+  assert.equal(geometry.mfactFor("tile", AREA, 2, o, [], 1, "left", 5), 0.05);
+});

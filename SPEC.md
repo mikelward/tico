@@ -422,7 +422,21 @@ tide's Lua layout is the reference; the two share test fixtures (§15).
   make, the window takes the tile nearest its center (swapping with that
   tile's window). If the center is on another display, the window first
   moves to the workspace showing there (§6.1). A resize of a tiled window sets `mfact`. That's
-  Krohnkite's behavior. A window dragged to native snap or float is left
+  Krohnkite's behavior.
+  - **Built:** the resize. tico keeps where it put each tiled window.
+    When a tiled window's width has changed on the same display and work
+    area, the edge that moved sets the workspace's `mfact`, for the
+    layout it's in: the share that puts that edge where you left it,
+    between 5% and 95%, as the keys keep it. The rest retile to match.
+  - Tile and two columns: the master/stack border, from either side.
+    Three columns: either edge of the master, or a stack's inner edge.
+  - A screen edge, a lone window, monocle, and tile with no master have
+    no share to move, so that resize is put back.
+  - A width changed with the work area (the shelf hiding, say), a
+    floating window, or a window back from maximized isn't read as a
+    drag.
+  - The move-to-swap above isn't built: a window dragged within its
+    display goes back to its tile. A window dragged to native snap or float is left
   floating until it's tiled again with `Search+Shift+F`.
 - Margin is 0, per tide. A setting allows chrometile's 2 px.
 

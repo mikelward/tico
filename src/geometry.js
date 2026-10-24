@@ -131,3 +131,32 @@ export function arrange(mode, area, n, o, singleRules) {
   if (!f) throw new Error(`unknown layout mode: ${mode}`);
   return f(area, n, o || {});
 }
+
+// The main share that puts window `i`'s `edge` ("left" or "right") at `x`,
+// for a window you resized by dragging that edge (§5.3), or null if that
+// edge doesn't move with the share: a screen edge, a lone window, monocle.
+// Every layout's edges move one way as the share grows, so bisection finds
+// the shares that put the edge on pixel `x`, and the middle one is taken.
+export function mfactFor(mode, area, n, o, singleRules, i, edge, x) {
+  const at = (mfact) => {
+    const b = arrange(mode, area, n, { ...o, mfact }, singleRules)[i];
+    return edge === "left" ? b.x : b.x + b.w;
+  };
+  const [lo, hi] = [0.05, 0.95];
+  if (at(lo) === at(hi)) return null;
+  const sign = at(hi) > at(lo) ? 1 : -1;
+  // The least share whose edge is at or past `target`, in the edge's
+  // direction of travel.
+  const first = (target) => {
+    let [a, b] = [lo, hi];
+    if (sign * at(a) >= sign * target) return a;
+    for (let k = 0; k < 40; k++) {
+      const mid = (a + b) / 2;
+      if (sign * at(mid) >= sign * target) b = mid;
+      else a = mid;
+    }
+    return b;
+  };
+  const mfact = (first(x) + first(x + sign)) / 2;
+  return Math.round(mfact * 1000) / 1000;
+}

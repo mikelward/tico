@@ -881,3 +881,68 @@ test("closing every window one by one, then opening one, matches nothing", async
   await tico.event();
   assert.equal(tico.state.windows[2].ws, 1, "a new window joins the workspace showing");
 });
+
+test("dragging the master's edge sets the main share, and the stack follows", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2), on(HD, 3)]);
+  assert.equal(chrome.box(1).w, 1056);
+  // You drag the master's right edge to x = 1344, 70% of 1920.
+  chrome.win(1).width = 1344;
+  await tico.event();
+  assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.7);
+  assert.deepEqual(chrome.box(1), { x: 0, y: 0, w: 1344, h: 1032 });
+  assert.deepEqual(chrome.box(2), { x: 1344, y: 0, w: 576, h: 516 });
+  assert.deepEqual(chrome.box(3), { x: 1344, y: 516, w: 576, h: 516 });
+});
+
+test("dragging a stack window's left edge sets the main share too", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  Object.assign(chrome.win(2), { left: 768, width: 1152 });
+  await tico.event();
+  assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.4);
+  assert.deepEqual(chrome.box(1), { x: 0, y: 0, w: 768, h: 1032 });
+});
+
+test("a resize the share can't follow is put back", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  // The master's left edge is the screen's.
+  Object.assign(chrome.win(1), { left: 200, width: 856 });
+  await tico.event();
+  assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.55);
+  assert.deepEqual(chrome.box(1), { x: 0, y: 0, w: 1056, h: 1032 });
+});
+
+test("moving a window without resizing it leaves the share", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  Object.assign(chrome.win(2), { left: 900, top: 50 });
+  await tico.event();
+  assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.55);
+  assert.deepEqual(chrome.box(2), { x: 1056, y: 0, w: 864, h: 1032 });
+});
+
+test("a window resized by a change in the work area isn't a drag", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  // The shelf hides, and ChromeOS widens the master as it goes.
+  chrome.displaysList = [{ ...HD, workArea: { left: 0, top: 0, width: 1920, height: 1080 } }];
+  chrome.win(1).width = 1300;
+  await tico.event();
+  assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.55);
+});
+
+test("a floating window's resize sets nothing", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2), on(HD, 3)]);
+  await floatAt(chrome, tico, 3, 100, 100);
+  chrome.win(3).width = 700;
+  await tico.event();
+  assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.55);
+});
+
+test("a window back from maximized isn't read as resized", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  Object.assign(chrome.win(1), { state: "maximized", left: 0, width: 1920 });
+  await tico.event();
+  // ChromeOS puts it back somewhere of its own choosing.
+  Object.assign(chrome.win(1), { state: "normal", left: 0, width: 1500 });
+  await tico.event();
+  assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.55);
+  assert.deepEqual(chrome.box(1), { x: 0, y: 0, w: 1056, h: 1032 });
+});

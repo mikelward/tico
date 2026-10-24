@@ -204,6 +204,8 @@ export class Tico {
     // left, before any display came or went and before this sync changed
     // anything, so neither a new display nor one restore that brings a
     // workspace makes other windows look minimized or restored.
+    // A tiled window you resized, the first if there are several.
+    let resized = null;
     for (const w of wins) {
       // Chrome restores a restarted window as it likes; tico puts it back.
       if (renamed.has(w.id)) {
@@ -227,9 +229,11 @@ export class Tico {
         const was = ws.displayOf(before, before.windows[w.id].ws);
         const d = displayFor(w, this.displays);
         if (was !== null && ids.includes(was) && was !== d) s = ws.movedToDisplay(s, w.id, d);
+        else if (was === d) resized ??= this.resized(before, w, d);
       }
       if (w.focused) s = ws.focused(s, w.id);
     }
+    if (resized) s = ws.setMfact(s, resized.n, resized.mode, resized.mfact);
     s.appPopups = [...appPopups].filter((id) => this.windows.has(id));
     s.refused = [...refused];
     if (Object.keys(waiting).length > 0) s.restoring = waiting;
@@ -314,6 +318,24 @@ export class Tico {
     ];
     const left = Object.fromEntries(Object.entries(waiting).filter(([id]) => !renames.has(Number(id))));
     return { state, renamed: new Set(renames.values()), waiting: left };
+  }
+
+  // A drag on a tiled window's edge sets its workspace's main share (§5.3).
+  // Its width changed since tico placed it, on the same display, which has
+  // the same work area: a work area that changed may have moved it, and a
+  // drag of the whole window keeps the width. Returns {n, mode, mfact}, or
+  // null if this wasn't such a drag or the share doesn't move that edge.
+  resized(before, w, display) {
+    const info = before.windows[w.id];
+    const p = info.placed;
+    if (!p || info.floating || w.width === p.width) return null;
+    const n = ws.showing(before, display);
+    const d = this.displays.find((x) => x.id === display);
+    if (n === null || info.ws !== n || !d || JSON.stringify(area(d)) !== JSON.stringify(p.area)) return null;
+    const edge = w.left !== p.left ? "left" : "right";
+    const x = edge === "left" ? w.left : w.left + w.width;
+    const mfact = geometry.mfactFor(p.mode, p.area, p.count, before.workspaces[n].modes[p.mode], this.settings.singleRules, p.index, edge, x);
+    return mfact === null ? null : { n, mode: p.mode, mfact };
   }
 
   // The display of the focused window, any type: a home window or a popup
@@ -629,6 +651,9 @@ export class Tico {
       this.state.refused = [...new Set([...(this.state.refused ?? []), id])];
     }
 
+    // Only windows tiled now have a placement to judge a resize by; one
+    // that's floating, hidden or maximized gets a new one when it tiles.
+    for (const info of Object.values(this.state.windows)) delete info.placed;
     for (const display of this.displays) {
       const n = ws.showing(s, display.id);
       if (n === null) continue;
@@ -636,9 +661,13 @@ export class Tico {
       const ids = ws.tiled(s, display.id).filter((id) => this.windows.get(id)?.state === "normal");
       const mode = this.modeOf(n, display);
       const boxes = geometry.arrange(mode, area(display), ids.length, s.workspaces[n].modes[mode], this.settings.singleRules);
-      await Promise.all(ids.map((id, i) => {
+      await Promise.all(ids.map(async (id, i) => {
         const b = boxes[i];
-        return update(id, { left: b.x, top: b.y, width: b.w, height: b.h });
+        const w = await update(id, { left: b.x, top: b.y, width: b.w, height: b.h });
+        // Where it ended up, which a minimum size can make differ from the
+        // box, so that only your own resize reads as one.
+        const info = this.state.windows[id];
+        if (info) info.placed = { left: w?.left ?? b.x, width: w?.width ?? b.w, area: area(display), mode, index: i, count: ids.length };
       }));
     }
     await this.placeFloating(update);

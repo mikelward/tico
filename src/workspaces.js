@@ -289,6 +289,14 @@ export function adjust(state, n, mode, change) {
   return s;
 }
 
+// A main share you set by dragging a window's edge (§5.3), within the
+// bounds the keys keep to.
+export function setMfact(state, n, mode, mfact) {
+  const s = clone(state);
+  s.workspaces[n].modes[mode].mfact = Math.min(0.95, Math.max(0.05, mfact));
+  return s;
+}
+
 // After a browser restart (§14.2), each window in `renames` (old ID to new)
 // keeps its workspace, place in the stack, and everything else tico knows.
 export function renameWindows(state, renames) {
