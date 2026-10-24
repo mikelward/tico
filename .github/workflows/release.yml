@@ -1,0 +1,53 @@
+name: release
+
+# Pushing a tag like v0.2.0 tests the code at that tag, builds the store
+# ZIP and attaches it to a GitHub release (PUBLISHING.md §4). Running it by
+# hand builds the ZIP as a workflow artifact, without a release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - id: version
+        run: echo "version=$(node -p "require('./manifest.json').version")" >> "$GITHUB_OUTPUT"
+      # The store refuses a version it has already seen, so a tag that
+      # disagrees with the manifest is a mistake to stop at.
+      - if: github.ref_type == 'tag'
+        env:
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if test "$TAG" != "v$VERSION"; then
+            echo "::error::tag $TAG doesn't match manifest.json's version $VERSION"
+            exit 1
+          fi
+      - run: make lint
+      - run: make test
+      - run: make zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tico-${{ steps.version.outputs.version }}
+          path: dist/tico-${{ steps.version.outputs.version }}.zip
+      # Only a tag push publishes; a manual run, even from a tag, doesn't.
+      - if: github.event_name == 'push' && github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release create "$TAG" "dist/tico-$VERSION.zip" --repo "$GITHUB_REPOSITORY" --title "tico $VERSION" --generate-notes
