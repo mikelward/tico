@@ -12,12 +12,14 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   on Node 22 (CI pins major 22), ES modules throughout, so the extension
   loads the same files it tests. The alternative is TypeScript or a
   bundler. Reversible: nothing yet depends on the toolchain.
-- **The four suggested keys are `Search+J`, `Search+K`, `Search+Space` and
-  `Search+Tab`**, as SPEC.md §7.1 picks, each with an `Alt+Shift+` default
-  so the manifest installs off ChromeOS too. Attention's default is
-  `Alt+Shift+U`, not `Alt+Shift+Tab`, which Windows and most Linux desktops
-  take for window switching. `Search+.` (next layout) lost its suggestion
-  to make room. Reversible: edit `manifest.json`.
+- **The four suggested keys are `Search+J`, `Search+K`, `Search+Space` (the
+  dashboard) and `Search+Tab`**, each with an `Alt+Shift+` default so the
+  manifest installs off ChromeOS too. Attention's default is `Alt+Shift+U`,
+  not `Alt+Shift+Tab`, which Windows and most Linux desktops take for window
+  switching. `Search+.` (next layout) lost its suggestion to make room.
+  Swap-with-master moved off `Search+Space` to `Search+Shift+M`, bound by
+  hand; `Search+Z` was the first idea, but it's ChromeOS's layout menu.
+  Reversible: edit `manifest.json`.
 - **A maximized or fullscreen window on a workspace you leave is minimized
   like the rest, and comes back normal**, losing its maximize. The
   alternative is remembering the state and restoring it. Reversible: a
@@ -36,20 +38,29 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   manifest's `content_scripts`, until the options page can request others
   as optional host permissions. Reversible: `src/unread.js` and the
   manifest.
-- **Granting all-sites access turns the dim on**, and the toggle lives in
-  the popup until the options page exists. The prompt can close the popup
-  that asked, so tico treats the grant itself as the switch. Turning it off
+- **Granting all-sites access turns the dim on**, and the toggle lives on
+  the dashboard and home page until the options page exists. The prompt
+  takes focus, which closes the dashboard that asked, so tico treats the
+  grant itself as the switch. Turning it off
   undims every page, then gives the access back. Revoking the access at
   `chrome://extensions` instead leaves pages dimmed until they reload, since
   tico can no longer reach them. The alternative is a separate stored
-  setting. Reversible: `Tico.dimOn` and the popup's checkbox.
-- **The clock detail opens on a click** of the popup's clocks, rather than
-  always showing, so the popup stays one row. Day is 07–19 and work is
+  setting. Reversible: `Tico.dimOn` and the page's checkbox.
+- **The clock detail opens on a click** of the dashboard's clocks, and is
+  always open on the home page, where there's room. Day is 07–19 and work is
   09–17 in every zone, and the DST note looks three weeks ahead. Zone
   abbreviations come from a small built-in table of common zones, since
   Chrome names London "GMT+1"; others show Chrome's form. The alternatives
   are an always-open detail and settings for the hours. Reversible:
-  `src/popup.js` and `src/clocks.js`.
+  `src/launcherview.js` and `src/clocks.js`.
+- **The launcher's ranking**: a home-grown fuzzy match (letters in order,
+  word starts and runs score higher), ties broken by `tab.lastAccessed`, and
+  a query with no match in its scope searching both. Tabs only, not windows
+  as such, since every window's tabs are listed. The alternative is a
+  library such as fzf's algorithm. Reversible: `src/launcher.js`.
+- **The dashboard opens full screen every time**, not as Chrome's toolbar
+  popup. If ChromeOS shows its full-screen bubble on each open, a large
+  centered window is the fallback. Reversible: `Tico.dashboard`.
 - **The app list is built in** (Calendar, Chat, Meet, YouTube Music), until
   the options page can edit it. Reversible: `src/apps.js`.
 

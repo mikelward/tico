@@ -204,6 +204,9 @@ export class Tico {
     s.unread = Object.fromEntries(
       Object.entries(before?.unread ?? {}).filter(([, u]) => this.all.has(u.windowId)),
     );
+    // The dashboard closes itself after a choice, or when you click away.
+    if (before?.dashboard !== undefined && this.all.has(before.dashboard)) s.dashboard = before.dashboard;
+    else delete s.dashboard;
     s.homes = {};
     for (const [d, id] of Object.entries(this.state?.homes ?? {})) {
       if (!this.all.has(id)) continue;
@@ -262,7 +265,10 @@ export class Tico {
     const s = this.state;
     const display = this.focusedDisplay();
     const n = ws.showing(s, display);
-    const win = this.focusedWindow();
+    // With the dashboard or another untracked window in front, a command acts
+    // on the window you were last in on this workspace.
+    const remembered = n === null ? null : s.workspaces[n].focused;
+    const win = this.focusedWindow() ?? (remembered !== null && ws.isShown(s, remembered) ? remembered : null);
     const tracked = win !== null && win in s.windows;
     const step = (k) => ((((n ?? 1) - 1 + k) % ws.WORKSPACES) + ws.WORKSPACES) % ws.WORKSPACES + 1;
     const disp = this.displays.find((d) => d.id === display);
@@ -272,7 +278,7 @@ export class Tico {
     if ((m = name.match(/^workspace-([1-9])$/))) return this.showWorkspace(display, Number(m[1]));
     if (name === "workspace-next") return this.showWorkspace(display, step(1));
     if (name === "workspace-prev") return this.showWorkspace(display, step(-1));
-    if (name === "popup") return this.popup(display);
+    if (name === "popup") return this.dashboard(display);
     if (name === "app-browser") return this.browser(display, n);
     if (name === "attention") return this.attention(display);
     const app = this.apps.find((a) => a.command === name);
@@ -353,31 +359,48 @@ export class Tico {
     await this.api.action?.setBadgeBackgroundColor({ color: elsewhere ? BADGE_ATTENTION : BADGE });
   }
 
-  // The popup, from the toolbar where there is one. A web app window has no
-  // toolbar, and Chrome refuses to open the popup there, so it opens as a
-  // small window instead (§8.1).
-  async popup(display) {
-    try {
-      await this.api.action.openPopup();
+  // The launcher page full screen on `display` (§6.2, §8.1): opened on that
+  // display first, since Chrome won't take a position and a full-screen
+  // state in one call.
+  async fullscreen(mode, display, focused) {
+    const b = display.bounds;
+    const w = await this.api.windows.create({
+      url: this.api.runtime.getURL(`src/launcher.html?mode=${mode}`),
+      type: "popup",
+      focused,
+      left: b.left,
+      top: b.top,
+      width: b.width,
+      height: b.height,
+    });
+    await this.api.windows.update(w.id, { state: "fullscreen" });
+    return w;
+  }
+
+  // The dashboard, from its key or the toolbar button: the launcher full
+  // screen over the focused display. The key again closes it (§8.1).
+  async dashboard(display) {
+    const s = this.state;
+    if (s.dashboard !== undefined) {
+      const id = s.dashboard;
+      delete s.dashboard;
+      await this.api.windows.remove(id);
       return null;
-    } catch {
-      // "Browser window has no toolbar": fall through to the window
     }
     const d = this.displays.find((x) => x.id === display) ?? this.displays[0];
-    const a = d.workArea;
-    // Wide enough for the popup's one row; narrower work areas wrap it.
-    const width = Math.min(800, a.width);
-    const height = Math.min(160, a.height);
-    await this.api.windows.create({
-      url: this.api.runtime.getURL("src/popup.html?window=1"),
-      type: "popup",
-      focused: true,
-      left: a.left + Math.round((a.width - width) / 2),
-      top: a.top + Math.round((a.height - height) / 2),
-      width,
-      height,
-    });
+    s.dashboard = (await this.fullscreen("dashboard", d, true)).id;
     return null;
+  }
+
+  // A tab chosen in the launcher: its tab comes forward, and its window with
+  // its workspace (§6.1 Activate).
+  activateTab(tabId, windowId) {
+    return this.run(async () => {
+      await this.sync();
+      await this.api.tabs.update(tabId, { active: true });
+      const focus = windowId in this.state.windows ? this.activate(windowId, this.focusedDisplay()) : windowId;
+      await this.apply(focus);
+    });
   }
 
   // Search+Tab (§10.3): the most recent mark, so pressing again goes to the
@@ -457,18 +480,7 @@ export class Tico {
       if (!empty) delete s.homeShownFor[display.id];
       if (empty && home === undefined && s.homeShownFor[display.id] !== n) {
         s.homeShownFor[display.id] = n;
-        const a = display.workArea;
-        const width = Math.min(480, a.width);
-        const height = Math.min(360, a.height);
-        const w = await this.api.windows.create({
-          url: this.api.runtime.getURL("src/home.html"),
-          type: "popup",
-          focused: wantFocus,
-          left: a.left + Math.round((a.width - width) / 2),
-          top: a.top + Math.round((a.height - height) / 2),
-          width,
-          height,
-        });
+        const w = await this.fullscreen("home", display, wantFocus);
         s.homes[display.id] = w.id;
       } else if (!empty && home !== undefined) {
         delete s.homes[display.id];

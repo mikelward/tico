@@ -339,9 +339,9 @@ off-ramp.
 | Focus follows mouse (KDE `FocusFollowsMouse`) | none | **no** |
 | Nothing steals focus (tide §14) | ChromeOS activation rules; tico never focuses unasked | **partial**: the OS decides for apps |
 | Super+Tab to the window wanting attention (tide §14.3) | tico's attention list from title-count watchers (§10.3) | **partial**: chosen sites only |
-| Full-width bar, workspaces, urgency (tide §7) | no top bar; shelf + tico toolbar badge + popup (§8) | **partial** |
+| Full-width bar, workspaces, urgency (tide §7) | no top bar on busy workspaces; shelf + toolbar badge + full-screen dashboard and home page with tide's bar (§6.2, §8) | **partial** |
 | Tray, network, volume, Bluetooth, battery | ChromeOS status area on the shelf | **yes**, native |
-| SF / NYC / LON clocks beside local (tide §7.3) | tico popup: zones, strips, DST, scrubbing (§8.2) | **partial**: one click away, not always on screen |
+| SF / NYC / LON clocks beside local (tide §7.3) | dashboard and home page: zones, strips, DST, scrubbing (§8.2) | **partial**: one key away, not always on screen |
 | Launcher on a Super tap (tide §8) | ChromeOS launcher on a Search tap | **yes**, native, without quick actions |
 | App keys (KDE `setup-kde`, tide `hyprland.lua`) | tico commands that open or focus web apps and profiles (§9) | **partial**: from a Chrome window only; Linux apps by shelf slot |
 | Two and three Chrome profiles (`browser2`, `browser3`) | a second ChromeOS account, or a Chrome profile if the build has them (§9.2) | **partial** |
@@ -466,18 +466,26 @@ workspace is showing on some display and you haven't minimized it.
 | **Minimize** by you | Set the flag. | ChromeOS picks |
 | **Restore** by you: any un-minimize tico didn't cause, from the shelf or Alt+Tab | Clear the window's minimized-by-you flag. If its workspace is hidden, this is Activate, so the workspace comes with it. | that window |
 
-### 6.2 Empty workspaces get a home window
+### 6.2 Empty workspaces get a home page
 
 Keys work only while a Chrome window has focus (§2.2), so an empty
-workspace would strand you: no window, no keys. tico opens a **home
-window** there instead, an extension page in a `popup` window. It shows:
+workspace would strand you: no window, no keys. tico opens its **home
+page** there instead: an extension page in a `popup` window, opened on that
+display and then made full screen. It shows:
 
-- the workspace number;
-- the app keys as a list, so you can still launch;
-- the clocks (§8.2).
+- tide's bar across the top: workspaces, layout, the workspace number and
+  the clocks (§8.1);
+- the launcher (§9.4), focused on its **Launch** scope, ready to type;
+- every zone's day and the next clock change (§8.2).
 
-The home window takes the keys and doesn't tile. It closes when a real
-window arrives, and is never counted as one.
+Full screen is the point: a `popup` window otherwise carries ChromeOS's
+caption bar and possibly a read-only address strip above tico's own bar,
+which no extension can remove. While the page shows, the shelf is hidden.
+
+The home page takes the keys and doesn't tile. It closes when a real window
+arrives, and is never counted as one. If ChromeOS shows its "hold Esc to
+exit full screen" bubble when it opens is *(unverified)* for extension
+windows.
 
 ### 6.3 Where it can't reach
 
@@ -502,7 +510,8 @@ Bound by tico, unless the column says the Shortcuts app:
 | `Search+Left` / `Right` | previous / next workspace | tico *(Search+arrows may be Home/End; §7.2)* |
 | `Search+Shift+Left` / `Right` | send to previous / next workspace | tico |
 | `Search+J` / `K`, with Shift | focus / move down and up the stack | tico |
-| `Search+Space` (tide: `Super+Return`) | swap with master | tico |
+| `Search+Space` | the dashboard: tico's bar and launcher, full screen (§8.1) | tico |
+| `Search+Shift+M` (tide: `Super+Return`) | swap with master | tico |
 | `Search+Shift+.` / `Search+Shift+,` (tide: `Super+\` / `Super+/`) | grow / shrink master | tico |
 | `Search+Shift+I` / `Search+Shift+D` (tide: `Super+=` / `Super+-`) | add / remove a master, dwm's letters | tico |
 | `Search+.` / `Search+,` | next / previous layout | tico |
@@ -518,7 +527,7 @@ Bound by tico, unless the column says the Shortcuts app:
 That's about 50 tico commands. Four ship with suggested keys: `Search+Tab`,
 because the shortcuts page can't capture Tab (§19.1), so a manifest
 suggestion is the only way to bind it, and then the three used most,
-`Search+J`, `Search+K` and `Search+Space`. If ChromeOS already owns
+`Search+J`, `Search+K` and `Search+Space` for the dashboard. If ChromeOS already owns
 `Search+Tab`, the suggestion is dropped at install *(unverified)*, and
 attention moves to a key the page can capture. You bind the rest once at
 `chrome://extensions/shortcuts`. The checklist (§3.4)
@@ -526,9 +535,10 @@ lists every unbound command and opens that page.
 
 The five keys the Commands API can't carry (§2.2) move to the nearest
 supported combo. Shift with `.` and `,` reads as `>` and `<` for grow and
-shrink. Space takes Return's swap, since tapping Search, not
-`Search+Space`, opens the launcher here. Close falls back to Chrome's own
-window close.
+shrink. `Search+Space` opens the dashboard, tico's own launcher, as it
+opens a launcher on other desktops, so swap-with-master moves from Return
+to `Search+Shift+M`, M for master. Close falls back to Chrome's own window
+close.
 
 ### 7.2 Conflicts to settle in M2
 
@@ -567,19 +577,21 @@ Instead:
   amber when another workspace holds a window wanting attention. The icon
   is on every browser window's toolbar and pinned, and is absent in web app
   windows, which have no toolbar.
-- **tico's popup**, from the icon or `Search+B`, shows nine workspaces in
-  tide's bar style (current, occupied with favicons, urgent, empty), the
-  layout symbol, and the clocks.
-- **Where there's no toolbar**, in web app windows and tico's app popups,
-  Chrome refuses to open an action popup ("Browser window has no toolbar",
-  `extension_action_api.cc` `OpenPopupInBrowser`). There, `Search+B` opens
-  the same page as a small `popup` window centered on the focused display.
-  It floats, isn't tiled or counted, and closes when it loses focus or on
-  Esc.
+- **tico's dashboard**, from `Search+Space` or the toolbar icon, is the home
+  page's sibling (§6.2), full screen over the focused display: tide's bar on
+  top (workspaces in tide's style — current, occupied, urgent, empty — the
+  layout symbol and the clocks) and the launcher (§9.4), opening on its
+  **Tabs** scope for switching. It closes once you choose, on Esc, when you
+  click away, or on its key again. It doesn't use Chrome's action popup,
+  which is small, anchored to the toolbar and refused where there's no
+  toolbar, as in web app windows ("Browser window has no toolbar",
+  `extension_action_api.cc` `OpenPopupInBrowser`). If ChromeOS's full-screen
+  bubble shows on every open, the dashboard falls back to a large centered
+  window *(unverified)*.
 
 ### 8.2 Clocks
 
-tide's clock rules, in the popup and the home window:
+tide's clock rules, in the bar of the dashboard and the home page, with the detail under it:
 
 - `SF`, `NYC`, `LON` and local, 24-hour, tabular figures.
 - Labels are fixed place names, not CLDR names.
@@ -666,8 +678,26 @@ files, settings and the web. What's missing from tide §8:
 - **Launcher scripts**: tico's commands appear in it only as the extension
   itself.
 
-tico adds nothing here. A launcher of its own would be a popup window that
-only opens from a Chrome window, which is worse than the native one.
+tico adds its own launcher on top, on the home page (§6.2) and the
+dashboard (§8.1), for what the native one doesn't do: switching among open
+tabs and running tico's commands.
+
+- **Two scopes**, switched by their chips or Tab: **Launch** (the app keys'
+  apps and tico's commands, each with its key) and **Tabs** (every open tab
+  but tico's own, with its workspace). The home page opens on Launch, the
+  dashboard on Tabs.
+- **Fuzzy matching:** every query letter in order, with word starts and runs
+  scoring higher, so "gc" finds Google Calendar. A tab matches by title and,
+  for less, by host. Ties go to the most recently used (`tab.lastAccessed`).
+- **Empty query:** tabs most recent first; apps before commands.
+- **Nothing in scope:** a query that matches nothing in its scope searches
+  both, so a tab still turns up from Launch.
+- **Enter** goes there: a tab comes forward with its window and workspace
+  (§6.1 Activate); an app or command runs as its key would. Arrows choose,
+  Esc clears, then closes the dashboard.
+
+It only opens from a Chrome window or an empty workspace (§2.2): over an
+Android or Linux app, tap Search for the native launcher instead.
 
 ## 10. Focus cue, focus and attention
 
@@ -709,7 +739,7 @@ notifications; tico derives it from **page titles** instead:
   `Chat (3)`. A content script on those origins, and only those, watches
   the title and tells tico when the count goes up.
 - tico marks the window: the badge goes amber (§8.1), the workspace is
-  marked in the popup, and `windows.update({drawAttention: true})` flashes
+  marked in the bar, and `windows.update({drawAttention: true})` flashes
   its shelf icon.
 - `Search+Tab` activates the most recent mark (§6.1); again goes to the next, as in
   tide §14.3. With nothing marked, it goes to the last window you were in.
@@ -873,7 +903,7 @@ tidal would ship on the **Play Store** (§20.4).
 
 | Repo | Gets |
 |---|---|
-| **tico** (this) | The spec. The extension: worker, layout geometry, workspaces, popup, home window, options page with the checklist, attention and dim content scripts. Its tests. |
+| **tico** (this) | The spec. The extension: worker, layout geometry, workspaces, the full-screen dashboard and home page with the launcher, options page with the checklist, attention and dim content scripts. Its tests. |
 | **tide** | Nothing changes. Its layout fixtures (window counts → rectangles) are the reference tico's geometry tests are checked against, copied with a note of the commit. |
 | **conf** | The shared `clocks.json` and layouts settings, if tico imports them (§13). Crostini needs nothing new: the Debian path already covers it. |
 | **scripts** | `setup` detects Crostini (`/dev/.cros_milestone` or `sommelier` on `PATH`, *(unverified)*) and skips the desktop: no KDE, no tide, no display manager. |
@@ -885,7 +915,7 @@ tidal would ship on the **Play Store** (§20.4).
 | **M1** | This spec | agreed; open questions answered |
 | **M2** | Device checks + layouts | every *(unverified)* claim in §2, §7.2, §9 and §11 is checked on a Chromebook, with the ChromeOS version, and this spec updated. The four layouts and the lone-window rule tile Chrome and web app windows on the laptop panel and on an ultrawide. Frame offsets are measured and tiles meet. State survives the worker sleeping and a browser restart. |
 | **M3** | Workspaces + keys | nine workspaces switch and send on one and two displays, with the home window on empty ones. Every key in §7.1 is bound or listed by the checklist. App keys focus or open each web app and profile. |
-| **M4** | Popup, clocks, attention | the popup shows workspaces and urgency from live state, the clocks follow tide's rules across a DST fixture, and a Chat message marks its window and `Search+Tab` goes there. |
+| **M4** | Dashboard, clocks, attention | the dashboard shows workspaces and urgency from live state, the clocks follow tide's rules across a DST fixture, and a Chat message marks its window and `Search+Tab` goes there. |
 | **M5** | Dim + settings | the optional dim works and is off without the permission. The options page edits everything live, syncs, and imports tide's JSON. |
 | **M6** | Linux | `setup` runs in Crostini; the nested-sway experiment is tried and written up, keep or drop. |
 
@@ -901,7 +931,7 @@ tidal would ship on the **Play Store** (§20.4).
   restart, and a worker woken by a command are tested without a browser.
   The fake's bounds can be off by a frame, to test the offset correction.
 - **Playwright with Chromium** loads the unpacked extension on Linux for
-  what the fake can't show: the popup, options page and content scripts.
+  what the fake can't show: the dashboard and home page, options page and content scripts.
   Window management on Linux Chromium differs from ChromeOS, so those
   results don't stand in for M2's device checks.
 - No test sleeps; events are driven in order by the fake.

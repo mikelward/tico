@@ -68,8 +68,6 @@ export class FakeChrome {
     };
     this.badge = "";
     this.badgeColor = null;
-    this.toolbar = true;
-    this.popups = 0;
     this.action = {
       setBadgeText: async ({ text }) => {
         fake.badge = text;
@@ -77,10 +75,11 @@ export class FakeChrome {
       setBadgeBackgroundColor: async ({ color }) => {
         fake.badgeColor = color;
       },
-      openPopup: async () => {
-        const w = fake.wins.find((x) => x.focused);
-        if (!fake.toolbar || (w && w.type !== "normal")) throw new Error("Browser window has no toolbar.");
-        fake.popups++;
+    };
+    this.tabUpdates = [];
+    this.tabs = {
+      update: async (id, props) => {
+        fake.tabUpdates.push({ id, ...props });
       },
     };
   }

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tico</title>
+<link rel="stylesheet" href="launcher.css">
+<script type="module" src="launcherview.js"></script>
+</head>
+<body>
+<header class="bar">
+<nav id="workspaces" aria-label="Workspaces"></nav>
+<span id="title"></span>
+<ol id="clocks" role="button" tabindex="0" aria-expanded="false" aria-controls="clock-detail" title="Click for each zone's day; scroll to scrub time"></ol>
+</header>
+<main>
+<section class="launcher">
+<div class="scopes" role="tablist" aria-label="Search">
+<button role="tab" data-scope="launch">Launch</button>
+<button role="tab" data-scope="tabs">Tabs</button>
+</div>
+<input id="query" type="search" placeholder="Type to search" autocomplete="off" spellcheck="false" aria-controls="results">
+<ul id="results" role="listbox"></ul>
+</section>
+<section id="clock-detail" class="panel" hidden></section>
+</main>
+<footer class="hint">
+<span>Enter to open · ↑ ↓ to choose · Tab to switch · Esc to <span id="esc">clear</span></span>
+<label><input type="checkbox" id="dim"> Dim inactive windows</label>
+</footer>
+</body>
+</html>
