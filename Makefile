@@ -5,6 +5,7 @@ TESTS = \
 	src/clocks_test.js \
 	src/dim_test.js \
 	src/geometry_test.js \
+	src/keys_test.js \
 	src/launcher_test.js \
 	src/restart_test.js \
 	src/settings_test.js \
