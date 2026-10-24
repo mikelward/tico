@@ -1,7 +1,8 @@
 # Every test file runs from here. `make test` fails if a *_test.js under
 # src/ isn't listed, since an unlisted test never runs.
 TESTS = \
-	src/geometry_test.js
+	src/geometry_test.js \
+	src/workspaces_test.js
 
 .PHONY: test
 test:
