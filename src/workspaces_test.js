@@ -192,7 +192,9 @@ test("mfact and the master count stay in range", () => {
   let s = ws.create(["a"]);
   for (let i = 0; i < 40; i++) s = ws.adjust(s, 1, "tile", { mfact: 0.025, nmaster: -1 });
   assert.equal(s.workspaces[1].modes.tile.mfact, 0.95);
-  assert.equal(s.workspaces[1].modes.tile.nmaster, 1);
+  assert.equal(s.workspaces[1].modes.tile.nmaster, 0, "tile can have no main window");
+  for (let i = 0; i < 5; i++) s = ws.adjust(s, 1, "threecol", { nmaster: -1 });
+  assert.equal(s.workspaces[1].modes.threecol.nmaster, 1, "the columns keep one");
   assert.equal(s.workspaces[2].modes.tile.mfact, 0.55, "other workspaces untouched");
 });
 

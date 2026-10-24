@@ -9,7 +9,7 @@ export const SETTINGS_KEY = "settings";
 
 // What follows you to every Chromebook, in storage.sync, and what each one
 // keeps for its own displays, in storage.local.
-export const SHARED = ["clocks", "day", "work", "apps", "dimStrength", "watched"];
+export const SHARED = ["clocks", "day", "work", "apps", "dimStrength", "watched", "defaultMode", "modes"];
 export const PER_MACHINE = ["singleRules", "ultrawideAspect"];
 
 export function pick(settings, keys) {
@@ -24,6 +24,14 @@ export const DEFAULT_SETTINGS = {
   dimStrength: 0.1,
   // Sites watched for unread counts beyond Gmail, Chat and Calendar.
   watched: [],
+  // The layout a workspace starts in, by its display's aspect (§5.2), and
+  // each layout's main share and main-window count, in tide's names.
+  defaultMode: { normal: "tile", ultrawide: "threecol" },
+  modes: {
+    tile: { mfact: 0.55, nmaster: 1 },
+    threecol: { mfact: 0.5, nmaster: 1 },
+    twocol: { mfact: 0.72, nmaster: 2 },
+  },
   // Per machine, as they depend on its displays (§5.2).
   singleRules: [{ minAspect: 2.1, width: 0.8 }],
   ultrawideAspect: 2.1,
@@ -132,7 +140,43 @@ function checkWatched(sites) {
   ];
 }
 
-const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a), dimStrength: checkStrength, watched: checkWatched };
+export const START_MODES = ["tile", "threecol", "twocol", "monocle"];
+
+// Objects merge key by key onto what's there (§13), as tide's do.
+function checkObject(value, keys) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error("must be an object");
+  const unknown = Object.keys(value).filter((k) => !keys.includes(k));
+  if (unknown.length > 0) throw new Error(`${unknown.join(", ")} isn't one of ${keys.join(", ")}`);
+}
+
+function checkDefaultMode(value, current) {
+  checkObject(value, ["normal", "ultrawide"]);
+  for (const [k, mode] of Object.entries(value)) {
+    if (!START_MODES.includes(mode)) throw new Error(`${k} must be ${START_MODES.join(", ")}, not ${mode}`);
+  }
+  return { ...current, ...value };
+}
+
+// Monocle has neither; tile alone can have no main window.
+const MIN_MASTERS = { tile: 0, threecol: 1, twocol: 1 };
+
+function checkModes(value, current) {
+  checkObject(value, Object.keys(MIN_MASTERS));
+  const modes = structuredClone(current);
+  for (const [mode, o] of Object.entries(value)) {
+    checkObject(o, ["mfact", "nmaster"]);
+    if ("mfact" in o && (typeof o.mfact !== "number" || !(o.mfact >= 0.1 && o.mfact <= 0.9))) {
+      throw new Error(`${mode}.mfact ${o.mfact} isn't a fraction from 0.1 to 0.9, like 0.55`);
+    }
+    if ("nmaster" in o && (!Number.isInteger(o.nmaster) || o.nmaster < MIN_MASTERS[mode] || o.nmaster > 100)) {
+      throw new Error(`${mode}.nmaster ${o.nmaster} isn't a whole number from ${MIN_MASTERS[mode]} to 100`);
+    }
+    modes[mode] = { ...modes[mode], ...o };
+  }
+  return modes;
+}
+
+const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a), dimStrength: checkStrength, watched: checkWatched, defaultMode: checkDefaultMode, modes: checkModes };
 
 // Settings from what's stored: `sync` then `local`, each an object or
 // undefined. Returns {settings, errors}, an error for each bad or unknown
@@ -152,7 +196,7 @@ export function resolve(sync, local) {
         continue;
       }
       try {
-        settings[key] = CHECKS[key](value);
+        settings[key] = CHECKS[key](value, settings[key]);
       } catch (e) {
         errors.push(`${key}: ${e.message}`);
       }

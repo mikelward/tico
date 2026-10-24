@@ -6,7 +6,7 @@ import { APP_COMMANDS } from "./apps.js";
 import { checklist } from "./keys.js";
 import { ITEMS, progress, SETUP_KEY, tick } from "./setup.js";
 import { pattern } from "./watchers.js";
-import { DEFAULT_SETTINGS, PER_MACHINE, pick, resolve, SETTINGS_KEY, SHARED } from "./settings.js";
+import { DEFAULT_SETTINGS, PER_MACHINE, pick, resolve, SETTINGS_KEY, SHARED, START_MODES } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
 const rows = $("clocks").tBodies[0];
@@ -117,6 +117,30 @@ async function renderWatched() {
   $("watched").replaceChildren(...items);
 }
 
+// The layouts by their names in SPEC.md §5.2.
+const MODE_NAMES = { tile: "Tile", threecol: "Three columns", twocol: "Two columns + stack", monocle: "Monocle" };
+const START = { normal: "start-normal", ultrawide: "start-ultrawide" };
+const modeRows = $("modes").tBodies[0];
+for (const id of Object.values(START)) {
+  $(id).replaceChildren(...START_MODES.map((m) => Object.assign(document.createElement("option"), { value: m, textContent: MODE_NAMES[m] })));
+  $(id).addEventListener("change", () => save());
+}
+
+function modeRow(mode, o) {
+  const tr = document.createElement("tr");
+  tr.dataset.mode = mode;
+  const th = Object.assign(document.createElement("th"), { scope: "row", textContent: MODE_NAMES[mode] });
+  const share = input(percent(o.mfact), { className: "share", type: "number", step: "any", min: "10", max: "90", ariaLabel: `${MODE_NAMES[mode]} main share, percent`, required: true });
+  const count = input(o.nmaster, { className: "count", type: "number", step: "1", min: mode === "tile" ? "0" : "1", max: "100", ariaLabel: `${MODE_NAMES[mode]} main windows`, required: true });
+  tr.append(th);
+  for (const c of [share, count]) {
+    const td = document.createElement("td");
+    td.append(c);
+    tr.append(td);
+  }
+  return tr;
+}
+
 // An emptied hour field is NaN, an error, not Number("")'s midnight.
 function fromForm() {
   const clocks = [...rows.rows].map((tr) => {
@@ -129,7 +153,12 @@ function fromForm() {
     return name || url ? [{ command: tr.dataset.command, name, url }] : [];
   });
   const strength = num($("dim-strength"));
-  return { clocks, ...hours, apps, dimStrength: Number((strength / 100).toPrecision(12)), watched: [...watchedSites] };
+  const defaultMode = Object.fromEntries(Object.entries(START).map(([k, id]) => [k, $(id).value]));
+  const modes = Object.fromEntries([...modeRows.rows].map((tr) => {
+    const [share, count] = tr.querySelectorAll("input");
+    return [tr.dataset.mode, { mfact: Number((num(share) / 100).toPrecision(12)), nmaster: num(count) }];
+  }));
+  return { clocks, ...hours, apps, dimStrength: Number((strength / 100).toPrecision(12)), watched: [...watchedSites], defaultMode, modes };
 }
 
 function toForm(settings) {
@@ -139,6 +168,8 @@ function toForm(settings) {
   renderWatched();
   appRows.replaceChildren(...APP_COMMANDS.map((c) => appRow(c, settings.apps.find((a) => a.command === c))));
   for (const [k, ids] of Object.entries(HOURS)) ids.forEach((id, i) => ($(id).value = settings[k][i]));
+  for (const [k, id] of Object.entries(START)) $(id).value = settings.defaultMode[k];
+  modeRows.replaceChildren(...Object.entries(settings.modes).map(([mode, o]) => modeRow(mode, o)));
   json.value = JSON.stringify(pick(settings, SHARED), null, 2);
 }
 

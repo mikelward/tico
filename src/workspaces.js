@@ -7,7 +7,7 @@
 
 export const WORKSPACES = 9;
 
-const DEFAULT_MODE_SETTINGS = {
+export const DEFAULT_MODE_SETTINGS = {
   tile: { mfact: 0.55, nmaster: 1 },
   threecol: { mfact: 0.5, nmaster: 1 },
   twocol: { mfact: 0.72, nmaster: 2 },
@@ -254,13 +254,14 @@ export function setLayout(state, n, mode) {
 }
 
 // Toggle monocle on workspace `n`, whose layout is `current` now (resolved
-// from the display's default when unset). Leaving monocle goes back to the
-// layout before it.
-export function toggleMonocle(state, n, current) {
+// from the display's default, `fallback`, when unset). Leaving monocle goes
+// back to the layout before it, or to tile when that was a monocle default,
+// as tide does.
+export function toggleMonocle(state, n, current, fallback) {
   const s = clone(state);
   const w = s.workspaces[n];
   if (current === "monocle") {
-    w.layout = w.beforeMonocle ?? null;
+    w.layout = w.beforeMonocle ?? (fallback === "monocle" ? "tile" : null);
     delete w.beforeMonocle;
   } else {
     w.beforeMonocle = w.layout;
@@ -269,11 +270,22 @@ export function toggleMonocle(state, n, current) {
   return s;
 }
 
+// Every workspace takes `modes`, each mode's main share and count from the
+// settings, dropping what the keys gave it (§5.2, tide's §6). `modesFrom`
+// remembers them, so tico applies a change once rather than on every step.
+export function setModes(state, modes) {
+  const s = clone(state);
+  for (let n = 1; n <= WORKSPACES; n++) s.workspaces[n].modes = structuredClone(modes);
+  s.modesFrom = structuredClone(modes);
+  return s;
+}
+
 export function adjust(state, n, mode, change) {
   const s = clone(state);
   const m = s.workspaces[n].modes[mode];
   if ("mfact" in change) m.mfact = Math.min(0.95, Math.max(0.05, m.mfact + change.mfact));
-  if ("nmaster" in change) m.nmaster = Math.max(1, m.nmaster + change.nmaster);
+  // Tile alone works with no main window, as in tide.
+  if ("nmaster" in change) m.nmaster = Math.max(mode === "tile" ? 0 : 1, m.nmaster + change.nmaster);
   return s;
 }
 

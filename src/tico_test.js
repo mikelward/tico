@@ -58,6 +58,32 @@ test("this Chromebook's layouts come from its own settings", async () => {
   assert.equal(chrome.box(1).x, 1920, "2.47 is under 3, so it tiles rather than three columns");
 });
 
+test("the layout settings reach every workspace, once", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  assert.equal(chrome.box(1).w, 1056, "tile's main window starts at 55%");
+  chrome.syncStore.settings = { modes: { tile: { mfact: 0.6 } } };
+  await tico.event();
+  assert.equal(chrome.box(1).w, 1152, "60% from the settings");
+  await tico.command("grow");
+  assert.equal(chrome.box(1).w, 1200, "the keys still adjust it");
+  await tico.event();
+  assert.equal(chrome.box(1).w, 1200, "and an unchanged setting doesn't undo them");
+  chrome.syncStore.settings = { modes: { tile: { mfact: 0.5 } } };
+  await tico.event();
+  assert.equal(chrome.box(1).w, 960, "a changed one does");
+});
+
+test("a new workspace starts in the layout the settings give its display", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  chrome.syncStore.settings = { defaultMode: { normal: "monocle" } };
+  await tico.event();
+  assert.deepEqual(chrome.box(2), { x: 0, y: 0, w: 1920, h: 1032 }, "monocle fills the display");
+  await tico.command("monocle");
+  assert.equal(chrome.box(1).w, 1056, "the monocle key leaves a monocle default for tile");
+  await tico.command("monocle");
+  assert.equal(chrome.box(1).w, 1920, "and comes back");
+});
+
 test("switching workspaces minimizes the old windows and restores them on return", async () => {
   const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
   await tico.command("workspace-2");

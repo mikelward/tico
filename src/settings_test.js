@@ -101,7 +101,7 @@ test("layouts are set per Chromebook, and checked", () => {
 
 test("pick keeps the shared settings apart from this Chromebook's", () => {
   const all = resolve().settings;
-  assert.deepEqual(Object.keys(pick(all, SHARED)), ["clocks", "day", "work", "apps", "dimStrength", "watched"]);
+  assert.deepEqual(Object.keys(pick(all, SHARED)), ["clocks", "day", "work", "apps", "dimStrength", "watched", "defaultMode", "modes"]);
   assert.deepEqual(Object.keys(pick(all, PER_MACHINE)), ["singleRules", "ultrawideAspect"]);
 });
 
@@ -122,4 +122,20 @@ test("watched sites are shared https origins", () => {
   assert.deepEqual(settings.watched, ["https://app.slack.com"], "each site once, as its origin");
   assert.deepEqual(resolve({ watched: ["http://example.com"] }).errors, [`watched: site 1, "http://example.com", must be https`]);
   assert.deepEqual(resolve({ watched: ["slack"] }).errors, [`watched: site 1, "slack", isn't a URL`]);
+});
+
+test("defaultMode and modes merge key by key, and a bad one names itself", () => {
+  const { settings, errors } = resolve({ defaultMode: { ultrawide: "twocol" }, modes: { tile: { mfact: 0.6 } } }, { modes: { tile: { nmaster: 0 } } });
+  assert.deepEqual(errors, []);
+  assert.deepEqual(settings.defaultMode, { normal: "tile", ultrawide: "twocol" });
+  assert.deepEqual(settings.modes.tile, { mfact: 0.6, nmaster: 0 });
+  assert.deepEqual(settings.modes.twocol, { mfact: 0.72, nmaster: 2 });
+  assert.deepEqual(resolve({ defaultMode: { normal: "spiral" } }).errors, ["defaultMode: normal must be tile, threecol, twocol, monocle, not spiral"]);
+  assert.deepEqual(resolve({ defaultMode: { wide: "tile" } }).errors, ["defaultMode: wide isn't one of normal, ultrawide"]);
+  assert.deepEqual(resolve({ modes: { threecol: { nmaster: 0 } } }).errors, ["modes: threecol.nmaster 0 isn't a whole number from 1 to 100"]);
+  assert.deepEqual(resolve({ modes: { tile: { mfact: 55 } } }).errors, ["modes: tile.mfact 55 isn't a fraction from 0.1 to 0.9, like 0.55"]);
+  assert.deepEqual(resolve({ modes: { monocle: {} } }).errors, ["modes: monocle isn't one of tile, threecol, twocol"]);
+  // A bad mode leaves the others as they were, not half-applied.
+  const half = resolve({ modes: { tile: { mfact: 0.6 }, twocol: { nmaster: 0 } } });
+  assert.deepEqual(half.settings.modes, DEFAULT_SETTINGS.modes);
 });

@@ -97,6 +97,21 @@ input.label {
 .hours input {
   width: 6ch;
 }
+#modes {
+  width: auto;
+  margin-top: 8px;
+}
+#modes input {
+  width: 8ch;
+}
+select {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--raised);
+  border-radius: 6px;
+  padding: 3px 4px;
+}
 .order {
   white-space: nowrap;
 }

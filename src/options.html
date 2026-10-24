@@ -72,6 +72,20 @@
 </section>
 
 <section>
+<h2>Workspaces</h2>
+<p class="muted">The layout each workspace starts in, and each layout's main windows. A change reaches every workspace, replacing what the grow, shrink and main-window keys set.</p>
+<fieldset class="start">
+<legend>Start in</legend>
+<label>On an ultrawide display <select id="start-ultrawide"></select></label>
+<label>On any other <select id="start-normal"></select></label>
+</fieldset>
+<table id="modes">
+<thead><tr><th>Layout</th><th>Main share (%)</th><th>Main windows</th></tr></thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section>
 <h2>Layouts on this Chromebook</h2>
 <p class="muted">These depend on this Chromebook's displays, so they stay here rather than follow you.</p>
 <label>A display is ultrawide, with three columns, from aspect ratio <input id="ultrawide" type="number" step="0.1" min="1" max="10" required></label>
