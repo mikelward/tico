@@ -237,3 +237,85 @@ test("a floating window on a hidden workspace comes up on the display that shows
   await tico.event();
   assert.equal(tico.state.windows[2].ws, 4, "the next sync leaves it on workspace 4");
 });
+
+test("an app key focuses the app's window, bringing its workspace", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true }),
+    on(HD, 2, { type: "app", url: "https://calendar.google.com/calendar/u/0/r" }),
+  ]);
+  await tico.command("send-3");
+  chrome.focus(2);
+  await tico.event();
+  await tico.command("send-4");
+  // Window 2 is now alone on hidden workspace 4.
+  chrome.focus(1);
+  await tico.event();
+  await tico.command("app-calendar");
+  assert.equal(tico.state.displays.hd, 4);
+  assert.equal(chrome.win(2).focused, true);
+  assert.equal(chrome.created.length, 0, "nothing new opened");
+});
+
+test("an app key with no window opens one and finds it next time", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
+  await tico.command("app-chat");
+  assert.deepEqual(chrome.created, [{ id: 2, url: "https://chat.google.com/", type: "popup" }]);
+  assert.deepEqual(tico.state.workspaces[1].windows, [1, 2], "the popup tiles like an app");
+  assert.equal(chrome.box(2).x, 1056);
+  chrome.focus(1);
+  await tico.event();
+  await tico.command("app-chat");
+  assert.equal(chrome.created.length, 1, "the second press focuses it");
+  assert.equal(chrome.win(2).focused, true);
+});
+
+test("the browser key focuses a browser window on this workspace, else opens one", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { type: "app", url: "https://music.youtube.com/", focused: true }),
+    on(HD, 2, { url: "https://example.com/" }),
+  ]);
+  await tico.command("app-browser");
+  assert.equal(chrome.win(2).focused, true);
+  await tico.command("workspace-2");
+  await tico.command("app-browser");
+  assert.deepEqual(chrome.created, [{ id: 3, url: undefined, type: "normal" }]);
+  assert.deepEqual(tico.state.workspaces[2].windows, [3]);
+});
+
+test("the browser key picks the most recently focused browser, not the first", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true }),
+    on(HD, 2),
+    on(HD, 3, { type: "app", url: "https://meet.google.com/" }),
+  ]);
+  chrome.focus(2);
+  await tico.event();
+  chrome.focus(3);
+  await tico.event();
+  await tico.command("app-browser");
+  assert.equal(chrome.win(2).focused, true);
+});
+
+test("a browser window showing an app's site is a browser, not the app", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { url: "https://calendar.google.com/", focused: true })]);
+  await tico.command("app-calendar");
+  assert.deepEqual(chrome.created, [{ id: 2, url: "https://calendar.google.com/", type: "popup" }]);
+  await tico.command("app-browser");
+  assert.equal(chrome.created.length, 1, "the browser key finds the normal window");
+  assert.equal(chrome.win(1).focused, true);
+});
+
+test("an app key focuses the app's newest window", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true }),
+    on(HD, 2, { type: "app", url: "https://meet.google.com/" }),
+    on(HD, 3, { type: "app", url: "https://meet.google.com/" }),
+  ]);
+  await tico.command("app-meet");
+  assert.equal(chrome.win(3).focused, true);
+});
+
+test("other popups stay untracked", async () => {
+  const { tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2, { type: "popup", url: "https://chat.google.com/" })]);
+  assert.equal(2 in tico.state.windows, false);
+});

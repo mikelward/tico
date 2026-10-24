@@ -159,6 +159,10 @@ export function focused(state, winId) {
   if (!(winId in state.windows)) return state;
   const s = clone(state);
   s.workspaces[s.windows[winId].ws].focused = winId;
+  // A focus counter, so keys can pick the most recently focused of a kind
+  // (§9.1); a repeat sync of the same focus doesn't count.
+  s.focusSeq ??= 0;
+  if (s.windows[winId].lastFocused !== s.focusSeq) s.windows[winId].lastFocused = ++s.focusSeq;
   return s;
 }
 
