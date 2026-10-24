@@ -852,7 +852,7 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   Baguette, the containerless Crostini that is default for new installs from
   M147 *(secondary)*, lists graphics acceleration among things no longer
   supported, so a nested compositor may be slow.
-- `setup` gains a Crostini mode in `scripts` (§15): the packages, kitty and
+- `setup` has a Crostini mode in `scripts` (§15, A.5): the packages, kitty and
   conf, without a desktop session.
 
 ## 13. Settings
@@ -992,7 +992,7 @@ tidal would ship on the **Play Store** (§20.4).
 | **tico** (this) | The spec. The extension: worker, layout geometry, workspaces, the full-screen dashboard and home page with the launcher, options page with the checklist, attention and dim content scripts. Its tests. |
 | **tide** | Nothing changes. Its layout fixtures (window counts → rectangles) are the reference tico's geometry tests are checked against, copied with a note of the commit. |
 | **conf** | The shared `clocks.json` and layouts settings, if tico imports them (§13). Crostini needs nothing new: the Debian path already covers it. |
-| **scripts** | `setup` detects Crostini (`/dev/.cros_milestone` or `sommelier` on `PATH`, *(unverified)*) and skips the desktop: no KDE, no tide, no display manager. |
+| **scripts** | `setup` detects Crostini (`/dev/.cros_milestone` or `/opt/google/cros-containers`, *(unverified on a device)*) and skips the desktop: no KDE, no tide, no display manager (A.5). |
 
 ## 16. Milestones
 
@@ -1428,20 +1428,24 @@ Unmarked claims come from reading the configs and scripts.
 - What works: fonts, kitty, the shpool unit (1394–1455), `make -C root
   install`.
 
-**A Crostini mode would:**
+**The Crostini mode** (mikelward/scripts#306, merged 2026-10-24) does
+these:
 
-- detect Crostini (`/dev/.cros_milestone` or `/opt/google/cros-containers`,
-  *(unverified for Baguette)*);
-- keep kitty and fonts, but skip KDE, `setup-kde`, tide, the keyboard
+- detects Crostini (`/dev/.cros_milestone` or
+  `/opt/google/cros-containers`, *(unverified on a device, and for
+  Baguette)*), on Debian only;
+- keeps kitty and fonts, but skips KDE, `setup-kde`, tide, the keyboard
   config, the GPU rule and the root group, printing what to set in ChromeOS
   Settings instead;
+- explains the disk-size cutoff, pointing at Settings › About ChromeOS ›
+  Linux development environment › Disk size;
+- comes with `setup_test` cases.
+
+Still to do, in that repo's `TODO.md`:
+
 - set `BROWSER` to `garcon-url-handler`, and teach `chrome` to hand plain
   URLs to the ChromeOS browser;
-- explain the disk-size cutoff, pointing at Settings › Linux › disk size;
-- warn on Baguette that kitty will render on the CPU;
-- come with a `setup_test` case, listed in the `Makefile`'s `test` target.
-
-That's a `scripts` PR of its own, once this spec is agreed (§15).
+- warn on Baguette that kitty will render on the CPU.
 
 ## Sources
 
