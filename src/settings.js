@@ -9,7 +9,7 @@ export const SETTINGS_KEY = "settings";
 
 // What follows you to every Chromebook, in storage.sync, and what each one
 // keeps for its own displays, in storage.local.
-export const SHARED = ["clocks", "day", "work", "apps"];
+export const SHARED = ["clocks", "day", "work", "apps", "dimStrength"];
 export const PER_MACHINE = ["singleRules", "ultrawideAspect"];
 
 export function pick(settings, keys) {
@@ -21,6 +21,7 @@ export const DEFAULT_SETTINGS = {
   day: DAY,
   work: WORK,
   apps: DEFAULT_APPS,
+  dimStrength: 0.1,
   // Per machine, as they depend on its displays (§5.2).
   singleRules: [{ minAspect: 2.1, width: 0.8 }],
   ultrawideAspect: 2.1,
@@ -104,7 +105,14 @@ function checkSingleRules(rules) {
   });
 }
 
-const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a) };
+function checkStrength(strength) {
+  if (typeof strength !== "number" || !(strength >= 0.02 && strength <= 0.5)) {
+    throw new Error(`${strength} isn't a strength from 0.02 to 0.5 (2% to 50%), like 0.1`);
+  }
+  return strength;
+}
+
+const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a), dimStrength: checkStrength };
 
 // Settings from what's stored: `sync` then `local`, each an object or
 // undefined. Returns {settings, errors}, an error for each bad or unknown

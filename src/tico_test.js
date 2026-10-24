@@ -641,6 +641,35 @@ test("with the dim on, every shown window but the focused one is dimmed", async 
   assert.deepEqual([...chrome.dimmed].sort(), [10, 30], "focus moves the dim at once");
 });
 
+test("the dim's strength comes from settings, and a change repaints what's dimmed", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  assert.equal(chrome.strength.get(20), 0.1, "10% by default");
+  chrome.syncStore.settings = { dimStrength: 0.25 };
+  await tico.event();
+  assert.equal(chrome.strength.get(20), 0.25, "the dimmed page took the new strength");
+  assert.deepEqual([...chrome.dimmed], [20]);
+});
+
+test("a dimmed window on a hidden workspace comes back at the new strength", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  await tico.command("workspace-2");
+  assert.deepEqual([...chrome.dimmed], [20], "its overlay waits for its return");
+  chrome.syncStore.settings = { dimStrength: 0.25 };
+  await tico.event();
+  await tico.command("workspace-1");
+  assert.equal(chrome.strength.get(20), 0.25);
+});
+
 test("a fullscreen window and a chrome:// page aren't dimmed", async () => {
   const { chrome, tico } = await setup([HD], [
     on(HD, 1, { focused: true, url: "https://example.com/" }),

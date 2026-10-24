@@ -61,6 +61,7 @@ export class FakeChrome {
     // Each window has one tab, `id * 10`; `dimmed` is the set of tabs
     // showing the dim overlay.
     this.dimmed = new Set();
+    this.strength = new Map();
     this.granted = false;
     this.permissions = { contains: async () => fake.granted };
     this.scripting = {
@@ -68,7 +69,10 @@ export class FakeChrome {
         const w = fake.wins.find((x) => x.id * 10 === target.tabId);
         if (!w) throw new Error(`No tab with id: ${target.tabId}.`);
         if ((w.url ?? "chrome://newtab/").startsWith("chrome")) throw new Error("Cannot access a chrome:// URL");
-        if (args[0]) fake.dimmed.add(target.tabId);
+        if (args[0]) {
+          fake.dimmed.add(target.tabId);
+          fake.strength.set(target.tabId, args[1]);
+        }
         else fake.dimmed.delete(target.tabId);
         return [{ result: undefined }];
       },
