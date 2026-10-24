@@ -158,3 +158,17 @@ input.width {
 #add-rule {
   margin-top: 8px;
 }
+#keys td:nth-child(2),
+#keys td:nth-child(3) {
+  font: 12px "Ubuntu Mono", ui-monospace, monospace;
+  white-space: nowrap;
+}
+#keys tr.unbound td:nth-child(3) {
+  color: var(--error);
+}
+#keys tr.other td:nth-child(3) {
+  color: var(--accent);
+}
+#keys tr.bound td {
+  color: var(--muted);
+}

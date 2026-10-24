@@ -867,7 +867,10 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   both.
 - **Built so far:** the clocks page (zones, labels, cities and order, and
   each zone's daytime and working hours), the apps page (each app key's
-  name and address, beside the key Chrome has bound), this Chromebook's
+  name and address, beside the key Chrome has bound), the keys checklist
+  (every command, the key this spec gives it and the key Chrome has bound,
+  the unbound ones first, with a button to `chrome://extensions/shortcuts`;
+  a command on another key counts as done), this Chromebook's
   layouts (the ultrawide threshold and the lone-window widths, kept in
   `storage.local`), and import, export and reset of the shared settings.
   `src/settings.js` checks every value, and the dashboard and home page pick

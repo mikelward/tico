@@ -3,6 +3,7 @@
 // isn't saved.
 
 import { APP_COMMANDS } from "./apps.js";
+import { checklist } from "./keys.js";
 import { DEFAULT_SETTINGS, PER_MACHINE, pick, resolve, SETTINGS_KEY, SHARED } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
@@ -205,7 +206,31 @@ $("zones").replaceChildren(
 // The page edits the shared settings alone, so saving never copies this
 // machine's overrides to the others. What's stored may predate a check, so
 // say what was wrong with it.
-shortcuts = Object.fromEntries((await chrome.commands.getAll()).map((c) => [c.name, c.shortcut]));
+// The keys checklist, refreshed when you come back from the shortcuts page.
+async function renderKeys() {
+  const bound = await chrome.commands.getAll();
+  shortcuts = Object.fromEntries(bound.map((c) => [c.name, c.shortcut]));
+  for (const tr of appRows.rows) tr.querySelector("kbd").textContent = shortcuts[tr.dataset.command] || "No key";
+  const rows = checklist(chrome.runtime.getManifest().commands, bound);
+  // A command on another key is your choice (or Chrome's default off
+  // ChromeOS), so only an unbound one is still to do.
+  const todo = rows.filter((r) => r.state === "unbound").length;
+  $("keys-summary").textContent = todo === 0 ? "Every command has a key." : `${todo} of ${rows.length} commands have no key yet.`;
+  // Still to do first, in manifest order.
+  const order = { unbound: 0, other: 1, bound: 2 };
+  $("keys").tBodies[0].replaceChildren(
+    ...[...rows].sort((a, b) => order[a.state] - order[b.state]).map((r) => {
+      const tr = document.createElement("tr");
+      tr.className = r.state;
+      const cells = [r.title, r.intended, r.state === "unbound" ? "not bound" : r.bound];
+      for (const text of cells) tr.append(Object.assign(document.createElement("td"), { textContent: text }));
+      return tr;
+    }),
+  );
+}
+$("open-shortcuts").addEventListener("click", () => chrome.tabs.create({ url: "chrome://extensions/shortcuts" }));
+window.addEventListener("focus", () => renderKeys());
+await renderKeys();
 const shared = (await chrome.storage.sync.get(SETTINGS_KEY))[SETTINGS_KEY];
 const { settings, errors: stored } = resolve(shared);
 toForm(settings);
