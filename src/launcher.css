@@ -95,6 +95,7 @@ nav button.current {
 }
 #clocks {
   display: flex;
+  align-items: baseline;
   gap: 14px;
   margin: 0;
   padding: 0;
@@ -105,6 +106,10 @@ nav button.current {
 }
 #clocks li {
   white-space: nowrap;
+}
+/* A day mark mustn't make its clock's line taller than the others'. */
+#clocks sup {
+  line-height: 0;
 }
 #clocks:focus-visible {
   outline: 2px solid var(--accent);

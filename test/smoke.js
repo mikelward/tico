@@ -98,3 +98,24 @@ test("the dashboard stays open while Chrome asks for the dim's access", async ()
   assert.equal(await page.evaluate(() => window.closes), 1, "didn't close once answered");
   assert.deepEqual(errors, []);
 });
+
+test("clocks on another day line up with the rest", async () => {
+  // A day apart in all, so whatever the time, one is on another day.
+  const clocks = [
+    { zone: "Pacific/Kiritimati", label: "KIR", city: "Kiritimati" },
+    { zone: "Pacific/Pago_Pago", label: "PPG", city: "Pago Pago" },
+    { zone: "Europe/London", label: "LON", city: "London" },
+    { zone: "Asia/Tokyo", label: "TYO", city: "Tokyo" },
+  ];
+  await worker.evaluate((clocks) => chrome.storage.sync.set({ settings: { clocks } }), clocks);
+  try {
+    const { page, errors } = await open("src/launcher.html?mode=dashboard");
+    await page.waitForSelector("#clocks sup");
+    const bottoms = await page.locator("#clocks .label").evaluateAll((labels) => labels.map((l) => l.getBoundingClientRect().bottom));
+    assert.ok(bottoms.length >= clocks.length, `${bottoms.length} clocks`);
+    assert.ok(Math.max(...bottoms) - Math.min(...bottoms) < 1, `labels at ${bottoms}`);
+    assert.deepEqual(errors, []);
+  } finally {
+    await worker.evaluate(() => chrome.storage.sync.remove("settings"));
+  }
+});
