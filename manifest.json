@@ -75,22 +75,22 @@
       "description": "Move the window up the stack (Search+Shift+K)"
     },
     "grow": {
-      "description": "Grow the master (Search+Shift+.)"
+      "description": "Grow the master (Search+N)"
     },
     "shrink": {
-      "description": "Shrink the master (Search+Shift+,)"
+      "description": "Shrink the master (Search+H)"
     },
     "master-add": {
-      "description": "Add a master (Search+Shift+I)"
+      "description": "Add a master (Search+I)"
     },
     "master-remove": {
-      "description": "Remove a master (Search+Shift+D)"
+      "description": "Remove a master (Search+D)"
     },
     "layout-prev": {
       "description": "Previous layout (Search+,)"
     },
     "monocle": {
-      "description": "Toggle monocle (Search+Shift+Space)"
+      "description": "Toggle monocle (Search+O)"
     },
     "float": {
       "description": "Toggle floating (Search+Shift+F)"
