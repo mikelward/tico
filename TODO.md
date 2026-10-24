@@ -8,10 +8,12 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   follows their shared conventions (tide's especially) without its own copy.
   The alternative is a short one pointing at `SPEC.md` and those
   conventions. Reversible: add the file.
-- **Plain Node, no dependencies or build step.** Tests use `node --test`
-  on Node 22 (CI pins major 22), ES modules throughout, so the extension
-  loads the same files it tests. The alternative is TypeScript or a
-  bundler. Reversible: nothing yet depends on the toolchain.
+- **Plain Node, no build step, and no runtime dependencies.** Tests use
+  `node --test` on Node 22 (CI pins major 22), ES modules throughout, so the
+  extension loads the same files it tests. Playwright is the one dev
+  dependency, for the smoke test (maintainer, 2026-10-24). The alternative
+  is TypeScript or a bundler. Reversible: nothing yet depends on the
+  toolchain.
 - **The four suggested keys are `Search+J`, `Search+K`, `Search+Space` (the
   dashboard) and `Search+Tab`**, each with an `Alt+Shift+` default so the
   manifest installs off ChromeOS too. Attention's default is `Alt+Shift+U`,
@@ -101,6 +103,3 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - Profile keys (SPEC.md §9.2).
 - Check the setup checklist's `chrome://os-settings` addresses on a
   Chromebook: desktop Chromium has no such pages, so they're unverified.
-- A Playwright smoke test in CI (SPEC.md §17): loading the extension in
-  Chromium and opening its pages worked by hand on 2026-10-24, but would
-  add the first dependency.

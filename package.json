@@ -4,5 +4,14 @@
   "type": "module",
   "engines": {
     "node": ">=22"
+  },
+  "scripts": {
+    "lint": "make lint",
+    "test": "make test",
+    "build": "echo 'Nothing to build: Chrome loads src/ as it is.'",
+    "smoke": "make smoke"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
   }
 }

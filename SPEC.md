@@ -1020,6 +1020,16 @@ tidal would ship on the **Play Store** (§20.4).
   what the fake can't show: the dashboard and home page, options page and content scripts.
   Window management on Linux Chromium differs from ChromeOS, so those
   results don't stand in for M2's device checks.
+  - `test/smoke.js`, run by `make smoke` and CI's `smoke` job, checks that
+    the worker starts, that the options page renders every section and
+    saves a setting and a checklist tick, and that the home page and
+    dashboard render the bar, clocks, launcher and calendar, all with no
+    page errors. Content scripts aren't covered yet.
+  - Playwright is tico's one dependency, a pinned dev dependency for tests
+    only; the extension still loads `src/` as it is. CI caches npm and
+    Chromium, and mikelward/npm-update batches its updates weekly.
+- `make lint` checks that every script parses, the pages' own included,
+  which no node test imports.
 - No test sleeps; events are driven in order by the fake.
 
 ## 18. Open questions
