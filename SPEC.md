@@ -966,7 +966,8 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   attention (§10.3), the dim's strength (2% to 50%,
   repainting what's already dimmed), this Chromebook's
   layouts (the ultrawide threshold and the lone-window widths, kept in
-  `storage.local`), and import, export and reset of the shared settings.
+  `storage.local`), this Chromebook's mouse wheel step, for the login
+  reminder (§19.2), and import, export and reset of the shared settings.
   `src/settings.js` checks every value, and the dashboard and home page pick
   up a change at once through `storage.onChanged`; tico reads its settings
   on each step. The workspaces page sets the layout a workspace starts in,
@@ -1340,6 +1341,13 @@ finer steps and the exact 3× aren't offered in Settings.
    - **It's per device, and nothing re-applies it.** Whether a value
      survives a reboot, resume, replug, or a change in Settings is
      *(unverified)*. A device's ID may change between boots.
+   - **tico's reminder.** No extension can run crosh, so with a wheel
+     step set on the options page (`wheelStep`, per Chromebook, off by
+     default), tico opens `src/mouse.html` at each login
+     (`runtime.onStartup`). It shows `gesture_prop devices`, a box for the
+     mouse's ID (the last one used filled in), and the two lines for that
+     ID and step, each with a Copy button. The options page can open it
+     any time, say after a replug.
 3. **Developer mode**, with rootfs verification off: a file in
    `/etc/gesture/` (read at startup, `gesture_property_provider.cc`)
    makes the same properties stick. It costs verified boot, and updates

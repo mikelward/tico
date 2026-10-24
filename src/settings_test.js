@@ -102,7 +102,7 @@ test("layouts are set per Chromebook, and checked", () => {
 test("pick keeps the shared settings apart from this Chromebook's", () => {
   const all = resolve().settings;
   assert.deepEqual(Object.keys(pick(all, SHARED)), ["clocks", "day", "work", "apps", "dimStrength", "watched", "defaultMode", "modes"]);
-  assert.deepEqual(Object.keys(pick(all, PER_MACHINE)), ["singleRules", "ultrawideAspect"]);
+  assert.deepEqual(Object.keys(pick(all, PER_MACHINE)), ["singleRules", "ultrawideAspect", "wheelStep"]);
 });
 
 test("a settings change applies at once, but tico's own state writes don't count", () => {
@@ -138,4 +138,16 @@ test("defaultMode and modes merge key by key, and a bad one names itself", () =>
   // A bad mode leaves the others as they were, not half-applied.
   const half = resolve({ modes: { tile: { mfact: 0.6 }, twocol: { nmaster: 0 } } });
   assert.deepEqual(half.settings.modes, DEFAULT_SETTINGS.modes);
+});
+
+test("the wheel step is off by default, and a step from 1 to 1000", () => {
+  assert.equal(DEFAULT_SETTINGS.wheelStep, null);
+  assert.equal(resolve(undefined, { wheelStep: 200 }).settings.wheelStep, 200);
+  assert.equal(resolve(undefined, { wheelStep: 200 }).errors.length, 0);
+  assert.equal(resolve(undefined, { wheelStep: null }).settings.wheelStep, null);
+  for (const bad of [0, 1001, "200", NaN]) {
+    const { settings, errors } = resolve(undefined, { wheelStep: bad });
+    assert.equal(settings.wheelStep, null, String(bad));
+    assert.match(errors[0], /^wheelStep: .* isn't a step from 1 to 1000/);
+  }
 });

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tico: set up the mouse wheel</title>
+<link rel="stylesheet" href="options.css">
+<script type="module" src="mouseview.js"></script>
+</head>
+<body>
+<main>
+<h1>Set up the mouse wheel</h1>
+<p class="muted">ChromeOS forgets the wheel step tico's settings ask for, so run these in crosh after each login. Copy one line at a time: crosh runs only the first line of a paste.</p>
+<div id="errors" role="alert" hidden></div>
+<section>
+<ol class="steps">
+<li>Check that Controlled scrolling is off for this mouse, in Settings › Mouse; the step doesn't apply with it on.</li>
+<li>Open crosh with <kbd>Ctrl+Alt+T</kbd>.</li>
+<li>List the input devices, and find your mouse's ID:
+<p class="row"><code id="devices"></code> <button type="button" data-copy="devices">Copy</button></p></li>
+<li><label>Your mouse's ID <input id="mouse-id" type="number" min="0" step="1" required></label>
+<p class="muted">The ID can change between boots, so check it each time.</p></li>
+<li>Run each of these:
+<p class="row"><code id="line-0"></code> <button type="button" data-copy="line-0">Copy</button></p>
+<p class="row"><code id="line-1"></code> <button type="button" data-copy="line-1">Copy</button></p></li>
+</ol>
+<div class="row">
+<button id="done" type="button">Done</button>
+<button id="settings" type="button">Change the step or stop these reminders</button>
+</div>
+</section>
+</main>
+</body>
+</html>

@@ -39,7 +39,8 @@ which Chrome Sync copies to your Google account if you have Sync turned on.
   - the addresses of up to 20 tabs per window, so windows can return to
     their workspaces after a restart;
   - the latest unread count for each watched tab;
-  - this Chromebook's layout settings and the setup checklist's ticks.
+  - this Chromebook's layout and mouse settings, the setup checklist's
+    ticks, and the mouse's input device number from its mouse page.
 
   This data never leaves the Chromebook. Removing tico deletes it.
 - **In your Chrome settings**, in `chrome.storage.sync`:
