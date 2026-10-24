@@ -4,7 +4,8 @@
 // toolbar button, it opens on open tabs and closes once you choose.
 
 import { scrub } from "./clocks.js";
-import { renderClocks, renderDetail } from "./clockview.js";
+import { stepMonth } from "./calendar.js";
+import { renderClocks, renderDetail, today } from "./clockview.js";
 import { items, rank } from "./launcher.js";
 import { load as loadSettings, SETTINGS_KEY } from "./settings.js";
 
@@ -173,10 +174,20 @@ for (const b of document.querySelectorAll(".scopes button")) b.addEventListener(
 // a click. Scrolling over them scrubs time until the pointer leaves (§8.2).
 let scrubbed = null;
 let settings;
+// The calendar's month: today's each time the detail opens, as in tide.
+let month = today();
+function stepCalendar(by) {
+  month = stepMonth(month.year, month.month, by);
+  renderTime();
+}
 function renderTime() {
   const at = scrubbed ?? new Date();
   renderClocks(clocks, at, scrubbed !== null, settings);
-  if (!detail.hidden) renderDetail(detail, at, scrubbed !== null, settings);
+  if (detail.hidden) return;
+  // A redraw replaces the month buttons, so keep the keyboard on the one it was on.
+  const focused = detail.contains(document.activeElement) ? document.activeElement.getAttribute("aria-label") : null;
+  renderDetail(detail, at, scrubbed !== null, settings, month, stepCalendar);
+  if (focused) detail.querySelector(`[aria-label="${focused}"]`)?.focus();
 }
 // The options page reports bad settings; here the defaults stand in.
 async function loadClocks() {
@@ -185,6 +196,7 @@ async function loadClocks() {
 }
 function toggleDetail() {
   detail.hidden = !detail.hidden;
+  if (!detail.hidden) month = today();
   clocks.setAttribute("aria-expanded", String(!detail.hidden));
   renderTime();
 }

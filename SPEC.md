@@ -494,7 +494,7 @@ display and then made full screen. It shows:
 - tide's bar across the top: workspaces, layout, the workspace number and
   the clocks (§8.1);
 - the launcher (§9.4), focused on its **Launch** scope, ready to type;
-- every zone's day and the next clock change (§8.2).
+- every zone's day, the next clock change and a month calendar (§8.2).
 
 Full screen is the point: a `popup` window otherwise carries ChromeOS's
 caption bar and possibly a read-only address strip above tico's own bar,
@@ -643,6 +643,8 @@ tide's clock rules, in the bar of the dashboard and the home page, with the deta
 - A different day shows `−1` / `+1`.
 - Each zone has a 24-hour day/night/working-hours strip.
 - The next DST change is named.
+- A month calendar with ISO week numbers, Monday first, marks today and
+  steps by month. It opens on today's month each time the detail does.
 - Scrolling scrubs time in 15-minute steps.
 - `Intl.DateTimeFormat` with `timeZoneName: "short"` gives the abbreviation.
   CLDR gives `GMT+1` for London in en-US, so tico keeps tide's

@@ -1,7 +1,8 @@
 // The clocks as HTML, shared by the popup and the home window: the row, and
-// the popup's detail with each zone's strip and the next DST change
-// (SPEC.md §8.2).
+// the popup's detail with each zone's strip, the next DST change and a month
+// calendar (SPEC.md §8.2).
 
+import { isoWeek, monthGrid, monthTitle } from "./calendar.js";
 import { DEFAULT_SETTINGS } from "./settings.js";
 import {
   abbreviation,
@@ -36,7 +37,8 @@ export function renderClocks(ol, now = new Date(), scrubbed = false, { clocks } 
   }
 }
 
-export function renderDetail(section, now = new Date(), scrubbed = false, settings = DEFAULT_SETTINGS) {
+// `calendar` is the month shown, {year, month}, and `step(by)` moves it.
+export function renderDetail(section, now = new Date(), scrubbed = false, settings = DEFAULT_SETTINGS, calendar = null, step = () => {}) {
   const { clocks } = settings;
   const local = localZone();
   section.replaceChildren();
@@ -70,4 +72,37 @@ export function renderDetail(section, now = new Date(), scrubbed = false, settin
     p.append(el("strong", null, "Clocks change soon. "), note);
     section.append(p);
   }
+  if (calendar) section.append(renderCalendar(calendar, step));
+}
+
+// Today's local date, the one the calendar marks.
+export function today(at = new Date()) {
+  return { year: at.getFullYear(), month: at.getMonth(), date: at.getDate() };
+}
+
+function renderCalendar({ year, month }, step) {
+  const now = today();
+  const head = el("div", "month");
+  const move = (by, text, label) => {
+    const b = el("button", null, text);
+    b.type = "button";
+    b.setAttribute("aria-label", label);
+    b.addEventListener("click", () => step(by));
+    return b;
+  };
+  head.append(move(-1, "‹", "Previous month"), el("strong", null, monthTitle(year, month)), move(1, "›", "Next month"));
+  head.append(el("span", "week", `week ${isoWeek(now.year, now.month, now.date)}`));
+  const grid = el("div", "days");
+  for (const d of ["", "M", "T", "W", "T", "F", "S", "S"]) grid.append(el("span", "dow", d));
+  for (const w of monthGrid(year, month, now)) {
+    grid.append(el("span", "wk", String(w.week)));
+    for (const d of w.days) {
+      const cell = el("span", [d.outside && "outside", d.today && "today"].filter(Boolean).join(" "), String(d.date));
+      if (d.today) cell.setAttribute("aria-current", "date");
+      grid.append(cell);
+    }
+  }
+  const cal = el("div", "calendar");
+  cal.append(head, grid);
+  return cal;
 }
