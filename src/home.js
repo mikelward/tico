@@ -1,5 +1,7 @@
 // The home window on an empty workspace (SPEC.md §6.2): which workspace it
-// is, and the keys that still work from here.
+// is, the clocks, and the keys that still work from here.
+
+import { renderClocks } from "./clockview.js";
 
 const KEYS = [
   ["Search+G", "Browser"],
@@ -31,3 +33,7 @@ chrome.storage.local.get("state").then(({ state }) => render(state));
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.state) render(changes.state.newValue);
 });
+
+const clocks = document.getElementById("clocks");
+renderClocks(clocks);
+setInterval(() => renderClocks(clocks), 10000);

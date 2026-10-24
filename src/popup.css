@@ -1,0 +1,84 @@
+:root {
+  color-scheme: light dark;
+  --bg: #fafafa;
+  --fg: #1e1e1e;
+  --muted: #5e5e5e;
+  --surface: #ebebeb;
+  --accent: #3584e4;
+  --on-accent: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1e;
+    --fg: #f6f5f4;
+    --muted: #9a9996;
+    --surface: #303030;
+    --accent: #78aeed;
+    --on-accent: #1e1e1e;
+  }
+}
+body {
+  margin: 0;
+  padding: 12px;
+  min-width: 480px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.4 Inter, system-ui, sans-serif;
+  /* One row like tide's bar: workspaces on the left, clocks on the right. */
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+button {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+button.occupied {
+  background: var(--surface);
+  color: var(--fg);
+}
+button.elsewhere {
+  border-color: var(--accent);
+}
+button.current {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.layout {
+  margin-left: 8px;
+  font-family: "Ubuntu Mono", ui-monospace, monospace;
+  color: var(--muted);
+}
+ol {
+  display: flex;
+  gap: 16px;
+  /* Stays on the right when it wraps under the workspaces. */
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+.label {
+  color: var(--muted);
+  margin-right: 4px;
+}
+sup {
+  color: var(--muted);
+}
+li {
+  white-space: nowrap;
+}

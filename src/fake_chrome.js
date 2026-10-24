@@ -51,6 +51,19 @@ export class FakeChrome {
       },
     };
     this.runtime = { getURL: (path) => `chrome-extension://tico/${path}` };
+    this.badge = "";
+    this.toolbar = true;
+    this.popups = 0;
+    this.action = {
+      setBadgeText: async ({ text }) => {
+        fake.badge = text;
+      },
+      openPopup: async () => {
+        const w = fake.wins.find((x) => x.focused);
+        if (!fake.toolbar || (w && w.type !== "normal")) throw new Error("Browser window has no toolbar.");
+        fake.popups++;
+      },
+    };
   }
 
   win(id) {

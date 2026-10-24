@@ -38,3 +38,17 @@ dt {
 dd {
   margin: 0;
 }
+ol {
+  display: flex;
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+.label,
+sup {
+  color: var(--muted);
+}
+.label {
+  margin-right: 4px;
+}

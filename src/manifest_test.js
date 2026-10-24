@@ -55,7 +55,8 @@ test("every command in the manifest does something", async () => {
     chrome.updates.length = 0;
     await tico.command(name);
     const after = JSON.stringify([tico.state, chrome.wins]);
-    assert.ok(before !== after || chrome.updates.some((u) => u.focused), `${name} changed nothing`);
+    const acted = before !== after || chrome.updates.some((u) => u.focused) || chrome.popups > 0;
+    assert.ok(acted, `${name} changed nothing`);
   }
 });
 
@@ -71,12 +72,18 @@ test("background.js adds every listener while it first runs", async () => {
       onBoundsChanged: event("windows.onBoundsChanged"),
     },
     system: { display: { onDisplayChanged: event("system.display.onDisplayChanged") } },
-    runtime: { onStartup: event("runtime.onStartup"), onInstalled: event("runtime.onInstalled") },
+    runtime: {
+      onStartup: event("runtime.onStartup"),
+      onInstalled: event("runtime.onInstalled"),
+      onMessage: event("runtime.onMessage"),
+      getManifest: () => manifest,
+    },
   };
   await import("./background.js");
   assert.deepEqual([...added].sort(), [
     "commands.onCommand",
     "runtime.onInstalled",
+    "runtime.onMessage",
     "runtime.onStartup",
     "system.display.onDisplayChanged",
     "windows.onBoundsChanged",
