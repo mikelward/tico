@@ -1,0 +1,79 @@
+// The smoke test (SPEC.md §17): loads the unpacked extension in Chromium and
+// opens its pages, which the node tests can't reach. Tiling, workspaces and
+// keys need ChromeOS's windows, so FakeChrome covers those instead.
+
+import { test, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
+
+const EXTENSION = fileURLToPath(new URL("..", import.meta.url));
+
+let context;
+let worker;
+let base;
+
+before(async () => {
+  context = await chromium.launchPersistentContext("", {
+    headless: false,
+    args: ["--headless=new", `--disable-extensions-except=${EXTENSION}`, `--load-extension=${EXTENSION}`],
+  });
+  worker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
+  base = new URL(".", worker.url()).href.replace(/src\/$/, "");
+});
+
+after(async () => {
+  await context?.close();
+});
+
+// Opens one of the extension's pages, failing on any error it throws.
+async function open(path) {
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto(base + path);
+  return { page, errors };
+}
+
+test("the background worker starts", async () => {
+  assert.match(worker.url(), /^chrome-extension:\/\/[a-p]{32}\//);
+  // It answers once its module has loaded and its listeners are in place.
+  assert.equal(await worker.evaluate(() => typeof chrome.commands.onCommand.hasListeners), "function");
+  assert.equal(await worker.evaluate(() => chrome.commands.onCommand.hasListeners()), true);
+});
+
+test("the options page renders every section and saves changes", async () => {
+  const { page, errors } = await open("src/options.html");
+  await page.waitForSelector("#setup li");
+  const headings = await page.locator("h2").allInnerTexts();
+  for (const h of ["Clocks", "Setup checklist", "Keys", "Apps", "Attention", "Dim", "Workspaces", "Layouts on this Chromebook", "Import and export"]) {
+    assert.ok(headings.includes(h), `no ${h} section in ${headings}`);
+  }
+  assert.ok((await page.locator("#clocks tbody tr").count()) > 0, "no clocks");
+  assert.ok((await page.locator("#keys tbody tr").count()) > 0, "no keys");
+  assert.ok((await page.locator("#modes tbody tr").count()) > 0, "no layouts");
+
+  await page.locator("#dim-strength").fill("20");
+  await page.locator("#dim-strength").dispatchEvent("change");
+  await page.waitForFunction(async () => (await chrome.storage.sync.get("settings")).settings?.dimStrength === 0.2);
+
+  await page.locator("#setup input[type=checkbox]").first().check();
+  await page.waitForFunction(async () => ((await chrome.storage.local.get("setup")).setup ?? []).length === 1);
+
+  assert.deepEqual(errors, []);
+  assert.equal(await page.locator("#errors").isHidden(), true, await page.locator("#errors").innerText());
+});
+
+for (const mode of ["home", "dashboard"]) {
+  test(`the ${mode} page renders the bar, clocks and launcher`, async () => {
+    const { page, errors } = await open(`src/launcher.html?mode=${mode}`);
+    await page.waitForSelector("#clocks li");
+    assert.ok(await page.locator("#query").isVisible(), "no launcher");
+    if (mode === "dashboard") await page.locator("#clocks").click();
+    await page.waitForSelector(".calendar .days");
+    const month = await page.locator(".calendar .month strong").innerText();
+    await page.locator('[aria-label="Next month"]').click();
+    assert.notEqual(await page.locator(".calendar .month strong").innerText(), month, "the calendar didn't step");
+    assert.deepEqual(errors, []);
+  });
+}

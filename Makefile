@@ -17,9 +17,17 @@ TESTS = \
 	src/tico_test.js \
 	src/manifest_test.js
 
-.PHONY: test
+.PHONY: test lint smoke
 test:
 	@unlisted=$$(find src -name '*_test.js' | sort | while read -r f; do \
 		case " $(TESTS) " in *" $$f "*) ;; *) echo "$$f";; esac; done); \
 	if test -n "$$unlisted"; then echo "not in the Makefile's TESTS: $$unlisted" >&2; exit 1; fi
 	node --test $(TESTS)
+
+# Every script parses, including the pages' own, which no test imports.
+lint:
+	@for f in src/*.js test/*.js; do node --check "$$f" || exit 1; done
+
+# Needs `npm ci` and Playwright's Chromium (`npx playwright install chromium`).
+smoke:
+	node --test test/smoke.js

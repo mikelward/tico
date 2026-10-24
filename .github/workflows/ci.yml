@@ -23,4 +23,33 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - run: make lint
       - run: make test
+
+  # Loads the extension in Chromium and opens its pages (SPEC.md §17).
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      # Chromium is ~150 MB, so it's cached per Playwright version; the
+      # system libraries it needs come from apt each run, which can't be.
+      - id: playwright
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - id: browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - run: make smoke
