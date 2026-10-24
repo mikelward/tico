@@ -674,8 +674,10 @@ only opens from a Chrome window, which is worse than the native one.
 ### 10.1 The dim
 
 - tico injects a content script into the visible tab of every **unfocused**
-  tiled window. It adds a full-page overlay at 7% black, ignoring the
-  pointer, at the top of the stacking order.
+  tiled window. It adds a full-page overlay at 10% black, ignoring the
+  pointer, at the top of the stacking order. That's stronger than tide's
+  0.07 Hyprland dim, matching the 10–15% of other desktops; strength
+  becomes a setting with the options page (§13).
 - The focused window's overlay goes the instant focus arrives.
 - No dim when the workspace has one visible window, over fullscreen video,
   or in PiP, as in tide §6.2.

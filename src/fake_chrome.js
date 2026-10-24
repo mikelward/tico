@@ -25,7 +25,7 @@ export class FakeChrome {
         structuredClone(
           fake.wins
             .filter((w) => !windowTypes || windowTypes.includes(w.type))
-            .map((w) => (populate ? { ...w, tabs: [{ url: w.url ?? "chrome://newtab/" }] } : w)),
+            .map((w) => (populate ? { ...w, tabs: [{ id: w.id * 10, active: true, url: w.url ?? "chrome://newtab/" }] } : w)),
         ),
       create: async ({ url, type = "normal", focused = false, left = 100, top = 100, width = 800, height = 600 } = {}) => {
         const id = Math.max(0, ...fake.wins.map((w) => w.id)) + 1;
@@ -51,6 +51,21 @@ export class FakeChrome {
       },
     };
     this.runtime = { getURL: (path) => `chrome-extension://tico/${path}` };
+    // Each window has one tab, `id * 10`; `dimmed` is the set of tabs
+    // showing the dim overlay.
+    this.dimmed = new Set();
+    this.granted = false;
+    this.permissions = { contains: async () => fake.granted };
+    this.scripting = {
+      executeScript: async ({ target, args }) => {
+        const w = fake.wins.find((x) => x.id * 10 === target.tabId);
+        if (!w) throw new Error(`No tab with id: ${target.tabId}.`);
+        if ((w.url ?? "chrome://newtab/").startsWith("chrome")) throw new Error("Cannot access a chrome:// URL");
+        if (args[0]) fake.dimmed.add(target.tabId);
+        else fake.dimmed.delete(target.tabId);
+        return [{ result: undefined }];
+      },
+    };
     this.badge = "";
     this.badgeColor = null;
     this.toolbar = true;

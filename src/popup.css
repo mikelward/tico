@@ -88,3 +88,7 @@ sup {
 li {
   white-space: nowrap;
 }
+.option {
+  flex-basis: 100%;
+  color: var(--muted);
+}

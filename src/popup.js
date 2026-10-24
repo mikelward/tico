@@ -36,9 +36,27 @@ function renderWorkspaces(view) {
   nav.append(layout);
 }
 
-chrome.storage.local.get("view").then(({ view }) => renderWorkspaces(view));
+const dim = document.getElementById("dim");
+function render(view) {
+  renderWorkspaces(view);
+  dim.checked = !!view?.dim;
+}
+chrome.storage.local.get("view").then(({ view }) => render(view));
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.view) renderWorkspaces(changes.view.newValue);
+  if (changes.view) render(changes.view.newValue);
+});
+
+// The dim needs all-sites access (§10.1), asked for here because Chrome only
+// prompts on a click. Turning it off undims every page first, then gives the
+// access back.
+const DIM_ORIGINS = ["<all_urls>"];
+dim.addEventListener("change", async () => {
+  if (dim.checked) {
+    if (await chrome.permissions.request({ origins: DIM_ORIGINS })) await chrome.runtime.sendMessage({ dim: true });
+    else dim.checked = false;
+  } else if (await chrome.runtime.sendMessage({ dim: false })) {
+    await chrome.permissions.remove({ origins: DIM_ORIGINS });
+  }
 });
 const clocks = document.getElementById("clocks");
 renderClocks(clocks);

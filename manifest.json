@@ -10,7 +10,11 @@
   "permissions": [
     "storage",
     "system.display",
-    "tabs"
+    "tabs",
+    "scripting"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
   ],
   "content_scripts": [
     {

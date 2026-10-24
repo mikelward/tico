@@ -3,6 +3,7 @@
 TESTS = \
 	src/apps_test.js \
 	src/clocks_test.js \
+	src/dim_test.js \
 	src/geometry_test.js \
 	src/unread_test.js \
 	src/workspaces_test.js \

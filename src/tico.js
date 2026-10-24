@@ -4,6 +4,7 @@
 // promise-returning calls are used.
 
 import { appOf, DEFAULT_APPS } from "./apps.js";
+import { overlay } from "./dim.js";
 import * as geometry from "./geometry.js";
 import { unreadCount } from "./unread.js";
 import * as ws from "./workspaces.js";
@@ -18,6 +19,7 @@ export const DEFAULTS = {
 const MANAGED = ["normal", "app"];
 const STATE_KEY = "state";
 const VIEW_KEY = "view";
+export const DIM_ORIGINS = ["<all_urls>"];
 const BADGE = "#3584e4";
 const BADGE_ATTENTION = "#e5a50a";
 
@@ -85,6 +87,34 @@ export class Tico {
     });
   }
 
+  // The dim is on while tico holds all-sites access (§10.1) and you haven't
+  // turned it off. Turning it off comes here first, to undim every page
+  // while tico can still reach them, then gives the access back.
+  setDim(on) {
+    return this.run(async () => {
+      await this.sync();
+      this.state.dimPaused = !on;
+      await this.apply();
+    });
+  }
+
+  // A tab finished loading a page. Any overlay went with the old page, and
+  // the new one may be reachable where the old wasn't (a new tab page
+  // becoming a website), so forget the tab and look at the dim afresh.
+  tabLoaded(tabId) {
+    // With the dim off there's nothing to do; skip the sync.
+    if (this.state && !this.dimOn()) return Promise.resolve();
+    return this.run(async () => {
+      await this.sync();
+      this.state.dimmed = (this.state.dimmed ?? []).filter((id) => id !== tabId);
+      await this.apply();
+    });
+  }
+
+  dimOn() {
+    return this.dimGranted && !this.state.dimPaused;
+  }
+
   command(name) {
     return this.run(async () => {
       await this.sync();
@@ -115,7 +145,7 @@ export class Tico {
     const counts = {};
     for (let n = 1; n <= ws.WORKSPACES; n++) counts[n] = s.workspaces[n].windows.length;
     const urgent = [...new Set(s.marks.map((id) => s.windows[id]?.ws).filter((n) => n !== undefined))];
-    return { focusedDisplay: this.focusedDisplay() ?? null, displays, counts, urgent };
+    return { focusedDisplay: this.focusedDisplay() ?? null, displays, counts, urgent, dim: this.dimOn() };
   }
 
   // Bring the state up to date with Chrome: displays, new and closed
@@ -135,6 +165,9 @@ export class Tico {
     const wins = all.filter((w) => MANAGED.includes(w.type) || appPopups.has(w.id));
     this.windows = new Map(wins.map((w) => [w.id, w]));
     this.all = new Map(all.map((w) => [w.id, w]));
+    this.activeTab = new Map(all.map((w) => [w.id, w.tabs?.find((t) => t.active)?.id]));
+    this.tabWindow = new Map(all.flatMap((w) => (w.tabs ?? []).map((t) => [t.id, w.id])));
+    this.dimGranted = await this.api.permissions.contains({ origins: DIM_ORIGINS });
     for (const id of Object.keys(s.windows).map(Number)) {
       if (!this.windows.has(id)) s = ws.removeWindow(s, id);
     }
@@ -267,6 +300,48 @@ export class Tico {
       this.state = ws.setLayout(s, n, geometry.modes[(i + k + geometry.modes.length) % geometry.modes.length]);
     }
     return null;
+  }
+
+  // Dim every shown window but the focused one, on workspaces showing more
+  // than one (§10.1). A hidden window keeps its overlay until it's back.
+  async dim(focused) {
+    const s = this.state;
+    s.dimmed ??= [];
+    const want = new Set();
+    const shown = new Set();
+    for (const display of this.displays) {
+      const n = ws.showing(s, display.id);
+      if (n === null) continue;
+      const ids = s.workspaces[n].windows.filter((id) => ws.isShown(s, id));
+      for (const id of ids) shown.add(id);
+      if (!this.dimOn() || ids.length < 2) continue;
+      for (const id of ids) {
+        // Fullscreen is for watching; leave it be.
+        if (id !== focused && this.windows.get(id)?.state !== "fullscreen") want.add(this.activeTab.get(id));
+      }
+    }
+    want.delete(undefined);
+    const dimmed = new Set(s.dimmed);
+    const set = async (tabId, on) => {
+      try {
+        await this.api.scripting.executeScript({ target: { tabId }, func: overlay, args: [on] });
+        return true;
+      } catch {
+        // chrome:// pages, the Web Store and the PDF viewer can't be
+        // injected, and a closing tab has gone: those just stay undimmed.
+        return false;
+      }
+    };
+    for (const tabId of want) if (!dimmed.has(tabId) && (await set(tabId, true))) dimmed.add(tabId);
+    for (const tabId of dimmed) {
+      if (want.has(tabId)) continue;
+      const win = this.tabWindow.get(tabId);
+      // Leave a hidden window's overlay for when it comes back.
+      if (this.dimOn() && win !== undefined && !shown.has(win)) continue;
+      if (win !== undefined) await set(tabId, false);
+      dimmed.delete(tabId);
+    }
+    s.dimmed = [...dimmed];
   }
 
   // The toolbar badge shows the focused display's workspace (§8.1).
@@ -449,6 +524,7 @@ export class Tico {
       this.state = ws.focused(this.state, focus);
     }
     await this.homes(focus);
+    await this.dim(focus ?? this.focusedWindow());
     await this.badge();
     await this.save();
   }
