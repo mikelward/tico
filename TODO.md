@@ -101,8 +101,6 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - Profile keys (SPEC.md §9.2).
 - Check the setup checklist's `chrome://os-settings` addresses on a
   Chromebook: desktop Chromium has no such pages, so they're unverified.
-- A month calendar with ISO week numbers under the clocks, as tide's
-  popover has.
 - A Playwright smoke test in CI (SPEC.md §17): loading the extension in
   Chromium and opening its pages worked by hand on 2026-10-24, but would
   add the first dependency.

@@ -2,6 +2,7 @@
 # src/ isn't listed, since an unlisted test never runs.
 TESTS = \
 	src/apps_test.js \
+	src/calendar_test.js \
 	src/clocks_test.js \
 	src/dim_test.js \
 	src/geometry_test.js \
