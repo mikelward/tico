@@ -10,6 +10,7 @@ TESTS = \
 	src/restart_test.js \
 	src/settings_test.js \
 	src/unread_test.js \
+	src/watchers_test.js \
 	src/workspaces_test.js \
 	src/tico_test.js \
 	src/manifest_test.js

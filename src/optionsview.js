@@ -4,6 +4,7 @@
 
 import { APP_COMMANDS } from "./apps.js";
 import { checklist } from "./keys.js";
+import { pattern } from "./watchers.js";
 import { DEFAULT_SETTINGS, PER_MACHINE, pick, resolve, SETTINGS_KEY, SHARED } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
@@ -85,6 +86,36 @@ function appRow(command, app) {
   return tr;
 }
 
+// The extra watched sites (§10.3). Settings sync, but a site's access is
+// granted per Chromebook, so each shows whether it's watched here.
+let watchedSites = [];
+
+async function renderWatched() {
+  const items = await Promise.all(
+    watchedSites.map(async (site) => {
+      const li = document.createElement("li");
+      const granted = await chrome.permissions.contains({ origins: [pattern(site)] });
+      li.append(site, " ", Object.assign(document.createElement("span"), { className: "muted", textContent: granted ? "watched" : "needs access here" }));
+      if (!granted) {
+        li.append(" ", button("Allow", `Allow ${site}`, async () => {
+          if (await chrome.permissions.request({ origins: [pattern(site)] })) renderWatched();
+        }));
+      }
+      li.append(" ", button("×", `Stop watching ${site}`, async () => {
+        watchedSites = watchedSites.filter((s) => s !== site);
+        if (await save()) {
+          // Gives back this site's access; with all-sites access for the dim,
+          // Chrome keeps that, which is fine: it's the dim's.
+          await chrome.permissions.remove({ origins: [pattern(site)] });
+          renderWatched();
+        }
+      }));
+      return li;
+    }),
+  );
+  $("watched").replaceChildren(...items);
+}
+
 // An emptied hour field is NaN, an error, not Number("")'s midnight.
 function fromForm() {
   const clocks = [...rows.rows].map((tr) => {
@@ -97,12 +128,14 @@ function fromForm() {
     return name || url ? [{ command: tr.dataset.command, name, url }] : [];
   });
   const strength = num($("dim-strength"));
-  return { clocks, ...hours, apps, dimStrength: Number((strength / 100).toPrecision(12)) };
+  return { clocks, ...hours, apps, dimStrength: Number((strength / 100).toPrecision(12)), watched: [...watchedSites] };
 }
 
 function toForm(settings) {
   rows.replaceChildren(...settings.clocks.map(clockRow));
   $("dim-strength").value = Number((settings.dimStrength * 100).toPrecision(12));
+  watchedSites = [...settings.watched];
+  renderWatched();
   appRows.replaceChildren(...APP_COMMANDS.map((c) => appRow(c, settings.apps.find((a) => a.command === c))));
   for (const [k, ids] of Object.entries(HOURS)) ids.forEach((id, i) => ($(id).value = settings[k][i]));
   json.value = JSON.stringify(pick(settings, SHARED), null, 2);
@@ -174,6 +207,31 @@ $("add-clock").addEventListener("click", () => {
 });
 for (const ids of Object.values(HOURS)) for (const id of ids) $(id).addEventListener("change", () => save());
 $("dim-strength").addEventListener("change", () => save());
+// Chrome asks for a site's access only from a click, so Watch asks first and
+// saves the site once it's granted.
+$("watch-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  let origin;
+  try {
+    origin = new URL($("watch-site").value.trim()).origin;
+  } catch {
+    showErrors([`"${$("watch-site").value}" isn't a site's address`]);
+    return;
+  }
+  if (!origin.startsWith("https://")) {
+    showErrors([`${origin} must be https`]);
+    return;
+  }
+  if (!(await chrome.permissions.request({ origins: [pattern(origin)] }))) {
+    showErrors([`tico needs access to ${origin} to watch it`]);
+    return;
+  }
+  if (!watchedSites.includes(origin)) watchedSites.push(origin);
+  if (await save()) {
+    $("watch-site").value = "";
+    renderWatched();
+  }
+});
 
 $("import").addEventListener("click", async () => {
   let value;
