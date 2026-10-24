@@ -4,12 +4,18 @@ on:
   push:
     branches: ["main"]
   pull_request:
+  # The weekly npm update batch opens its pull request with GITHUB_TOKEN,
+  # which starts no pull_request run, so it dispatches this one by name.
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number this run reports for.
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.sha }}
+  group: ci-${{ github.event.pull_request.number || inputs.pr || github.sha }}
   cancel-in-progress: true
 
 jobs:
