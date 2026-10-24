@@ -8,7 +8,8 @@
 </head>
 <body>
 <nav id="workspaces" aria-label="Workspaces"></nav>
-<ol id="clocks"></ol>
+<ol id="clocks" role="button" tabindex="0" aria-expanded="false" aria-controls="clock-detail" title="Click for each zone's day; scroll to scrub time"></ol>
+<section id="clock-detail" hidden></section>
 <label class="option"><input type="checkbox" id="dim"> Dim inactive windows</label>
 </body>
 </html>

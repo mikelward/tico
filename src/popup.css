@@ -92,3 +92,77 @@ li {
   flex-basis: 100%;
   color: var(--muted);
 }
+#clocks {
+  cursor: pointer;
+  border-radius: 6px;
+}
+#clocks:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+/* A scrubbed time shows in the accent color; the labels stay as they are. */
+#clocks.scrubbed li,
+#clock-detail.scrubbed .time {
+  color: var(--accent);
+}
+#clock-detail {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto;
+  align-items: center;
+  gap: 8px 12px;
+  font-variant-numeric: tabular-nums;
+}
+#clock-detail[hidden] {
+  display: none;
+}
+#clock-detail .label,
+#clock-detail .abbr,
+#clock-detail .offset,
+.axis {
+  color: var(--muted);
+}
+#clock-detail .time {
+  font-weight: 600;
+}
+.strip {
+  position: relative;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.strip .day,
+.strip .work,
+.strip .now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.strip .day {
+  background: color-mix(in srgb, var(--accent) 35%, var(--surface));
+}
+.strip .work {
+  top: 3px;
+  bottom: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.strip .now {
+  width: 2px;
+  margin-left: -1px;
+  background: var(--fg);
+}
+.axis {
+  grid-column: 4;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+.note {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface);
+}

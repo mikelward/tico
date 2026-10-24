@@ -43,6 +43,13 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   `chrome://extensions` instead leaves pages dimmed until they reload, since
   tico can no longer reach them. The alternative is a separate stored
   setting. Reversible: `Tico.dimOn` and the popup's checkbox.
+- **The clock detail opens on a click** of the popup's clocks, rather than
+  always showing, so the popup stays one row. Day is 07–19 and work is
+  09–17 in every zone, and the DST note looks three weeks ahead. Zone
+  abbreviations come from a small built-in table of common zones, since
+  Chrome names London "GMT+1"; others show Chrome's form. The alternatives
+  are an always-open detail and settings for the hours. Reversible:
+  `src/popup.js` and `src/clocks.js`.
 - **The app list is built in** (Calendar, Chat, Meet, YouTube Music), until
   the options page can edit it. Reversible: `src/apps.js`.
 
@@ -52,8 +59,10 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   and correcting each window type's frame waits for a device.
 - Window IDs change across a browser restart (SPEC.md §14.2): windows come
   back on the current workspace; matching them by tab URL is still to do.
-- Profile keys (SPEC.md §9.2), the clocks popover's strips and DST note
-  (§8.2), and the options page (§13).
+- Profile keys (SPEC.md §9.2) and the options page (§13), which takes the
+  clock zones and hours.
+- A month calendar with ISO week numbers under the clocks, as tide's
+  popover has.
 - A Playwright smoke test in CI (SPEC.md §17): loading the extension in
   Chromium and opening its pages worked by hand on 2026-10-24, but would
   add the first dependency.
