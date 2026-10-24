@@ -1,0 +1,19 @@
+name: npm update
+
+# Weekly batch of npm dependency updates, from mikelward/npm-update.
+on:
+  schedule:
+    # 06:17 UTC on Saturdays: an off-the-hour minute, since the top of the
+    # hour is the busiest slot on the shared scheduler.
+    - cron: '17 6 * * 6'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  npm-update:
+    uses: mikelward/npm-update/.github/workflows/npm-update.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
