@@ -2,7 +2,9 @@
 # src/ isn't listed, since an unlisted test never runs.
 TESTS = \
 	src/geometry_test.js \
-	src/workspaces_test.js
+	src/workspaces_test.js \
+	src/tico_test.js \
+	src/manifest_test.js
 
 .PHONY: test
 test:

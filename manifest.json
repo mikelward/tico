@@ -1,0 +1,137 @@
+{
+  "manifest_version": 3,
+  "name": "tico",
+  "version": "0.1.0",
+  "description": "dwm-style tiling and workspaces for Chrome and web app windows on ChromeOS.",
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "system.display"
+  ],
+  "commands": {
+    "focus-next": {
+      "description": "Focus the next window in the stack (Search+J)",
+      "suggested_key": {
+        "chromeos": "Search+J",
+        "default": "Alt+Shift+J"
+      }
+    },
+    "focus-prev": {
+      "description": "Focus the previous window in the stack (Search+K)",
+      "suggested_key": {
+        "chromeos": "Search+K",
+        "default": "Alt+Shift+K"
+      }
+    },
+    "swap-master": {
+      "description": "Swap the window with the master (Search+Space)",
+      "suggested_key": {
+        "chromeos": "Search+Space",
+        "default": "Alt+Shift+Space"
+      }
+    },
+    "layout-next": {
+      "description": "Next layout (Search+.)",
+      "suggested_key": {
+        "chromeos": "Search+Period",
+        "default": "Alt+Shift+Period"
+      }
+    },
+    "move-next": {
+      "description": "Move the window down the stack (Search+Shift+J)"
+    },
+    "move-prev": {
+      "description": "Move the window up the stack (Search+Shift+K)"
+    },
+    "grow": {
+      "description": "Grow the master (Search+Shift+.)"
+    },
+    "shrink": {
+      "description": "Shrink the master (Search+Shift+,)"
+    },
+    "master-add": {
+      "description": "Add a master (Search+Shift+I)"
+    },
+    "master-remove": {
+      "description": "Remove a master (Search+Shift+D)"
+    },
+    "layout-prev": {
+      "description": "Previous layout (Search+,)"
+    },
+    "monocle": {
+      "description": "Toggle monocle (Search+Shift+Space)"
+    },
+    "float": {
+      "description": "Toggle floating (Search+Shift+F)"
+    },
+    "workspace-next": {
+      "description": "Next workspace (Search+Right)"
+    },
+    "workspace-prev": {
+      "description": "Previous workspace (Search+Left)"
+    },
+    "send-next": {
+      "description": "Send the window to the next workspace (Search+Shift+Right)"
+    },
+    "send-prev": {
+      "description": "Send the window to the previous workspace (Search+Shift+Left)"
+    },
+    "workspace-1": {
+      "description": "Go to workspace 1 (Search+1)"
+    },
+    "workspace-2": {
+      "description": "Go to workspace 2 (Search+2)"
+    },
+    "workspace-3": {
+      "description": "Go to workspace 3 (Search+3)"
+    },
+    "workspace-4": {
+      "description": "Go to workspace 4 (Search+4)"
+    },
+    "workspace-5": {
+      "description": "Go to workspace 5 (Search+5)"
+    },
+    "workspace-6": {
+      "description": "Go to workspace 6 (Search+6)"
+    },
+    "workspace-7": {
+      "description": "Go to workspace 7 (Search+7)"
+    },
+    "workspace-8": {
+      "description": "Go to workspace 8 (Search+8)"
+    },
+    "workspace-9": {
+      "description": "Go to workspace 9 (Search+9)"
+    },
+    "send-1": {
+      "description": "Send the window to workspace 1 (Search+Shift+1)"
+    },
+    "send-2": {
+      "description": "Send the window to workspace 2 (Search+Shift+2)"
+    },
+    "send-3": {
+      "description": "Send the window to workspace 3 (Search+Shift+3)"
+    },
+    "send-4": {
+      "description": "Send the window to workspace 4 (Search+Shift+4)"
+    },
+    "send-5": {
+      "description": "Send the window to workspace 5 (Search+Shift+5)"
+    },
+    "send-6": {
+      "description": "Send the window to workspace 6 (Search+Shift+6)"
+    },
+    "send-7": {
+      "description": "Send the window to workspace 7 (Search+Shift+7)"
+    },
+    "send-8": {
+      "description": "Send the window to workspace 8 (Search+Shift+8)"
+    },
+    "send-9": {
+      "description": "Send the window to workspace 9 (Search+Shift+9)"
+    }
+  }
+}
