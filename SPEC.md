@@ -1215,7 +1215,15 @@ finer steps and the exact 3× aren't offered in Settings.
 
 **Finer than Settings**, most practical first:
 
-1. **`gesture_prop` in crosh.**
+1. **A mouse that stores its DPI.** libgestures assumes 1000 counts per
+   inch (`Mouse CPI`), so a mouse sending more moves the pointer that much
+   faster at every speed step. It's the one fix that survives reboots,
+   needs no flag or developer mode, and reaches Android and Linux windows
+   too. Some office mice, such as Logitech's M510, are fixed at 1000;
+   Solaar (`solaar show`) lists `ADJUSTABLE DPI` on a Logitech mouse that
+   can change it. Gaming mice keep it in onboard memory: set it once with
+   Solaar, libratbag or the maker's app, on any machine.
+2. **`gesture_prop` in crosh.**
    - It needs `chrome://flags/#gesture-properties-dbus-service`
      (`kGesturePropertiesDBusService`, off by default). The D-Bus policy
      admits the `chronos` user, so developer mode doesn't seem to be
@@ -1231,13 +1239,13 @@ finer steps and the exact 3× aren't offered in Settings.
    - **It's per device and per boot.** The values most likely reset on
      reboot, resume or replug *(unverified)*, and nothing re-applies them
      automatically. It suits an experiment, not a daily setting.
-2. **Developer mode**, with rootfs verification off: a file in
+3. **Developer mode**, with rootfs verification off: a file in
    `/etc/gesture/` (read at startup, `gesture_property_provider.cc`)
    makes the same properties stick. It costs verified boot, and updates
    overwrite the rootfs. That's the off-ramp (§3.6), not tico.
-3. **Web pages only**: extensions can rescale wheel events in pages, not
+4. **Web pages only**: extensions can rescale wheel events in pages, not
    in the shell or Linux apps. That's a poor fit.
-4. **Linux apps**: exo converts ChromeOS's offset to Wayland axis units
+5. **Linux apps**: exo converts ChromeOS's offset to Wayland axis units
    (`components/exo/wayland/wayland_pointer_delegate.cc`). Sommelier has
    no scroll-scale option (`vm_tools/sommelier/sommelier-seat.cc`), so
    per-app multipliers, like kitty's, are the tool.
