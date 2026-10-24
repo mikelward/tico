@@ -83,17 +83,16 @@ includes the tests. Build the store's from a checkout:
 make zip     # dist/tico-<version>.zip; `unzip -l` it to see what went in
 ```
 
-Or let GitHub build it. Raise `version` in `manifest.json` through a pull
-request like any other change, since the store refuses an upload whose
-version isn't higher than the published one. Once that's merged, tag it:
+Or let GitHub build it: releases are automatic. Raise `version` in
+`manifest.json` through a pull request like any other change (the store
+refuses an upload whose version isn't higher than the published one). When
+it merges, the `release` workflow sees a version with no release yet, runs
+the tests, builds the ZIP and publishes it as release `v<version>`, tag
+included, under **Releases** on the repository page. A merge that leaves
+the version alone builds the ZIP and releases nothing.
 
-```sh
-git tag v0.2.0 origin/main && git push origin v0.2.0
-```
-
-The `release` workflow then runs the tests, builds the ZIP and attaches it
-to a GitHub release, under **Releases** on the repository page. It stops if
-the tag doesn't match the manifest's version. Running the workflow by hand
+Pushing a `v<version>` tag by hand does the same, and stops if the tag
+doesn't match the manifest's version. Running the workflow by hand
 (**Actions › release › Run workflow**) builds the ZIP as a download on that
 run instead, without a release.
 
