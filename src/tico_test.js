@@ -710,3 +710,135 @@ test("turning the dim off undims every page while tico can still reach them", as
   await tico.event();
   assert.deepEqual(tico.state.dimmed, []);
 });
+
+test("after a browser restart, windows go back to their workspaces by their tabs", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://mail.google.com/" }),
+    on(HD, 2, { url: "https://docs.google.com/a" }),
+    on(HD, 3, { url: "https://github.com/" }),
+  ]);
+  await tico.command("send-3");
+  chrome.focus(2);
+  await tico.event();
+  await tico.command("float");
+  // The browser restarts: the same windows return with new IDs, all showing,
+  // and the service worker starts afresh from storage.
+  chrome.wins = [];
+  chrome.open(on(HD, 11, { url: "https://github.com/" }));
+  chrome.open(on(HD, 12, { url: "https://mail.google.com/" }));
+  chrome.open(on(HD, 13, { url: "https://docs.google.com/a" }));
+  chrome.open(on(HD, 14, { url: "https://example.com/new" }));
+  chrome.focus(13);
+  const after = new Tico(chrome);
+  await after.event();
+  const s = after.state;
+  assert.equal(s.windows[12].ws, 3, "Gmail went back to workspace 3");
+  assert.equal(chrome.win(12).state, "minimized", "which isn't showing");
+  assert.equal(s.windows[13].floating, true, "the floating window still floats");
+  assert.deepEqual(s.workspaces[1].windows, [13, 11, 14], "the stack order holds, and the new window joins the end");
+  assert.equal(1 in s.windows, false);
+});
+
+test("after a restart, windows Chrome restores one at a time still find their workspaces", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://mail.google.com/" }),
+    on(HD, 2, { url: "https://github.com/" }),
+  ]);
+  await tico.command("send-3");
+  chrome.wins = [];
+  chrome.open(on(HD, 11, { url: "https://github.com/", focused: true }));
+  const after = new Tico(chrome);
+  await after.event();
+  assert.equal(after.state.windows[11].ws, 1);
+  assert.equal(after.state.restoring[1].ws, 3, "Gmail's window waits for its return");
+  chrome.open(on(HD, 12, { url: "https://mail.google.com/" }));
+  await after.event();
+  assert.equal(after.state.windows[12].ws, 3, "Gmail went back to workspace 3");
+  assert.equal(chrome.win(12).state, "minimized");
+  assert.equal(after.state.restoring, undefined, "nothing is left waiting");
+});
+
+test("after a restart, a window still matches after its page changed with the dim off", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+  ]);
+  await tico.command("float");
+  chrome.win(1).url = "https://example.net/";
+  await tico.tabLoaded(10);
+  chrome.wins = [];
+  chrome.open(on(HD, 11, { url: "https://example.org/" }));
+  chrome.open(on(HD, 12, { url: "https://example.net/", focused: true }));
+  const after = new Tico(chrome);
+  await after.event();
+  assert.equal(after.state.windows[12].floating, true, "it found the floating window by its new page");
+});
+
+test("after a restart, a popup tico doesn't manage can't take a window's place", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true, url: "https://mail.google.com/" })]);
+  await tico.command("send-3");
+  chrome.wins = [];
+  chrome.open(on(HD, 11, { type: "popup", url: "https://mail.google.com/" }));
+  chrome.open(on(HD, 12, { url: "https://mail.google.com/", focused: true }));
+  const after = new Tico(chrome);
+  await after.event();
+  assert.equal(after.state.windows[12].ws, 3, "the tab window got Gmail's place");
+  assert.equal(11 in after.state.windows, false);
+});
+
+test("after a restart, an app popup that comes back late is still the app's", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true, url: "https://github.com/" })]);
+  await tico.command("app-calendar");
+  await tico.command("send-3");
+  chrome.wins = [];
+  chrome.open(on(HD, 11, { url: "https://github.com/", focused: true }));
+  const after = new Tico(chrome);
+  await after.event();
+  chrome.open(on(HD, 12, { type: "popup", url: "https://calendar.google.com/" }));
+  await after.event();
+  assert.equal(after.state.windows[12].ws, 3, "Calendar went back to workspace 3");
+  assert.equal(chrome.win(12).state, "minimized");
+  await after.command("app-calendar");
+  assert.equal(chrome.created.length, 1, "its key finds it rather than opening another");
+});
+
+test("after a restart, a first window that matches nothing doesn't end the wait", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true, url: "https://mail.google.com/" })]);
+  await tico.command("send-3");
+  chrome.wins = [];
+  chrome.open(on(HD, 11, { url: "https://example.com/new", focused: true }));
+  const after = new Tico(chrome);
+  await after.event();
+  assert.equal(after.state.windows[11].ws, 1, "the new window joins the showing workspace");
+  chrome.open(on(HD, 12, { url: "https://mail.google.com/" }));
+  await after.event();
+  assert.equal(after.state.windows[12].ws, 3, "Gmail still went back to workspace 3");
+  assert.equal(chrome.win(12).state, "minimized");
+});
+
+test("after a restart, a command ends the wait for windows that never came back", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://mail.google.com/" }),
+    on(HD, 2, { url: "https://github.com/" }),
+  ]);
+  await tico.command("send-3");
+  chrome.wins = [];
+  chrome.open(on(HD, 11, { url: "https://github.com/", focused: true }));
+  const after = new Tico(chrome);
+  await after.event();
+  await after.command("focus-next");
+  assert.equal(after.state.restoring, undefined);
+  chrome.open(on(HD, 12, { url: "https://mail.google.com/" }));
+  await after.event();
+  assert.equal(after.state.windows[12].ws, 1, "a window opened later is just new");
+});
+
+test("closing every window one by one, then opening one, matches nothing", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true, url: "https://mail.google.com/" })]);
+  await tico.command("send-3");
+  chrome.wins = [];
+  await tico.event();
+  chrome.open(on(HD, 2, { url: "https://mail.google.com/", focused: true }));
+  await tico.event();
+  assert.equal(tico.state.windows[2].ws, 1, "a new window joins the workspace showing");
+});

@@ -5,6 +5,7 @@
 
 import { appOf, DEFAULT_APPS } from "./apps.js";
 import { overlay } from "./dim.js";
+import { matchWindows, windowUrls } from "./restart.js";
 import * as geometry from "./geometry.js";
 import { unreadCount } from "./unread.js";
 import * as ws from "./workspaces.js";
@@ -116,13 +117,20 @@ export class Tico {
   // the new one may be reachable where the old wasn't (a new tab page
   // becoming a website), so forget the tab and look at the dim afresh.
   tabLoaded(tabId) {
-    // With the dim off there's nothing to do; skip the sync.
-    if (this.state && !this.dimOn()) return Promise.resolve();
+    // With the dim off there's nothing to dim, so skip the sync, but the
+    // window's URLs still changed, and a restart matches by them (§14.2).
+    if (this.state && !this.dimOn()) return this.run(() => this.rememberUrls());
     return this.run(async () => {
       await this.sync();
       this.state.dimmed = (this.state.dimmed ?? []).filter((id) => id !== tabId);
       await this.apply();
     });
+  }
+
+  async rememberUrls() {
+    const all = await this.api.windows.getAll({ populate: true, windowTypes: [...MANAGED, "popup"] });
+    for (const w of all) if (w.id in this.state.windows) this.state.windows[w.id].urls = windowUrls(w);
+    await this.save();
   }
 
   dimOn() {
@@ -132,6 +140,8 @@ export class Tico {
   command(name) {
     return this.run(async () => {
       await this.sync();
+      // Pressing a key means the browser has finished restoring (§14.2).
+      delete this.state.restoring;
       const focus = await this.perform(name);
       await this.apply(focus);
     });
@@ -168,14 +178,14 @@ export class Tico {
     await this.load();
     this.displays = await this.api.system.display.getInfo();
     const ids = this.displays.map((d) => d.id);
-    // The state as the last step left the screen, before displays changed.
-    const before = this.state;
-    let s = before ? ws.setDisplays(before, ids) : ws.create(ids);
-    const appPopups = new Set((before?.appPopups ?? []).map(Number));
-
     // Every window type, so a focused popup or devtools window still says
     // which display you're on, but only managed ones are tracked.
     const all = await this.api.windows.getAll({ populate: true, windowTypes: [...MANAGED, "popup", "devtools"] });
+    // The state as the last step left the screen, before displays changed,
+    // with windows renamed if the browser restarted.
+    const { state: before, renamed, waiting } = this.restarted(this.state, all);
+    let s = before ? ws.setDisplays(before, ids) : ws.create(ids);
+    const appPopups = new Set((before?.appPopups ?? []).map(Number));
     const refused = new Set((before?.refused ?? []).filter((id) => all.some((w) => w.id === id)));
     const wins = all.filter((w) => managed(w, appPopups, refused));
     this.windows = new Map(wins.map((w) => [w.id, w]));
@@ -193,6 +203,11 @@ export class Tico {
     // anything, so neither a new display nor one restore that brings a
     // workspace makes other windows look minimized or restored.
     for (const w of wins) {
+      // Chrome restores a restarted window as it likes; tico puts it back.
+      if (renamed.has(w.id)) {
+        if (w.focused) s = ws.focused(s, w.id);
+        continue;
+      }
       if (!(w.id in s.windows) || !before || !(w.id in before.windows)) {
         s = ws.addWindow(s, w.id, displayFor(w, this.displays));
         // A window already minimized when tico first sees it stays so.
@@ -215,6 +230,14 @@ export class Tico {
     }
     s.appPopups = [...appPopups].filter((id) => this.windows.has(id));
     s.refused = [...refused];
+    if (Object.keys(waiting).length > 0) s.restoring = waiting;
+    else delete s.restoring;
+    // What a window is, should the browser restart and renumber it.
+    for (const w of wins) {
+      if (!(w.id in s.windows)) continue;
+      s.windows[w.id].urls = windowUrls(w);
+      s.windows[w.id].type = w.type;
+    }
     // A mark clears when you go to its window, or it closes.
     s.marks = (before?.marks ?? []).filter((id) => this.windows.has(id) && !this.windows.get(id).focused);
     s.unread = Object.fromEntries(
@@ -232,6 +255,63 @@ export class Tico {
       else await this.api.windows.remove(id);
     }
     this.state = s;
+  }
+
+  // A browser restart gives every window a new ID, so none of the stored
+  // ones exist any more; closing windows one by one never does that, since
+  // each sync forgets the closed ones. Then each new window takes the place
+  // of the old one it shares the most tab URLs with (§14.2). Chrome may
+  // bring the windows back over several events, so the old ones nothing
+  // matched yet wait in `restoring` for the next sync, until your first
+  // command says the restore is over. Returns the state to judge this sync
+  // by, the new IDs that were matched, and the old windows still waiting.
+  restarted(stored, all) {
+    const none = { state: stored, renamed: new Set(), waiting: {} };
+    if (!stored) return none;
+    const oldIds = Object.keys(stored.windows).map(Number);
+    const present = (id) => all.some((w) => w.id === id);
+    let state = stored;
+    let candidates = all;
+    let waiting;
+    if (oldIds.length > 0 && !oldIds.some(present)) {
+      // An app popup keeps saying so while it waits.
+      const appPopups = new Set((stored.appPopups ?? []).map(Number));
+      waiting = Object.fromEntries(
+        Object.entries(stored.windows).map(([id, info]) => [id, { ...info, appPopup: appPopups.has(Number(id)) }]),
+      );
+    } else if (stored.restoring) {
+      // Put the waiting windows back on their workspaces, and match only
+      // windows tico hasn't seen.
+      state = structuredClone(stored);
+      for (const [id, { appPopup, ...info }] of Object.entries(stored.restoring)) {
+        state.windows[id] = info;
+        state.workspaces[info.ws].windows.push(Number(id));
+      }
+      waiting = stored.restoring;
+      candidates = all.filter((w) => !(w.id in stored.windows));
+    } else {
+      return none;
+    }
+    // Each kind of window only takes the place of its own kind, so a popup
+    // tico doesn't manage can't take a tab window's place.
+    const renames = new Map();
+    for (const type of new Set(Object.values(waiting).map((info) => info.type))) {
+      const old = Object.fromEntries(
+        Object.entries(waiting).filter(([, info]) => info.type === type).map(([id, info]) => [id, info.urls]),
+      );
+      const current = candidates.filter((w) => w.type === type).map((w) => ({ id: w.id, urls: windowUrls(w) }));
+      for (const [from, to] of matchWindows(old, current)) renames.set(from, to);
+    }
+    // A window that matches nothing doesn't end the wait for the rest; with
+    // no window at all, you may have closed them all, so nothing waits.
+    if (renames.size === 0 && !stored.restoring && all.length === 0) return none;
+    state = ws.renameWindows(state, renames);
+    state.appPopups = [
+      ...(stored.appPopups ?? []).filter((id) => present(Number(id))),
+      ...[...renames].filter(([from]) => waiting[from].appPopup).map(([, to]) => to),
+    ];
+    const left = Object.fromEntries(Object.entries(waiting).filter(([id]) => !renames.has(Number(id))));
+    return { state, renamed: new Set(renames.values()), waiting: left };
   }
 
   // The display of the focused window, any type: a home window or a popup

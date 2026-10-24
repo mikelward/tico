@@ -884,9 +884,20 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   browser and `chrome.storage.local` for what survives a restart.
 - On wake, tico reconciles stored state with `windows.getAll`: unknown
   windows join the current workspace; vanished ones are dropped.
-- Window IDs change across a browser restart. tico rebuilds workspaces
-  after a restart by matching each window's tab URLs, and anything it can't
-  match lands on workspace 1.
+- Window IDs change across a browser restart. tico stores each window's tab
+  URLs with its place, refreshed as pages load, and knows a restart when none of the stored IDs
+  exist; closing windows one by one never looks like that, since each sync
+  forgets the closed ones. Each new window then takes the place of the old
+  one it shares the most URLs with (closest fit first, each used once): its
+  workspace, place in the stack and float. Chrome's restored minimized
+  states aren't read as your doing; tico just puts the screen back. A
+  window it can't match joins the workspace showing on its display, as any
+  new window does.
+- Chrome may bring the windows back over several events, so old windows
+  nothing has matched yet wait for later ones to match, even when the first
+  to come back matches none of them, until your first
+  command says the restore is over. Each joins the end of its workspace's
+  stack.
 
 ### 14.3 Cost and reliability
 

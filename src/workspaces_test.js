@@ -195,3 +195,18 @@ test("mfact and the master count stay in range", () => {
   assert.equal(s.workspaces[1].modes.tile.nmaster, 1);
   assert.equal(s.workspaces[2].modes.tile.mfact, 0.55, "other workspaces untouched");
 });
+
+test("a renamed window keeps its workspace, place and settings", () => {
+  let s = ws.create(["hd"]);
+  s = ws.addWindow(s, 1, "hd");
+  s = ws.addWindow(s, 2, "hd");
+  s = ws.send(s, 2, 3);
+  s = ws.toggleFloating(s, 1);
+  s = ws.focused(s, 1);
+  const r = ws.renameWindows(s, new Map([[1, 11], [2, 12]]));
+  assert.deepEqual(r.workspaces[1].windows, [11]);
+  assert.deepEqual(r.workspaces[3].windows, [12]);
+  assert.equal(r.workspaces[1].focused, 11);
+  assert.equal(r.windows[11].floating, true);
+  assert.equal(1 in r.windows, false);
+});

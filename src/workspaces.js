@@ -276,3 +276,19 @@ export function adjust(state, n, mode, change) {
   if ("nmaster" in change) m.nmaster = Math.max(1, m.nmaster + change.nmaster);
   return s;
 }
+
+// After a browser restart (§14.2), each window in `renames` (old ID to new)
+// keeps its workspace, place in the stack, and everything else tico knows.
+export function renameWindows(state, renames) {
+  const s = clone(state);
+  for (const [from, to] of renames) {
+    if (!(from in s.windows) || to in s.windows) continue;
+    s.windows[to] = s.windows[from];
+    delete s.windows[from];
+    for (const w of Object.values(s.workspaces)) {
+      w.windows = w.windows.map((id) => (id === from ? to : id));
+      if (w.focused === from) w.focused = to;
+    }
+  }
+  return s;
+}
