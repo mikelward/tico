@@ -609,6 +609,9 @@ table:
 | Search+Alt+M | move the window to another display | keep; tico follows the move (§6.1) |
 | Search+/ and Search+= on Dvorak (Search+[ and ] on QWERTY) | the desk to the left and right | keep; with one desk (§6.3) they do nothing, and tico doesn't use them |
 | Search+Shift+A | assign the window to all desks | keep; tico doesn't use it |
+| Search+D | dictation | remove it in the Shortcuts app, under Accessibility, to use Search+D |
+| Search+S | select to speak | keep; tico doesn't use it |
+| Search+I | none | free |
 
 The Shortcuts app's settings are in Settings › Keyboard and inputs ›
 View keyboard shortcuts; Calendar and microphone mute (under Device), the emoji picker and
@@ -616,6 +619,66 @@ Quick Insert are editable there; Search+Left / Right are listed under Text but l
 tico key on one does nothing until it's removed there.
 
 Whatever moves to Alt+Shift moves as a set, so the map stays learnable.
+
+### 7.3 Keys tico can bind
+
+Chrome binds an extension command only to a letter, a digit, Comma, Period,
+Space, Tab, an arrow, Insert, Delete, Home, End, Page Up or Page Down, with
+Search, Ctrl or Alt, and optionally Shift (`ui/base/accelerators/command.cc`).
+So tide's `\` `/` `=` `-` `` ` `` and Return can't be tico keys at all.
+
+The rule for choosing (maintainer, 2026-10-24): an action used often gets
+Search and one key, no other modifier; Shift means moving the window (to a
+workspace, along the stack), or marks a rare action like floating. T stays
+reserved for the terminal.
+
+This is every Search combo, from tico's manifest and from trying them on a
+Chromebook. **OS, removable** means ChromeOS has it and the Shortcuts app
+(§7.2) can take it off; **OS, locked** means it can't; a blank is untried.
+Search+Alt and Search+Ctrl are allowed too, and untried unless listed.
+
+| Key | Search+key | Search+Shift+key | Search+Alt+key |
+|---|---|---|---|
+| A | | OS: assign to all desks | |
+| B | | | |
+| C | tico: app 1 (Calendar); OS calendar panel, removable | tico: app 2 (Chat) | |
+| D | OS: dictation, removable (Accessibility) | tico: remove a master; OS: minimize Snap Group (§7.2) | |
+| E | | | |
+| F | OS: Quick Insert, removable; tico planned: second profile (§9.1) | tico: toggle floating | OS: float |
+| G | tico: browser | OS: Snap Group; tico planned: third profile | |
+| H | free once the Explore app's shortcut is removed | | |
+| I | free; tico planned: IRC (§9.1) | tico: add a master | |
+| J | tico: focus next | tico: move down the stack | |
+| K | tico: focus previous | tico: move up the stack | |
+| L | OS: lock, editable, kept | | |
+| M | tico: app 3 (Meet); OS microphone mute, removable | tico: swap with master | OS: move to other display |
+| N | | OS: notification center *(unverified)* | |
+| O | | | |
+| P | | | |
+| Q | | | |
+| R | | | |
+| S | OS: select to speak | | |
+| T | reserved: the terminal (§1) | | |
+| U | | | |
+| V | OS: clipboard history | | |
+| W | | | |
+| X | OS: picture-in-picture | | |
+| Y | tico: app 4 (YouTube Music) | | |
+| Z | OS: window layout menu | | |
+| 1–9 | tico: go to workspace | tico: send to workspace | |
+| 0 | | | |
+| Comma | tico: previous layout | tico: shrink master | |
+| Period | tico: next layout | tico: grow master | |
+| Space | tico: dashboard | tico: monocle; OS emoji picker, removable | |
+| Tab | tico: attention | | |
+| Left / Right | OS, locked: Home / End | OS, locked: select to line start / end | |
+| Up / Down | OS, locked: Page Up / Page Down | OS, locked | |
+| Page Up / Down | tico: previous / next workspace | tico: send to previous / next workspace | |
+| Home / End | | | |
+| Insert / Delete | | | |
+
+Search+Ctrl+S opens the Shortcuts app itself, and Search+Esc the task manager (Esc can't be a tico key anyway). Search+S, Search+V, Search+X and Search+Z may be removable too: whether the
+Shortcuts app shows them with a padlock is untried.
 
 ## 8. Status, bar and clocks
 
