@@ -2,6 +2,8 @@
 // tests in Node: tabs, apps and tico's commands, filtered by a fuzzy match
 // and ordered by how well they match, then by how recently you used them.
 
+import { appOfUrl } from "./apps.js";
+
 // How well `query` matches `text`, or null if it doesn't. Every query
 // character must appear in order; matches at the start of a word, and runs of
 // consecutive matches, score higher, so "gc" finds "Google Calendar" first.
@@ -26,13 +28,15 @@ export function fuzzyScore(query, text) {
   return score;
 }
 
-// The best score of an item over its title and its other searchable text,
-// such as a tab's host, which counts for less.
+// The best score of an item over its title, a tab's app name, which counts
+// as much, and its other searchable text, such as a tab's host, which counts
+// for less.
 function itemScore(query, item) {
-  const title = fuzzyScore(query, item.title);
+  const scores = [fuzzyScore(query, item.title), item.app ? fuzzyScore(query, item.app) : null];
   const extra = item.extra ? fuzzyScore(query, item.extra) : null;
-  if (title === null && extra === null) return null;
-  return Math.max(title ?? -Infinity, extra === null ? -Infinity : extra - 2);
+  if (extra !== null) scores.push(extra - 2);
+  const found = scores.filter((s) => s !== null);
+  return found.length === 0 ? null : Math.max(...found);
 }
 
 // The two scopes: "launch" is apps and tico's commands, "tabs" is open tabs.
@@ -75,7 +79,9 @@ function host(url) {
 }
 
 // The launcher's items: every tab but tico's own pages, the app keys, and
-// the manifest's commands. `workspaceOf` names a window's workspace, or null.
+// the manifest's commands. A tab on an app's site carries the app's name, so
+// "calendar" finds Calendar's tabs. `workspaceOf` names a window's
+// workspace, or null.
 export function items({ tabs = [], apps = [], commands = {}, workspaceOf = () => null, ownOrigin = "" }) {
   const out = [];
   for (const t of tabs) {
@@ -85,6 +91,7 @@ export function items({ tabs = [], apps = [], commands = {}, workspaceOf = () =>
       kind: "tab",
       title: t.title || t.url || "Untitled",
       extra: host(t.url ?? ""),
+      app: appOfUrl(t.url, apps)?.name ?? null,
       detail: n === null ? "tab" : `tab on ${n}`,
       recency: t.lastAccessed ?? 0,
       tabId: t.id,

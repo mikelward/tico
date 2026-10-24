@@ -81,7 +81,7 @@ test("a bad app is an error naming it", () => {
       { command: "app-music", name: "B", url: "https://example.com/b" },
     ]),
     ["apps: app 2: https://example.com is already app 1's site"],
-    "windows match apps by origin, so two can't share one",
+    "tabs match apps by origin, so two can't share one",
   );
 });
 
