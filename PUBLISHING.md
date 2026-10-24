@@ -60,14 +60,11 @@ What the first upload needs:
   rendered to the 16, 32, 48 and 128 px PNGs the manifest names. After
   changing the SVG, `make icons` renders them again. The store's own
   listing icon is the 128 px one.
-- **A privacy policy URL.** The store asks for one when an extension
-  handles user data, and reading tab titles and URLs counts. tico has no
-  server and collects nothing for its developer. It keeps its state in
-  `chrome.storage.local`, on the Chromebook. But its shared settings (the
-  clocks, the app keys' sites, the watched sites, the workspace settings) are in
-  `chrome.storage.sync`, which Chrome copies to your Google account and
-  your other signed-in browsers when Chrome Sync is on. The policy should
-  say both. A short page on GitHub Pages or in this repository is enough.
+- **A privacy policy URL.** Done: [PRIVACY.md](PRIVACY.md). Give the store
+  `https://github.com/mikelward/tico/blob/main/PRIVACY.md`. It says what
+  tico reads, keeps and sends, including that Chrome Sync copies the shared
+  settings to your Google account when Sync is on. Update it when tico
+  starts reading or keeping something new.
 - **Screenshots.** At least one, 1280×800 or 640×400. Take them on the
   Chromebook (Search+Ctrl+Show windows takes a screenshot).
 - **A developer account.** Register at the
@@ -119,7 +116,7 @@ In the [developer dashboard](https://chrome.google.com/webstore/devconsole):
    - **Remote code:** no. tico runs only the code in its package.
    - **Data use:** tico sends nothing to its developer or anyone else.
      Chrome Sync carrying the shared settings is Chrome's, not tico's, but
-     say so in the policy, as above. Then tick the certifications.
+     PRIVACY.md says so. Then tick the certifications.
 4. **Distribution:** **Unlisted** to try a published build first (only
    people with the link can install it), or **Public**. **Private** limits
    it to listed testers.
