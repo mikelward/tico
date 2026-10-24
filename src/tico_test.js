@@ -4,6 +4,11 @@ import assert from "node:assert/strict";
 import { Tico } from "./tico.js";
 import { FakeChrome, HD, UW } from "./fake_chrome.js";
 
+const HOME = "chrome-extension://tico/src/home.html";
+const homes = (chrome) => chrome.wins.filter((w) => w.url === HOME);
+// The windows tico opened, other than home windows.
+const opened = (chrome) => chrome.created.filter((c) => c.url !== HOME).map(({ id, ...c }) => c);
+
 function on(display, id, extra = {}) {
   const a = display.workArea;
   return { id, left: a.left + 10 * id, top: a.top + 10, width: 400, height: 300, ...extra };
@@ -37,13 +42,13 @@ test("switching workspaces minimizes the old windows and restores them on return
   await tico.command("workspace-2");
   assert.equal(chrome.win(1).state, "minimized");
   assert.equal(chrome.win(2).state, "minimized");
-  chrome.open(on(HD, 3, { focused: true }));
+  chrome.open(on(HD, 9, { focused: true }));
   await tico.event();
-  assert.deepEqual(chrome.box(3), { x: 0, y: 0, w: 1920, h: 1032 }, "a new window joins workspace 2");
+  assert.deepEqual(chrome.box(9), { x: 0, y: 0, w: 1920, h: 1032 }, "a new window joins workspace 2");
   await tico.command("workspace-1");
   assert.equal(chrome.win(1).state, "normal");
   assert.equal(chrome.win(2).state, "normal");
-  assert.equal(chrome.win(3).state, "minimized");
+  assert.equal(chrome.win(9).state, "minimized");
 });
 
 test("sending a window to a hidden workspace hides it and retiles the rest", async () => {
@@ -253,19 +258,19 @@ test("an app key focuses the app's window, bringing its workspace", async () => 
   await tico.command("app-calendar");
   assert.equal(tico.state.displays.hd, 4);
   assert.equal(chrome.win(2).focused, true);
-  assert.equal(chrome.created.length, 0, "nothing new opened");
+  assert.deepEqual(opened(chrome), [], "nothing new opened");
 });
 
 test("an app key with no window opens one and finds it next time", async () => {
   const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
   await tico.command("app-chat");
-  assert.deepEqual(chrome.created, [{ id: 2, url: "https://chat.google.com/", type: "popup" }]);
+  assert.deepEqual(opened(chrome), [{ url: "https://chat.google.com/", type: "popup" }]);
   assert.deepEqual(tico.state.workspaces[1].windows, [1, 2], "the popup tiles like an app");
   assert.equal(chrome.box(2).x, 1056);
   chrome.focus(1);
   await tico.event();
   await tico.command("app-chat");
-  assert.equal(chrome.created.length, 1, "the second press focuses it");
+  assert.equal(opened(chrome).length, 1, "the second press focuses it");
   assert.equal(chrome.win(2).focused, true);
 });
 
@@ -278,8 +283,8 @@ test("the browser key focuses a browser window on this workspace, else opens one
   assert.equal(chrome.win(2).focused, true);
   await tico.command("workspace-2");
   await tico.command("app-browser");
-  assert.deepEqual(chrome.created, [{ id: 3, url: undefined, type: "normal" }]);
-  assert.deepEqual(tico.state.workspaces[2].windows, [3]);
+  assert.deepEqual(opened(chrome), [{ url: undefined, type: "normal" }]);
+  assert.equal(tico.state.workspaces[2].windows.length, 1);
 });
 
 test("the browser key picks the most recently focused browser, not the first", async () => {
@@ -318,4 +323,74 @@ test("an app key focuses the app's newest window", async () => {
 test("other popups stay untracked", async () => {
   const { tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2, { type: "popup", url: "https://chat.google.com/" })]);
   assert.equal(2 in tico.state.windows, false);
+});
+
+test("an empty workspace gets a focused home window, and loses it when a window arrives", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
+  assert.equal(homes(chrome).length, 0);
+  await tico.command("workspace-2");
+  const [home] = homes(chrome);
+  assert.ok(home, "a home window opened");
+  assert.equal(home.focused, true);
+  assert.equal(home.type, "popup");
+  assert.equal(2 in tico.state.windows, false, "it isn't tracked or tiled");
+  // A key pressed in the home window acts on its display.
+  await tico.command("app-browser");
+  assert.equal(homes(chrome).length, 0, "it closed when the browser window arrived");
+  assert.deepEqual(chrome.removed, [home.id]);
+});
+
+test("switching between empty workspaces keeps one home window", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
+  await tico.command("workspace-2");
+  await tico.command("workspace-3");
+  assert.equal(homes(chrome).length, 1);
+  await tico.command("workspace-1");
+  assert.equal(homes(chrome).length, 0);
+  assert.equal(chrome.win(1).focused, true);
+});
+
+test("a home window you close stays closed until another empty workspace", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
+  await tico.command("workspace-2");
+  chrome.wins = chrome.wins.filter((w) => w.url !== HOME);
+  await tico.event();
+  assert.equal(homes(chrome).length, 0);
+  await tico.command("workspace-3");
+  assert.equal(homes(chrome).length, 1);
+});
+
+test("switching one display's workspace focuses only that display's home", async () => {
+  const { chrome, tico } = await setup([HD, UW], [on(HD, 1, { focused: true }), on(UW, 2)]);
+  await tico.command("send-4");
+  chrome.focus(2);
+  await tico.event();
+  await tico.command("send-5");
+  // Both displays now show empty workspaces, each with a home window.
+  const hdHome = () => homes(chrome).find((w) => w.left < 1920);
+  chrome.focus(hdHome().id);
+  await tico.event();
+  await tico.command("workspace-3");
+  assert.equal(tico.state.displays.hd, 3);
+  assert.equal(hdHome().focused, true, "focus stays on the display you switched");
+});
+
+test("a disconnected display's home window closes", async () => {
+  const { chrome, tico } = await setup([HD, UW], [on(HD, 1, { focused: true }), on(UW, 2)]);
+  chrome.focus(2);
+  await tico.event();
+  await tico.command("send-4");
+  const [home] = homes(chrome);
+  assert.ok(home.left >= 1920, "the ultrawide got a home");
+  chrome.displaysList = [HD];
+  Object.assign(home, { left: 100, top: 100 });
+  await tico.event();
+  assert.equal(homes(chrome).length, 0);
+  assert.deepEqual(tico.state.homes, {});
+});
+
+test("the last window leaving a workspace brings the home window", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
+  await tico.command("send-2");
+  assert.equal(homes(chrome).length, 1);
 });
