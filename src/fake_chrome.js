@@ -1,0 +1,58 @@
+// A fake of the parts of `chrome` tico uses, for tests. Windows and displays
+// are plain objects the test can read and change; every call returns a
+// promise, like MV3's chrome.* APIs.
+
+export class FakeChrome {
+  constructor({ displays, windows = [] }) {
+    this.displaysList = displays;
+    this.wins = windows.map((w) => ({ type: "normal", state: "normal", focused: false, alwaysOnTop: false, ...w }));
+    this.store = {};
+    this.updates = [];
+    const fake = this;
+    this.system = { display: { getInfo: async () => structuredClone(fake.displaysList) } };
+    this.storage = {
+      local: {
+        get: async (key) => (key in fake.store ? { [key]: structuredClone(fake.store[key]) } : {}),
+        set: async (items) => {
+          for (const [k, v] of Object.entries(items)) fake.store[k] = structuredClone(v);
+        },
+      },
+    };
+    this.windows = {
+      getAll: async ({ windowTypes } = {}) =>
+        structuredClone(fake.wins.filter((w) => !windowTypes || windowTypes.includes(w.type))),
+      update: async (id, props) => {
+        fake.updates.push({ id, ...props });
+        const w = fake.win(id);
+        if (props.focused) {
+          for (const o of fake.wins) o.focused = false;
+          if (w.state === "minimized") w.state = "normal";
+        }
+        Object.assign(w, props);
+        return structuredClone(w);
+      },
+    };
+  }
+
+  win(id) {
+    const w = this.wins.find((x) => x.id === id);
+    if (!w) throw new Error(`no window ${id}`);
+    return w;
+  }
+
+  open(w) {
+    this.wins.push({ type: "normal", state: "normal", focused: false, alwaysOnTop: false, ...w });
+  }
+
+  focus(id) {
+    for (const o of this.wins) o.focused = o.id === id;
+  }
+
+  box(id) {
+    const w = this.win(id);
+    return { x: w.left, y: w.top, w: w.width, h: w.height };
+  }
+}
+
+export const HD = { id: "hd", bounds: { left: 0, top: 0, width: 1920, height: 1080 }, workArea: { left: 0, top: 0, width: 1920, height: 1032 } };
+export const UW = { id: "uw", bounds: { left: 1920, top: 0, width: 3440, height: 1440 }, workArea: { left: 1920, top: 0, width: 3440, height: 1392 } };
