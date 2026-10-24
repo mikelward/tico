@@ -9,7 +9,7 @@ export const SETTINGS_KEY = "settings";
 
 // What follows you to every Chromebook, in storage.sync, and what each one
 // keeps for its own displays, in storage.local.
-export const SHARED = ["clocks", "day", "work", "apps", "dimStrength"];
+export const SHARED = ["clocks", "day", "work", "apps", "dimStrength", "watched"];
 export const PER_MACHINE = ["singleRules", "ultrawideAspect"];
 
 export function pick(settings, keys) {
@@ -22,6 +22,8 @@ export const DEFAULT_SETTINGS = {
   work: WORK,
   apps: DEFAULT_APPS,
   dimStrength: 0.1,
+  // Sites watched for unread counts beyond Gmail, Chat and Calendar.
+  watched: [],
   // Per machine, as they depend on its displays (§5.2).
   singleRules: [{ minAspect: 2.1, width: 0.8 }],
   ultrawideAspect: 2.1,
@@ -112,7 +114,25 @@ function checkStrength(strength) {
   return strength;
 }
 
-const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a), dimStrength: checkStrength };
+function checkWatched(sites) {
+  if (!Array.isArray(sites)) throw new Error("must be a list");
+  return [
+    ...new Set(
+      sites.map((site, i) => {
+        let url;
+        try {
+          url = new URL(site);
+        } catch {
+          throw new Error(`site ${i + 1}, "${site}", isn't a URL`);
+        }
+        if (url.protocol !== "https:") throw new Error(`site ${i + 1}, "${site}", must be https`);
+        return url.origin;
+      }),
+    ),
+  ];
+}
+
+const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a), dimStrength: checkStrength, watched: checkWatched };
 
 // Settings from what's stored: `sync` then `local`, each an object or
 // undefined. Returns {settings, errors}, an error for each bad or unknown

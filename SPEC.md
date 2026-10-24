@@ -792,8 +792,12 @@ notifications; tico derives it from **page titles** instead:
 - `Search+Tab` activates the most recent mark (§6.1); again goes to the next, as in
   tide §14.3. With nothing marked, it goes to the last window you were in.
 - A mark clears when the window is focused.
-- The watched origins are a setting. These narrow host permissions don't
-  need the all-sites warning.
+- The watched origins are a setting. Gmail, Chat and Calendar are always
+  watched, from the manifest; each other site is added on the options page,
+  which asks for that site's access alone, without the all-sites warning,
+  and tico registers the same title watcher for it at runtime
+  (`scripting.registerContentScripts`). Grants are per Chromebook while
+  settings sync, so a site added elsewhere waits for its access here.
 
 ## 11. The rest of the desktop
 
@@ -870,7 +874,8 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   name and address, beside the key Chrome has bound), the keys checklist
   (every command, the key this spec gives it and the key Chrome has bound,
   the unbound ones first, with a button to `chrome://extensions/shortcuts`;
-  a command on another key counts as done), the dim's strength (2% to 50%,
+  a command on another key counts as done), the extra sites watched for
+  attention (§10.3), the dim's strength (2% to 50%,
   repainting what's already dimmed), this Chromebook's
   layouts (the ultrawide threshold and the lone-window widths, kept in
   `storage.local`), and import, export and reset of the shared settings.

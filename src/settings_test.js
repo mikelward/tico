@@ -101,7 +101,7 @@ test("layouts are set per Chromebook, and checked", () => {
 
 test("pick keeps the shared settings apart from this Chromebook's", () => {
   const all = resolve().settings;
-  assert.deepEqual(Object.keys(pick(all, SHARED)), ["clocks", "day", "work", "apps", "dimStrength"]);
+  assert.deepEqual(Object.keys(pick(all, SHARED)), ["clocks", "day", "work", "apps", "dimStrength", "watched"]);
   assert.deepEqual(Object.keys(pick(all, PER_MACHINE)), ["singleRules", "ultrawideAspect"]);
 });
 
@@ -114,4 +114,12 @@ test("the dim's strength is shared, and checked", () => {
   assert.equal(resolve({ dimStrength: 0.2 }).settings.dimStrength, 0.2);
   assert.deepEqual(resolve({ dimStrength: 0.9 }).errors, ["dimStrength: 0.9 isn't a strength from 0.02 to 0.5 (2% to 50%), like 0.1"]);
   assert.ok(SHARED.includes("dimStrength"));
+});
+
+test("watched sites are shared https origins", () => {
+  const { settings, errors } = resolve({ watched: ["https://app.slack.com/client", "https://app.slack.com"] });
+  assert.deepEqual(errors, []);
+  assert.deepEqual(settings.watched, ["https://app.slack.com"], "each site once, as its origin");
+  assert.deepEqual(resolve({ watched: ["http://example.com"] }).errors, [`watched: site 1, "http://example.com", must be https`]);
+  assert.deepEqual(resolve({ watched: ["slack"] }).errors, [`watched: site 1, "slack", isn't a URL`]);
 });
