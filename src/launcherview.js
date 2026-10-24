@@ -223,9 +223,19 @@ document.body.addEventListener("mouseleave", () => {
 // access back.
 const DIM_ORIGINS = ["<all_urls>"];
 const dim = $("dim");
+// Chrome's prompt takes focus, and closing the dashboard under it drops the
+// request, so the dashboard stays open until you answer.
+let asking = false;
 dim.addEventListener("change", async () => {
   if (dim.checked) {
-    if (await chrome.permissions.request({ origins: DIM_ORIGINS })) await chrome.runtime.sendMessage({ dim: true });
+    let granted;
+    asking = true;
+    try {
+      granted = await chrome.permissions.request({ origins: DIM_ORIGINS });
+    } finally {
+      asking = false;
+    }
+    if (granted) await chrome.runtime.sendMessage({ dim: true });
     else dim.checked = false;
   } else if (await chrome.runtime.sendMessage({ dim: false })) {
     await chrome.permissions.remove({ origins: DIM_ORIGINS });
@@ -239,7 +249,9 @@ if (home) {
 } else {
   $("esc").textContent = "clear or close";
   // The dashboard is a glance: clicking away closes it.
-  window.addEventListener("blur", () => window.close());
+  window.addEventListener("blur", () => {
+    if (!asking) window.close();
+  });
 }
 
 chrome.storage.onChanged.addListener((changes) => {

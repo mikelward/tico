@@ -77,3 +77,24 @@ for (const mode of ["home", "dashboard"]) {
     assert.deepEqual(errors, []);
   });
 }
+
+test("the dashboard stays open while Chrome asks for the dim's access", async () => {
+  const { page, errors } = await open("src/launcher.html?mode=dashboard");
+  await page.waitForSelector("#clocks li");
+  // Hold the prompt open, and record closes rather than closing.
+  await page.evaluate(() => {
+    window.answer = null;
+    chrome.permissions.request = () => new Promise((resolve) => (window.answer = resolve));
+    window.closes = 0;
+    window.close = () => window.closes++;
+  });
+  await page.locator("#dim").click();
+  await page.waitForFunction(() => window.answer !== null);
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+  assert.equal(await page.evaluate(() => window.closes), 0, "closed under the prompt");
+  await page.evaluate(() => window.answer(false));
+  await page.waitForFunction(() => !document.getElementById("dim").checked);
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+  assert.equal(await page.evaluate(() => window.closes), 1, "didn't close once answered");
+  assert.deepEqual(errors, []);
+});
