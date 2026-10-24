@@ -3,6 +3,7 @@
 // first runs, so every listener is added here, at the top level, and tico
 // loads its saved state on the first event it handles.
 
+import { remind } from "./mouse.js";
 import { load as loadSettings, settingsChanged } from "./settings.js";
 import { isWatched, serialized, syncWatchers } from "./watchers.js";
 import { DIM_ORIGINS, Tico } from "./tico.js";
@@ -33,9 +34,12 @@ chrome.windows.onRemoved.addListener(changed);
 chrome.windows.onFocusChanged.addListener(changed);
 chrome.windows.onBoundsChanged.addListener(changed);
 chrome.system.display.onDisplayChanged.addListener(changed);
+// Startup is a login on ChromeOS, after which the mouse lines need running
+// again (§19.2).
 chrome.runtime.onStartup.addListener(() => {
   changed();
   watch();
+  remind(chrome).catch((e) => console.error("tico: couldn't open the mouse reminder:", e));
 });
 chrome.runtime.onInstalled.addListener(() => {
   changed();

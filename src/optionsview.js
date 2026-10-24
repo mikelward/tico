@@ -4,6 +4,7 @@
 
 import { APP_COMMANDS } from "./apps.js";
 import { checklist } from "./keys.js";
+import { MOUSE_PAGE } from "./mouse.js";
 import { ITEMS, progress, SETUP_KEY, tick } from "./setup.js";
 import { pattern } from "./watchers.js";
 import { DEFAULT_SETTINGS, PER_MACHINE, pick, resolve, SETTINGS_KEY, SHARED, START_MODES } from "./settings.js";
@@ -214,12 +215,15 @@ function layoutFromForm() {
     const [aspect, width] = tr.querySelectorAll("input");
     return { minAspect: num(aspect), width: Number((num(width) / 100).toPrecision(12)) };
   });
-  return { singleRules, ultrawideAspect: num($("ultrawide")) };
+  // An empty step is no reminder, not an error.
+  const wheelStep = $("wheel-step").value.trim() === "" ? null : num($("wheel-step"));
+  return { singleRules, ultrawideAspect: num($("ultrawide")), wheelStep };
 }
 
 function layoutToForm(settings) {
   ruleRows.replaceChildren(...settings.singleRules.map(ruleRow));
   $("ultrawide").value = settings.ultrawideAspect;
+  $("wheel-step").value = settings.wheelStep ?? "";
 }
 
 async function saveLocal() {
@@ -280,7 +284,7 @@ $("import").addEventListener("click", async () => {
   }
   const here = Object.keys(value).filter((k) => PER_MACHINE.includes(k));
   if (here.length > 0) {
-    showErrors([`${here.join(", ")} ${here.length > 1 ? "are" : "is"} set for each Chromebook, under Layouts, not imported`]);
+    showErrors([`${here.join(", ")} ${here.length > 1 ? "are" : "is"} set for each Chromebook, on this page, not imported`]);
     return;
   }
   // Settings left out keep their defaults, as tide's files do.
@@ -364,6 +368,10 @@ if (overrides.length > 0) {
   $("overrides").hidden = false;
 }
 $("ultrawide").addEventListener("change", () => saveLocal());
+$("wheel-step").addEventListener("change", () => saveLocal());
+$("show-mouse").addEventListener("click", () =>
+  chrome.tabs.create({ url: chrome.runtime.getURL(MOUSE_PAGE) }).catch((e) => showErrors([`Couldn't open the mouse page: ${e.message}`])),
+);
 $("add-rule").addEventListener("click", () => {
   ruleRows.append(ruleRow({}));
   ruleRows.lastElementChild.querySelector("input").focus();

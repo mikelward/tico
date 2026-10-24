@@ -204,3 +204,13 @@ input.width {
 .checklist p {
   margin: 2px 0 0 26px;
 }
+.steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+.steps li {
+  margin: 8px 0;
+}
+.steps code {
+  overflow-wrap: anywhere;
+}

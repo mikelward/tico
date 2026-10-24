@@ -10,7 +10,7 @@ export const SETTINGS_KEY = "settings";
 // What follows you to every Chromebook, in storage.sync, and what each one
 // keeps for its own displays, in storage.local.
 export const SHARED = ["clocks", "day", "work", "apps", "dimStrength", "watched", "defaultMode", "modes"];
-export const PER_MACHINE = ["singleRules", "ultrawideAspect"];
+export const PER_MACHINE = ["singleRules", "ultrawideAspect", "wheelStep"];
 
 export function pick(settings, keys) {
   return Object.fromEntries(keys.filter((k) => k in settings).map((k) => [k, settings[k]]));
@@ -35,6 +35,9 @@ export const DEFAULT_SETTINGS = {
   // Per machine, as they depend on its displays (§5.2).
   singleRules: [{ minAspect: 2.1, width: 0.8 }],
   ultrawideAspect: 2.1,
+  // The mouse wheel's step per click, re-applied from crosh at each login
+  // (§19.2); null for no reminder.
+  wheelStep: null,
 };
 
 function checkClocks(clocks) {
@@ -140,6 +143,14 @@ function checkWatched(sites) {
   ];
 }
 
+function checkWheelStep(step) {
+  if (step === null) return null;
+  if (typeof step !== "number" || !(step >= 1 && step <= 1000)) {
+    throw new Error(`${step} isn't a step from 1 to 1000, like 200, or null for none`);
+  }
+  return step;
+}
+
 export const START_MODES = ["tile", "threecol", "twocol", "monocle"];
 
 // Objects merge key by key onto what's there (§13), as tide's do.
@@ -176,7 +187,7 @@ function checkModes(value, current) {
   return modes;
 }
 
-const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a), dimStrength: checkStrength, watched: checkWatched, defaultMode: checkDefaultMode, modes: checkModes };
+const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a), dimStrength: checkStrength, watched: checkWatched, defaultMode: checkDefaultMode, modes: checkModes, wheelStep: checkWheelStep };
 
 // Settings from what's stored: `sync` then `local`, each an object or
 // undefined. Returns {settings, errors}, an error for each bad or unknown

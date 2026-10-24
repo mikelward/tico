@@ -109,7 +109,11 @@ export class FakeChrome {
       },
     };
     this.tabUpdates = [];
+    this.createdTabs = [];
     this.tabs = {
+      create: async (props) => {
+        fake.createdTabs.push(props);
+      },
       update: async (id, props) => {
         fake.tabUpdates.push({ id, ...props });
       },

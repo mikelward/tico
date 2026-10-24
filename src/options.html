@@ -98,6 +98,15 @@
 </section>
 
 <section>
+<h2>Mouse on this Chromebook</h2>
+<p class="muted">A longer step per wheel click than Settings offers, set from crosh (Ctrl+Alt+T), which needs <code>chrome://flags/#gesture-properties-dbus-service</code> enabled once. ChromeOS forgets it at each reboot, so with a step here, tico opens a page with the lines to copy at each login. Leave it empty for no reminder.</p>
+<div class="row">
+<label>Step per click <input id="wheel-step" type="number" step="any" min="1" max="1000" placeholder="off"></label>
+<button id="show-mouse" type="button">Show the lines</button>
+</div>
+</section>
+
+<section>
 <h2>Import and export</h2>
 <p class="muted">The settings as JSON, in the shape of tide's config, to copy between machines or keep in a dotfiles repo.</p>
 <textarea id="json" rows="10" spellcheck="false" aria-label="Settings as JSON"></textarea>

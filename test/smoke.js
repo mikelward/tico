@@ -46,7 +46,7 @@ test("the options page renders every section and saves changes", async () => {
   const { page, errors } = await open("src/options.html");
   await page.waitForSelector("#setup li");
   const headings = await page.locator("h2").allInnerTexts();
-  for (const h of ["Clocks", "Setup checklist", "Keys", "Apps", "Attention", "Dim", "Workspaces", "Layouts on this Chromebook", "Import and export"]) {
+  for (const h of ["Clocks", "Setup checklist", "Keys", "Apps", "Attention", "Dim", "Workspaces", "Layouts on this Chromebook", "Mouse on this Chromebook", "Import and export"]) {
     assert.ok(headings.includes(h), `no ${h} section in ${headings}`);
   }
   assert.ok((await page.locator("#clocks tbody tr").count()) > 0, "no clocks");
@@ -56,6 +56,10 @@ test("the options page renders every section and saves changes", async () => {
   await page.locator("#dim-strength").fill("20");
   await page.locator("#dim-strength").dispatchEvent("change");
   await page.waitForFunction(async () => (await chrome.storage.sync.get("settings")).settings?.dimStrength === 0.2);
+
+  await page.locator("#wheel-step").fill("200");
+  await page.locator("#wheel-step").dispatchEvent("change");
+  await page.waitForFunction(async () => (await chrome.storage.local.get("settings")).settings?.wheelStep === 200);
 
   await page.locator("#setup input[type=checkbox]").first().check();
   await page.waitForFunction(async () => ((await chrome.storage.local.get("setup")).setup ?? []).length === 1);
@@ -117,5 +121,26 @@ test("clocks on another day line up with the rest", async () => {
     assert.deepEqual(errors, []);
   } finally {
     await worker.evaluate(() => chrome.storage.sync.remove("settings"));
+  }
+});
+
+test("the mouse page fills the mouse's ID into the crosh lines", async () => {
+  await worker.evaluate(() => chrome.storage.local.set({ settings: { wheelStep: 200 }, mouseId: 7 }));
+  try {
+    const { page, errors } = await open("src/mouse.html");
+    await page.waitForFunction(() => document.getElementById("line-1").textContent.includes("200"));
+    assert.equal(await page.locator("#mouse-id").inputValue(), "7", "the last ID isn't offered");
+    assert.equal(await page.locator("#line-1").innerText(), 'gesture_prop set 7 "Mouse Scroll Accel Curve" array:double:200,0,0,0,0');
+    await page.locator("#mouse-id").fill("12");
+    await page.locator("#mouse-id").dispatchEvent("change");
+    assert.match(await page.locator("#line-0").innerText(), /^gesture_prop set 12 "Mouse High Resolution Scrolling"/);
+    await page.waitForFunction(async () => (await chrome.storage.local.get("mouseId")).mouseId === 12);
+    // A step changed on the options page reaches the open page.
+    await worker.evaluate(() => chrome.storage.local.set({ settings: { wheelStep: 300 } }));
+    await page.waitForFunction(() => document.getElementById("line-1").textContent.includes("array:double:300,"));
+    assert.deepEqual(errors, []);
+    assert.equal(await page.locator("#errors").isHidden(), true, await page.locator("#errors").innerText());
+  } finally {
+    await worker.evaluate(() => chrome.storage.local.remove(["settings", "mouseId"]));
   }
 });

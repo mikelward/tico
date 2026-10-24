@@ -70,7 +70,7 @@ export const ITEMS = [
     id: "mouse",
     title: "Set up the mouse",
     where: "chrome://os-settings/per-device-mouse",
-    how: "Per mouse: swap the primary button if you use it left-handed, speed 5 with acceleration on, and controlled scrolling at speed 5.",
+    how: "Per mouse: swap the primary button if you use it left-handed, speed 5 with acceleration on, and controlled scrolling at speed 5. For a longer wheel step than that, turn controlled scrolling off and set one under Mouse below.",
     ref: "§11, §19.2",
   },
 ];
