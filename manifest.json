@@ -96,16 +96,16 @@
       "description": "Toggle floating (Search+Shift+F)"
     },
     "workspace-next": {
-      "description": "Next workspace (Search+Right)"
+      "description": "Next workspace (Search+PageDown)"
     },
     "workspace-prev": {
-      "description": "Previous workspace (Search+Left)"
+      "description": "Previous workspace (Search+PageUp)"
     },
     "send-next": {
-      "description": "Send the window to the next workspace (Search+Shift+Right)"
+      "description": "Send the window to the next workspace (Search+Shift+PageDown)"
     },
     "send-prev": {
-      "description": "Send the window to the previous workspace (Search+Shift+Left)"
+      "description": "Send the window to the previous workspace (Search+Shift+PageUp)"
     },
     "workspace-1": {
       "description": "Go to workspace 1 (Search+1)"

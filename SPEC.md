@@ -53,7 +53,7 @@ Contents:
 - A lone window centered at **80%** width on an ultrawide, **100%** on 16:9
   or 16:10.
 - Nine **workspaces** on `Search+1…9`, sending a window on
-  `Search+Shift+1…9`, stepping on `Search+Left/Right`.
+  `Search+Shift+1…9`, stepping on `Search+Page Up/Down` (§7.2).
 - The tide **key map**, with Search as Super, for every action ChromeOS lets
   tico or the OS bind.
 - **Inactive windows dimmed** as the focus cue.
@@ -551,8 +551,8 @@ Bound by tico, unless the column says the Shortcuts app:
 | tap Search | launcher | native |
 | `Search+L` | lock | native |
 | `Search+1…9` / `Search+Shift+1…9` | go to / send to workspace | tico |
-| `Search+Left` / `Right` | previous / next workspace | tico *(Search+arrows may be Home/End; §7.2)* |
-| `Search+Shift+Left` / `Right` | send to previous / next workspace | tico |
+| `Search+Page Up` / `Page Down` (tide: `Super+Left` / `Right`) | previous / next workspace | tico (Search+arrows are Home/End and Page Up/Down; §7.2) |
+| `Search+Shift+Page Up` / `Page Down` | send to previous / next workspace | tico |
 | `Search+J` / `K`, with Shift | focus / move down and up the stack | tico |
 | `Search+Space` | the dashboard: tico's bar and launcher, full screen (§8.1) | tico |
 | `Search+Shift+M` (tide: `Super+Return`) | swap with master | tico |
