@@ -325,7 +325,7 @@ already assume (§10.3).
 ### 3.6 The off-ramp: run tide
 
 Everything tico can't reach (Android and Linux windows, global keys, the
-bar, focus follows mouse) needs the OS replaced. On a Chromebook that means
+bar) needs the OS replaced. On a Chromebook that means
 third-party UEFI firmware (MrChromebox) and a normal distro running tide,
 giving up verified boot, ChromeOS updates and Google's security guarantees,
 with some risk of bricking *(unverified for any specific model)*.
@@ -350,7 +350,7 @@ off-ramp.
 | No borders, no gaps | ChromeOS draws its own frames; tico margin 0 | **partial** |
 | Maximize, fullscreen, restore (tide §6.3) | native Alt+=, fullscreen key, rebound to Search+Up/Shift+Up/Down in the Shortcuts app | **yes** |
 | Dialogs float, centered on parent (tide §6.4) | popups and dialogs untiled by type and rule (§5.4) | **yes** for Chrome; the OS places native dialogs |
-| Focus follows mouse (KDE `FocusFollowsMouse`) | none | **no** |
+| Focus follows mouse (KDE `FocusFollowsMouse`) | ChromeOS's `chrome://flags/#focus-follows-cursor`, from the setup checklist (§10.2) | **partial**: a flag, off by default, which Chrome can drop |
 | Nothing steals focus (tide §14) | ChromeOS activation rules; tico never focuses unasked | **partial**: the OS decides for apps |
 | Super+Tab to the window wanting attention (tide §14.3) | tico's attention list from title-count watchers (§10.3) | **partial**: chosen sites only |
 | Full-width bar, workspaces, urgency (tide §7) | no top bar on busy workspaces; shelf + toolbar badge + full-screen dashboard and home page with tide's bar (§6.2, §8) | **partial** |
@@ -769,8 +769,14 @@ Android or Linux app, tap Search for the native launcher instead.
 
 ### 10.2 Focus
 
-- ChromeOS has **no focus follows mouse**, and nothing can add it. KDE's
-  `FocusFollowsMouse` is the one KDE behavior that can't be carried over.
+- **Focus follows mouse is a ChromeOS flag**, `#focus-follows-cursor`
+  (`features::kFocusFollowsCursor`, "sloppyfocus"). It's off by default;
+  on, the window under the pointer takes focus without a click and isn't
+  raised. Chromium 158's `about_flags.cc` still lists it for ChromeOS, with
+  `expiry_milestone` 200 in `flag-metadata.json`. tico can't turn a flag on,
+  so the setup checklist links to it (§3.4). It works on a Chromebook with
+  Chrome windows. Whether it reaches Android and Linux windows is
+  *(unverified)*.
 - tico never focuses a window you didn't ask for. It focuses only on its
   own keys, a workspace switch, or a close (the next window in the stack).
 - Whether a new window takes focus is ChromeOS's call. Chrome windows you
