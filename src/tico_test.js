@@ -322,6 +322,15 @@ test("an app key with no window opens one and finds it next time", async () => {
   assert.equal(chrome.win(2).focused, true);
 });
 
+test("an app key opens the app settings give it, and a key with none does nothing", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true })]);
+  chrome.syncStore.settings = { apps: [{ command: "app-chat", name: "Linear", url: "https://linear.app/" }] };
+  await tico.command("app-chat");
+  assert.deepEqual(opened(chrome), [{ url: "https://linear.app/", type: "popup" }]);
+  await tico.command("app-meet");
+  assert.equal(opened(chrome).length, 1, "Meet's key has no app now");
+});
+
 test("the browser key focuses a browser window on this workspace, else opens one", async () => {
   const { chrome, tico } = await setup([HD], [
     on(HD, 1, { type: "app", url: "https://music.youtube.com/", focused: true }),

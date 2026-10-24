@@ -7,6 +7,7 @@ export class FakeChrome {
     this.displaysList = displays;
     this.wins = windows.map((w) => ({ type: "normal", state: "normal", focused: false, alwaysOnTop: false, ...w }));
     this.store = {};
+    this.syncStore = {};
     this.updates = [];
     this.refuse = new Set();
     this.created = [];
@@ -19,6 +20,9 @@ export class FakeChrome {
         set: async (items) => {
           for (const [k, v] of Object.entries(items)) fake.store[k] = structuredClone(v);
         },
+      },
+      sync: {
+        get: async (key) => (key in fake.syncStore ? { [key]: structuredClone(fake.syncStore[key]) } : {}),
       },
     };
     this.windows = {

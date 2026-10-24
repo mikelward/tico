@@ -141,3 +141,8 @@ textarea {
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
+kbd {
+  font: 12px "Ubuntu Mono", ui-monospace, monospace;
+  white-space: nowrap;
+  color: var(--muted);
+}

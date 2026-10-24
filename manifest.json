@@ -165,16 +165,16 @@
       "description": "Focus or open a browser window (Search+G)"
     },
     "app-calendar": {
-      "description": "Focus or open Google Calendar (Search+C)"
+      "description": "Focus or open app 1, Google Calendar unless changed in tico's options (Search+C)"
     },
     "app-chat": {
-      "description": "Focus or open Google Chat (Search+Shift+C)"
+      "description": "Focus or open app 2, Google Chat unless changed in tico's options (Search+Shift+C)"
     },
     "app-meet": {
-      "description": "Focus or open Google Meet (Search+M)"
+      "description": "Focus or open app 3, Google Meet unless changed in tico's options (Search+M)"
     },
     "app-music": {
-      "description": "Focus or open YouTube Music (Search+Y)"
+      "description": "Focus or open app 4, YouTube Music unless changed in tico's options (Search+Y)"
     }
   },
   "action": {

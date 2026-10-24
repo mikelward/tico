@@ -69,17 +69,20 @@ function renderBar() {
 
 async function refresh() {
   me = await chrome.windows.getCurrent();
-  const [tabs, stored] = await Promise.all([chrome.tabs.query({}), chrome.storage.local.get(["state", "view"])]);
+  const [tabs, stored, { settings: current }] = await Promise.all([
+    chrome.tabs.query({}),
+    chrome.storage.local.get(["state", "view"]),
+    loadSettings(chrome.storage),
+  ]);
   state = stored.state ?? null;
   view = stored.view ?? null;
   const commands = chrome.runtime.getManifest().commands;
-  const apps = Object.entries(commands)
-    .filter(([name]) => name.startsWith("app-"))
-    .map(([command, c]) => {
-      const m = /^Focus or open (?:a )?(.*?)\s*\((.*)\)$/.exec(c.description);
-      const name = m ? m[1][0].toUpperCase() + m[1].slice(1) : command;
-      return { name, command, key: m ? m[2] : "" };
-    });
+  // Each app key's name comes from settings; its key, from the manifest.
+  const keyOf = (command) => /\(([^)]*)\)$/.exec(commands[command]?.description ?? "")?.[1] ?? "";
+  const apps = [
+    { name: "Browser window", command: "app-browser", key: keyOf("app-browser") },
+    ...current.apps.map((a) => ({ name: a.name, command: a.command, key: keyOf(a.command) })),
+  ];
   all = items({
     tabs,
     apps,
@@ -229,7 +232,10 @@ if (home) {
 
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.view || changes.state) refresh();
-  if (changes[SETTINGS_KEY]) loadClocks();
+  if (changes[SETTINGS_KEY]) {
+    loadClocks();
+    refresh();
+  }
 });
 // The home page can sit for hours; look again whenever it comes back.
 window.addEventListener("focus", () => {

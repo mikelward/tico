@@ -1,6 +1,9 @@
 // The app keys (SPEC.md §9.1): each focuses its app's window, bringing its
 // workspace, or opens it. Web apps match by the origin of the window's tab.
 
+// The manifest's app keys, which settings can give any web app.
+export const APP_COMMANDS = ["app-calendar", "app-chat", "app-meet", "app-music"];
+
 export const DEFAULT_APPS = [
   { command: "app-calendar", name: "Google Calendar", url: "https://calendar.google.com/" },
   { command: "app-chat", name: "Google Chat", url: "https://chat.google.com/" },
