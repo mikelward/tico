@@ -169,10 +169,10 @@ export const WORK = [9, 17];
 // A zone's 24-hour strip, on local's hours: the zone's day and working hours
 // as {kind, start, end} in local hours from 0 to 24, split where they wrap
 // past midnight (SPEC.md §8.2).
-export function strip(date, localZone, zone) {
+export function strip(date, localZone, zone, { day = DAY, work = WORK } = {}) {
   const shift = -hoursFromLocal(date, localZone, zone);
   const segments = [];
-  for (const [kind, [from, to]] of [["day", DAY], ["work", WORK]]) {
+  for (const [kind, [from, to]] of [["day", day], ["work", work]]) {
     const start = (((from + shift) % 24) + 24) % 24;
     const end = start + (to - from);
     if (end <= 24) segments.push({ kind, start, end });

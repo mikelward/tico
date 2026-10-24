@@ -11,6 +11,12 @@ const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta
 // The keys Chromium accepts for a command (ui/base/accelerators/command.cc).
 const KEYS = /^([A-Z0-9]|Comma|Period|Up|Down|Left|Right|Insert|Delete|Home|End|PageUp|PageDown|Space|Tab)$/;
 
+test("the options page exists and opens in a tab", () => {
+  assert.deepEqual(manifest.options_ui, { page: "src/options.html", open_in_tab: true });
+  const html = readFileSync(new URL(`../${manifest.options_ui.page}`, import.meta.url), "utf8");
+  assert.match(html, /src="optionsview\.js"/);
+});
+
 test("at most four commands suggest a key, as Chromium allows", () => {
   const suggested = Object.values(manifest.commands).filter((c) => c.suggested_key);
   assert.ok(suggested.length <= 4, `${suggested.length} suggest keys`);

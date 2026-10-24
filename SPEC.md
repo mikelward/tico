@@ -861,6 +861,11 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
 - Import and export as JSON, in the same shape as tide's
   `~/.config/tide/*.json`, so one clocks list and one layouts file serve
   both.
+- **Built so far:** the clocks page (zones, labels, cities and order, and
+  each zone's daytime and working hours) and import, export and reset.
+  `src/settings.js` checks every value, and the dashboard and home page pick
+  up a change at once through `storage.onChanged`. The other pages are still
+  to do.
 
 ## 14. The extension
 

@@ -2,11 +2,11 @@
 // the popup's detail with each zone's strip and the next DST change
 // (SPEC.md §8.2).
 
+import { DEFAULT_SETTINGS } from "./settings.js";
 import {
   abbreviation,
   city,
   clockRow,
-  DEFAULT_CLOCKS,
   dstNote,
   formatOffset,
   hoursFromLocal,
@@ -24,10 +24,11 @@ function el(tag, className, text) {
 }
 
 // `scrubbed` marks a time you've scrolled to rather than now.
-export function renderClocks(ol, now = new Date(), scrubbed = false) {
+// `settings` are tico's (src/settings.js): its clocks and hours.
+export function renderClocks(ol, now = new Date(), scrubbed = false, { clocks } = DEFAULT_SETTINGS) {
   ol.replaceChildren();
   ol.classList.toggle("scrubbed", scrubbed);
-  for (const c of clockRow(now, localZone(), DEFAULT_CLOCKS)) {
+  for (const c of clockRow(now, localZone(), clocks)) {
     const li = el("li");
     li.append(el("span", "label", c.label), c.time);
     if (c.day !== 0) li.append(el("sup", null, c.day > 0 ? `+${c.day}` : `−${-c.day}`));
@@ -35,12 +36,13 @@ export function renderClocks(ol, now = new Date(), scrubbed = false) {
   }
 }
 
-export function renderDetail(section, now = new Date(), scrubbed = false) {
+export function renderDetail(section, now = new Date(), scrubbed = false, settings = DEFAULT_SETTINGS) {
+  const { clocks } = settings;
   const local = localZone();
   section.replaceChildren();
   section.classList.toggle("scrubbed", scrubbed);
-  const times = clockRow(now, local, DEFAULT_CLOCKS);
-  const zones = [...DEFAULT_CLOCKS.filter((c) => c.zone !== local), { zone: local, label: "—", city: "Local" }];
+  const times = clockRow(now, local, clocks);
+  const zones = [...clocks.filter((c) => c.zone !== local), { zone: local, label: "—", city: "Local" }];
   const nowAt = `${(localHour(now, local) / 24) * 100}%`;
   zones.forEach((c, i) => {
     section.append(el("span", "label", c.label));
@@ -48,7 +50,7 @@ export function renderDetail(section, now = new Date(), scrubbed = false) {
     name.append(" ", el("span", "abbr", abbreviation(now, c.zone)));
     section.append(name, el("span", "time", times[i].time));
     const bar = el("div", "strip");
-    for (const s of strip(now, local, c.zone)) {
+    for (const s of strip(now, local, c.zone, settings)) {
       const seg = el("div", s.kind);
       seg.style.left = `${(s.start / 24) * 100}%`;
       seg.style.width = `${((s.end - s.start) / 24) * 100}%`;
@@ -62,7 +64,7 @@ export function renderDetail(section, now = new Date(), scrubbed = false) {
   const axis = el("div", "axis");
   for (const h of [0, 6, 12, 18, 24]) axis.append(el("span", null, String(h)));
   section.append(axis);
-  const note = dstNote(now, local, DEFAULT_CLOCKS);
+  const note = dstNote(now, local, clocks);
   if (note) {
     const p = el("p", "note");
     p.append(el("strong", null, "Clocks change soon. "), note);
