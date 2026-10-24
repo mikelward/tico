@@ -1,15 +1,12 @@
 name: release
 
-# A push to main whose manifest.json version has no release yet tests that
-# commit, builds the store ZIP and publishes it as release v<version>, tag
-# included (PUBLISHING.md §4). So raising the version in a pull request is
-# the whole release step. Pushing a tag like v0.2.0 by hand does the same for
-# that tag. Running it by hand builds the ZIP as a workflow artifact, without
-# a release.
+# Every push to main is a new version, the commit count (make version), so
+# each one tests that commit, builds the store ZIP and publishes it as
+# release v<version>, tag included (PUBLISHING.md §4). Running it by hand
+# builds the ZIP as a workflow artifact, without a release.
 on:
   push:
     branches: ["main"]
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -28,36 +25,25 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+          # The version is the commit count, so it needs all of them.
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
       - id: version
-        run: echo "version=$(node -p "require('./manifest.json').version")" >> "$GITHUB_OUTPUT"
-      # Only a push publishes; a manual run, even from a tag, doesn't.
+        run: echo "version=$(make -s version)" >> "$GITHUB_OUTPUT"
+      # Only a push to main publishes. A re-run of one whose version is
+      # already released publishes nothing; --exit-code makes ls-remote exit 2
+      # when no such tag exists yet.
       - id: release
         env:
           EVENT: ${{ github.event_name }}
-          REF_TYPE: ${{ github.ref_type }}
-          TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           if test "$EVENT" != push; then
             echo "publish=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if test "$REF_TYPE" = tag; then
-            # The store refuses a version it has already seen, so a tag
-            # that disagrees with the manifest is a mistake to stop at.
-            if test "$TAG" != "v$VERSION"; then
-              echo "::error::tag $TAG doesn't match manifest.json's version $VERSION"
-              exit 1
-            fi
-            echo "publish=true" >> "$GITHUB_OUTPUT"
-            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # A push to main releases its version once. --exit-code makes
-          # ls-remote exit 2 when no such tag exists yet.
           status=0
           git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null || status=$?
           case "$status" in
@@ -67,7 +53,6 @@ jobs:
               ;;
             2)
               echo "publish=true" >> "$GITHUB_OUTPUT"
-              echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "::error::couldn't check for tag v$VERSION (git ls-remote exited $status)"
@@ -86,6 +71,5 @@ jobs:
       - if: steps.release.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.release.outputs.tag }}
           VERSION: ${{ steps.version.outputs.version }}
-        run: gh release create "$TAG" "dist/tico-$VERSION.zip" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "tico $VERSION" --generate-notes
+        run: gh release create "v$VERSION" "dist/tico-$VERSION.zip" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "tico $VERSION" --generate-notes

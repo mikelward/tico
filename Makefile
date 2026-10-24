@@ -38,12 +38,31 @@ icons:
 	node scripts/render-icons.js
 
 # The Chrome Web Store upload: manifest.json at the top, and nothing only
-# development needs. DIST picks where it goes.
+# development needs. DIST picks where it goes. Its version is the number of
+# commits, so each commit on main is a higher version than the last, as the
+# store requires. Recursive (=), so only these targets ask git.
 DIST ?= dist
-VERSION := $(shell node -p "require('./manifest.json').version")
-zip:
-	mkdir -p $(DIST)
-	rm -f $(DIST)/tico-$(VERSION).zip
-	zip -qrX $(DIST)/tico-$(VERSION).zip manifest.json src icons/*.png \
-		-x 'src/*_test.js' -x 'src/fake_chrome.js'
+VERSION = $(shell git rev-list --count HEAD)
+STAGE = $(DIST)/stage
+
+.PHONY: version
+version: unshallow-check
+	@echo $(VERSION)
+
+# A shallow clone counts only the commits it has, which would make a lower
+# version than one already published.
+.PHONY: unshallow-check
+unshallow-check:
+	@if test "$$(git rev-parse --is-shallow-repository)" != false; then \
+		echo "the history is shallow, so the commit count is wrong; run git fetch --unshallow" >&2; exit 1; fi
+
+zip: unshallow-check
+	rm -rf $(STAGE) $(DIST)/tico-$(VERSION).zip
+	mkdir -p $(STAGE)/icons
+	cp -R manifest.json src $(STAGE)/
+	cp icons/*.png $(STAGE)/icons/
+	rm -f $(STAGE)/src/*_test.js $(STAGE)/src/fake_chrome.js
+	node -e 'const fs = require("fs"); const f = process.argv[1]; const m = JSON.parse(fs.readFileSync(f)); m.version = process.argv[2]; fs.writeFileSync(f, JSON.stringify(m, null, 2) + "\n");' $(STAGE)/manifest.json $(VERSION)
+	cd $(STAGE) && zip -qrX ../tico-$(VERSION).zip .
+	rm -rf $(STAGE)
 	@echo $(DIST)/tico-$(VERSION).zip
