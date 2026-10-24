@@ -1,0 +1,37 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { overlay } from "./dim.js";
+
+// Just enough of a page for overlay(): one element slot by ID.
+function fakePage() {
+  const els = new Map();
+  globalThis.document = {
+    getElementById: (id) => els.get(id) ?? null,
+    createElement: () => {
+      const el = { style: {}, remove: () => els.delete(el.id) };
+      return el;
+    },
+    documentElement: { append: (el) => els.set(el.id, el) },
+  };
+  return els;
+}
+
+test("the overlay is 10% black, ignores the pointer, and sits on top", () => {
+  const els = fakePage();
+  overlay(true);
+  const css = els.get("tico-dim").style.cssText;
+  assert.match(css, /background:rgba\(0,0,0,0\.1\)/);
+  assert.match(css, /pointer-events:none/);
+  assert.match(css, /z-index:2147483647/);
+});
+
+test("the overlay goes on once and comes off", () => {
+  const els = fakePage();
+  overlay(true);
+  const first = els.get("tico-dim");
+  overlay(true);
+  assert.equal(els.get("tico-dim"), first, "a second call adds nothing");
+  overlay(false);
+  assert.equal(els.size, 0);
+  overlay(false);
+});

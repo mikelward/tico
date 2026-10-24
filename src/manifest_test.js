@@ -37,6 +37,11 @@ test("the title watcher runs on the watched origins and nowhere else", () => {
   assert.equal(manifest.host_permissions, undefined, "no host access beyond the content script's");
 });
 
+test("all-sites access is optional, for the dim alone", () => {
+  assert.deepEqual(manifest.optional_host_permissions, ["<all_urls>"]);
+  assert.ok(manifest.permissions.includes("scripting"));
+});
+
 test("every command in the manifest does something", async () => {
   for (const name of Object.keys(manifest.commands)) {
     const chrome = new FakeChrome({
@@ -85,6 +90,8 @@ test("background.js adds every listener while it first runs", async () => {
       onBoundsChanged: event("windows.onBoundsChanged"),
     },
     system: { display: { onDisplayChanged: event("system.display.onDisplayChanged") } },
+    tabs: { onActivated: event("tabs.onActivated"), onUpdated: event("tabs.onUpdated") },
+    permissions: { onAdded: event("permissions.onAdded"), onRemoved: event("permissions.onRemoved") },
     runtime: {
       onStartup: event("runtime.onStartup"),
       onInstalled: event("runtime.onInstalled"),
@@ -95,10 +102,14 @@ test("background.js adds every listener while it first runs", async () => {
   await import("./background.js");
   assert.deepEqual([...added].sort(), [
     "commands.onCommand",
+    "permissions.onAdded",
+    "permissions.onRemoved",
     "runtime.onInstalled",
     "runtime.onMessage",
     "runtime.onStartup",
     "system.display.onDisplayChanged",
+    "tabs.onActivated",
+    "tabs.onUpdated",
     "windows.onBoundsChanged",
     "windows.onCreated",
     "windows.onFocusChanged",

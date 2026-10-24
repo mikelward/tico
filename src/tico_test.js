@@ -422,6 +422,7 @@ test("the view lists each display's workspace and layout", async () => {
     displays: { hd: { workspace: 1, mode: "tile" }, uw: { workspace: 2, mode: "threecol" } },
     counts: { 1: 1, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 },
     urgent: [],
+    dim: false,
   });
 });
 
@@ -516,4 +517,115 @@ test("a closed window's mark and counts go with it", async () => {
   await tico.event();
   assert.deepEqual(tico.state.marks, []);
   assert.deepEqual(tico.state.unread, {});
+});
+
+test("the dim is off until you grant all-sites access", async () => {
+  const { chrome } = await setup([HD], [on(HD, 1, { focused: true, url: "https://example.com/" }), on(HD, 2, { url: "https://example.org/" })]);
+  assert.deepEqual([...chrome.dimmed], []);
+  assert.equal(chrome.store.view.dim, false);
+});
+
+test("with the dim on, every shown window but the focused one is dimmed", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+    on(HD, 3, { url: "https://example.net/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  assert.deepEqual([...chrome.dimmed].sort(), [20, 30]);
+  assert.equal(chrome.store.view.dim, true);
+  chrome.focus(2);
+  await tico.event();
+  assert.deepEqual([...chrome.dimmed].sort(), [10, 30], "focus moves the dim at once");
+});
+
+test("a fullscreen window and a chrome:// page aren't dimmed", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "chrome://settings/" }),
+    on(HD, 3, { url: "https://example.net/", state: "fullscreen" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  assert.deepEqual([...chrome.dimmed], [], "the chrome:// page fails quietly and the rest goes on");
+});
+
+test("a window left alone on its workspace loses the dim", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  assert.deepEqual([...chrome.dimmed], [20]);
+  chrome.wins = chrome.wins.filter((w) => w.id !== 1);
+  await tico.event();
+  assert.deepEqual([...chrome.dimmed], []);
+});
+
+test("a hidden window keeps its dim, and loses it when it comes back focused", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  assert.deepEqual([...chrome.dimmed], [20]);
+  await tico.command("workspace-2");
+  assert.deepEqual([...chrome.dimmed], [20], "no churn on a hidden page");
+  await tico.command("workspace-1");
+  chrome.focus(2);
+  await tico.event();
+  assert.deepEqual([...chrome.dimmed], [10]);
+});
+
+test("a dimmed tab that loads a new page gets the dim back", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  // The page reloads, and its overlay goes with the old document.
+  chrome.dimmed.delete(20);
+  await tico.tabLoaded(20);
+  assert.deepEqual([...chrome.dimmed], [20]);
+  await tico.tabLoaded(10);
+  assert.deepEqual([...chrome.dimmed], [20], "the focused tab's load leaves it undimmed");
+});
+
+test("a tab that couldn't be dimmed is dimmed once it loads a website", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "chrome://newtab/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  assert.deepEqual([...chrome.dimmed], []);
+  chrome.win(2).url = "https://example.org/";
+  await tico.tabLoaded(20);
+  assert.deepEqual([...chrome.dimmed], [20]);
+});
+
+test("with the dim off, a load does nothing", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
+  chrome.updates.length = 0;
+  await tico.tabLoaded(20);
+  assert.deepEqual(chrome.updates, [], "no retile");
+});
+
+test("turning the dim off undims every page while tico can still reach them", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  await tico.setDim(false);
+  assert.deepEqual([...chrome.dimmed], []);
+  assert.equal(chrome.store.view.dim, false);
+  chrome.granted = false;
+  await tico.event();
+  assert.deepEqual(tico.state.dimmed, []);
 });

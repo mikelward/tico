@@ -36,6 +36,13 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   manifest's `content_scripts`, until the options page can request others
   as optional host permissions. Reversible: `src/unread.js` and the
   manifest.
+- **Granting all-sites access turns the dim on**, and the toggle lives in
+  the popup until the options page exists. The prompt can close the popup
+  that asked, so tico treats the grant itself as the switch. Turning it off
+  undims every page, then gives the access back. Revoking the access at
+  `chrome://extensions` instead leaves pages dimmed until they reload, since
+  tico can no longer reach them. The alternative is a separate stored
+  setting. Reversible: `Tico.dimOn` and the popup's checkbox.
 - **The app list is built in** (Calendar, Chat, Meet, YouTube Music), until
   the options page can edit it. Reversible: `src/apps.js`.
 
@@ -46,7 +53,7 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - Window IDs change across a browser restart (SPEC.md §14.2): windows come
   back on the current workspace; matching them by tab URL is still to do.
 - Profile keys (SPEC.md §9.2), the clocks popover's strips and DST note
-  (§8.2), the dim (§10.1) and the options page (§13).
+  (§8.2), and the options page (§13).
 - A Playwright smoke test in CI (SPEC.md §17): loading the extension in
   Chromium and opening its pages worked by hand on 2026-10-24, but would
   add the first dependency.
