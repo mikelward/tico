@@ -99,6 +99,7 @@ test("background.js adds every listener while it first runs", async () => {
     tabs: { onActivated: event("tabs.onActivated"), onUpdated: event("tabs.onUpdated") },
     action: { onClicked: event("action.onClicked") },
     permissions: { onAdded: event("permissions.onAdded"), onRemoved: event("permissions.onRemoved") },
+    storage: { onChanged: event("storage.onChanged") },
     runtime: {
       onStartup: event("runtime.onStartup"),
       onInstalled: event("runtime.onInstalled"),
@@ -115,6 +116,7 @@ test("background.js adds every listener while it first runs", async () => {
     "runtime.onInstalled",
     "runtime.onMessage",
     "runtime.onStartup",
+    "storage.onChanged",
     "system.display.onDisplayChanged",
     "tabs.onActivated",
     "tabs.onUpdated",

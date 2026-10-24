@@ -3,6 +3,7 @@
 // first runs, so every listener is added here, at the top level, and tico
 // loads its saved state on the first event it handles.
 
+import { settingsChanged } from "./settings.js";
 import { DIM_ORIGINS, Tico } from "./tico.js";
 
 const tico = new Tico(chrome);
@@ -30,6 +31,11 @@ chrome.permissions.onAdded.addListener((granted) => {
   else changed();
 });
 chrome.permissions.onRemoved.addListener(changed);
+// A setting saved on the options page applies at once, not at the next
+// window event; tico's own state writes aren't settings, so don't loop.
+chrome.storage.onChanged.addListener((changes) => {
+  if (settingsChanged(changes)) changed();
+});
 // The toolbar button opens the dashboard, as its key does (§8.1).
 chrome.action.onClicked.addListener(() => tico.command("popup"));
 

@@ -146,3 +146,15 @@ kbd {
   white-space: nowrap;
   color: var(--muted);
 }
+#ultrawide,
+input.aspect,
+input.width {
+  width: 8ch;
+}
+#rules {
+  width: auto;
+  margin-top: 4px;
+}
+#add-rule {
+  margin-top: 8px;
+}

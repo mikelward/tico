@@ -47,6 +47,17 @@ test("an ultrawide starts in three columns", async () => {
   assert.equal(chrome.box(1).x, 1920 + 860, "master in the middle");
 });
 
+test("this Chromebook's layouts come from its own settings", async () => {
+  const { chrome, tico } = await setup([UW], [on(UW, 1, { focused: true })]);
+  chrome.store.settings = { singleRules: [{ minAspect: 2, width: 0.5 }], ultrawideAspect: 3 };
+  await tico.event();
+  assert.deepEqual(chrome.box(1), { x: 1920 + 860, y: 0, w: 1720, h: 1392 }, "half the width");
+  chrome.open(on(UW, 2));
+  chrome.open(on(UW, 3));
+  await tico.event();
+  assert.equal(chrome.box(1).x, 1920, "2.47 is under 3, so it tiles rather than three columns");
+});
+
 test("switching workspaces minimizes the old windows and restores them on return", async () => {
   const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
   await tico.command("workspace-2");

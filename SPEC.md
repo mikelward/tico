@@ -867,11 +867,12 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   both.
 - **Built so far:** the clocks page (zones, labels, cities and order, and
   each zone's daytime and working hours), the apps page (each app key's
-  name and address, beside the key Chrome has bound), and import, export
-  and reset.
+  name and address, beside the key Chrome has bound), this Chromebook's
+  layouts (the ultrawide threshold and the lone-window widths, kept in
+  `storage.local`), and import, export and reset of the shared settings.
   `src/settings.js` checks every value, and the dashboard and home page pick
-  up a change at once through `storage.onChanged`; tico reads the apps on
-  each step. The other pages are still to do.
+  up a change at once through `storage.onChanged`; tico reads its settings
+  on each step. The other pages are still to do.
 
 ## 14. The extension
 

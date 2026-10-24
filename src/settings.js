@@ -7,11 +7,23 @@ import { checkZone, DAY, DEFAULT_CLOCKS, WORK } from "./clocks.js";
 
 export const SETTINGS_KEY = "settings";
 
+// What follows you to every Chromebook, in storage.sync, and what each one
+// keeps for its own displays, in storage.local.
+export const SHARED = ["clocks", "day", "work", "apps"];
+export const PER_MACHINE = ["singleRules", "ultrawideAspect"];
+
+export function pick(settings, keys) {
+  return Object.fromEntries(keys.filter((k) => k in settings).map((k) => [k, settings[k]]));
+}
+
 export const DEFAULT_SETTINGS = {
   clocks: DEFAULT_CLOCKS,
   day: DAY,
   work: WORK,
   apps: DEFAULT_APPS,
+  // Per machine, as they depend on its displays (§5.2).
+  singleRules: [{ minAspect: 2.1, width: 0.8 }],
+  ultrawideAspect: 2.1,
 };
 
 function checkClocks(clocks) {
@@ -71,7 +83,28 @@ function checkApps(apps) {
   });
 }
 
-const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps };
+function checkAspect(aspect, at = "") {
+  if (typeof aspect !== "number" || !Number.isFinite(aspect) || aspect < 1 || aspect > 10) {
+    throw new Error(`${at}${aspect} isn't an aspect ratio from 1 to 10, like 2.1`);
+  }
+  return aspect;
+}
+
+// The lone window's width fraction from each aspect ratio up (§5.2).
+function checkSingleRules(rules) {
+  if (!Array.isArray(rules)) throw new Error("must be a list");
+  return rules.map((r, i) => {
+    const at = `rule ${i + 1}: `;
+    if (typeof r !== "object" || r === null) throw new Error(`${at}must be an object`);
+    const minAspect = checkAspect(r.minAspect, at);
+    if (typeof r.width !== "number" || !(r.width >= 0.1 && r.width <= 1)) {
+      throw new Error(`${at}width ${r.width} isn't a fraction from 0.1 to 1, like 0.8`);
+    }
+    return { minAspect, width: r.width };
+  });
+}
+
+const CHECKS = { clocks: checkClocks, day: checkHours, work: checkHours, apps: checkApps, singleRules: checkSingleRules, ultrawideAspect: (a) => checkAspect(a) };
 
 // Settings from what's stored: `sync` then `local`, each an object or
 // undefined. Returns {settings, errors}, an error for each bad or unknown
@@ -98,6 +131,12 @@ export function resolve(sync, local) {
     }
   }
   return { settings, errors };
+}
+
+// Whether a storage.onChanged batch touched the settings, rather than only
+// tico's own state.
+export function settingsChanged(changes) {
+  return SETTINGS_KEY in changes;
 }
 
 // The settings as stored for this machine. `storage` is chrome.storage.

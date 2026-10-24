@@ -96,7 +96,7 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - Frame offsets (SPEC.md §5.3): tiles use the bounds as given; measuring
   and correcting each window type's frame waits for a device.
 - Profile keys (SPEC.md §9.2), and the options page's other pages (§13):
-  layouts, workspaces, keys, dim and attention.
+  workspaces, keys, dim and attention.
 - A month calendar with ISO week numbers under the clocks, as tide's
   popover has.
 - A Playwright smoke test in CI (SPEC.md §17): loading the extension in
