@@ -1,5 +1,5 @@
 ---
-last_modified: 2026-10-23
+last_modified: 2026-10-24
 ---
 
 # tico: design spec (milestone 1)
@@ -215,13 +215,52 @@ and later.
 
 ## 3. Decisions
 
-### 3.1 A new extension, not a chrometile fork
+### 3.1 A new extension, with chrometile until it's ready
 
-chrometile proves the mechanism, but tico needs workspaces, persisted state,
-tide's layouts and the dim, which change most of its ~600 lines. tico starts
-clean under Apache-2.0, credits chrometile in its README, and sends upstream
-the `moveToDisplay` fix and the listener-registration fix, which help users
-there today.
+chrometile proves the mechanism, but it isn't a base to build on:
+
+- **Most of tico is what chrometile lacks**: workspaces, saved state, the
+  dim, clocks, attention and app keys. The workspace state machine (§6.1)
+  is a different core from chrometile's one window list per display.
+  chrometile is about 600 lines, 496 of them in `src/background.js`, so a
+  fork would keep the idea and little of the code.
+- **Its foundations would be rewritten anyway**: state only in memory, late
+  listener registration, and no notion of desks (§2.5).
+- **tico's logic must be testable on its own** (§17) and portable to tidal
+  (§20.4). chrometile mixes layout logic with `chrome.*` calls.
+- **The license doesn't decide it.** chrometile is Apache-2.0, like tico,
+  so borrowing a piece only needs credit, which tico's README gives.
+
+**Meanwhile, use chrometile.** It works today and is maintained: its last
+commit is 2026-10-13, and it merges outside contributions. It gives the
+Chromebook basic tiling until tico reaches M3, when tico replaces it. They
+can't run together, since both would move the same windows.
+
+**Send chrometile two fixes**, each a small PR. They help its users now and
+cost tico little:
+
+1. **`moveToDisplay`** (`src/background.js` 411–425) calls
+   `this.window_ids.unshift` from a plain function, where `this` is the
+   global object, not a display. `window_ids` lives on each display's
+   object, so the call throws inside the `windows.update` callback. The
+   window moves, but it isn't put first in the destination's list, the
+   retile never runs, and the promise never settles. The fix is
+   `allDisplays[index].window_ids.unshift(...)`, then the retile.
+2. **Late listener registration.** Its listeners are added inside
+   `isChromebook().then(getSettings().then(...))`. MV3 delivers the event
+   that wakes a sleeping worker only to listeners registered synchronously
+   at the top level, so the first key or window event after idle can be
+   lost *(inferred from the code, not tested)*. The fix registers every
+   listener at the top level, and has each one wait for the settings
+   before acting.
+
+Both are from reading chrometile at `af8e367`. Each PR should reproduce the
+problem first: a unit test for `moveToDisplay`, and for the listeners,
+letting the worker go idle and then pressing a key.
+
+Contributing the rest of tico to chrometile instead would change its whole
+design, likely more than its maintainer wants. Asking costs nothing, but
+tico doesn't wait on the answer.
 
 ### 3.2 tico owns the workspaces; native desks stay at one
 
@@ -878,8 +917,8 @@ tidal would ship on the **Play Store** (§20.4).
    minimize animation can't be lived with.
 2. **Is the dim worth the all-sites permission?** §10.1 makes it optional,
    off by default.
-3. **Fork chrometile or start fresh?** §3.1 recommends fresh, sending
-   fixes upstream.
+3. **Fork chrometile or start fresh?** §3.1 recommends fresh, using
+   chrometile until M3 and sending it two fixes.
 4. **How much of the off-ramp (§3.6) should this repo document**, given the
    tide spec already covers the desktop it would run?
 5. **The five moved keys** (§7.1): `Search+Space`, `Search+Shift+.` and
