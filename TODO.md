@@ -61,6 +61,14 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - **The dashboard opens full screen every time**, not as Chrome's toolbar
   popup. If ChromeOS shows its full-screen bubble on each open, a large
   centered window is the fallback. Reversible: `Tico.dashboard`.
+- **Always-on-top windows aren't tracked at all**: Document
+  picture-in-picture and always-on-top popups stay put on every workspace,
+  since ChromeOS refuses to minimize them. The alternative is tracking them
+  as floating windows that stay on one workspace, which can't hide them.
+  Reversible: `managed()` in `src/tico.js`.
+- **Secure Shell's popup windows tile**, by its extension ID in a built-in
+  list, until the options page has tile and float rules (SPEC.md §5.4).
+  Reversible: `TILED_POPUP_ORIGINS`.
 - **The app list is built in** (Calendar, Chat, Meet, YouTube Music), until
   the options page can edit it. Reversible: `src/apps.js`.
 

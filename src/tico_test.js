@@ -15,6 +15,15 @@ function on(display, id, extra = {}) {
   return { id, left: a.left + 10 * id, top: a.top + 10, width: 400, height: 300, ...extra };
 }
 
+// Float window `id` with Search+Shift+F, then drag it to (x, y) at 400x300.
+async function floatAt(chrome, tico, id, x, y) {
+  chrome.focus(id);
+  await tico.event();
+  await tico.command("float");
+  Object.assign(chrome.win(id), { left: x, top: y, width: 400, height: 300 });
+  await tico.event();
+}
+
 async function setup(displays, windows) {
   const chrome = new FakeChrome({ displays, windows });
   const tico = new Tico(chrome);
@@ -99,10 +108,54 @@ test("popups aren't tiled or hidden", async () => {
   assert.equal(chrome.win(2).state, "normal");
 });
 
-test("an always-on-top window floats", async () => {
-  const { chrome } = await setup([HD], [on(HD, 1), on(HD, 2, { alwaysOnTop: true })]);
+test("an always-on-top window is left alone on every workspace", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2, { alwaysOnTop: true })]);
   assert.deepEqual(chrome.box(1), { x: 0, y: 0, w: 1920, h: 1032 });
-  assert.deepEqual(chrome.box(2), on(HD, 2) && { x: 20, y: 10, w: 400, h: 300 });
+  assert.deepEqual(chrome.box(2), { x: 20, y: 10, w: 400, h: 300 });
+  assert.equal(2 in tico.state.windows, false);
+  await tico.command("workspace-2");
+  assert.equal(chrome.win(2).state, "normal", "picture-in-picture refuses minimizing, so tico never asks");
+});
+
+test("a window that refuses to minimize doesn't stop the switch", async () => {
+  const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2), on(HD, 3)]);
+  chrome.refuse.add(1);
+  await tico.command("workspace-2");
+  assert.equal(chrome.win(1).state, "normal", "it refused");
+  assert.equal(chrome.win(2).state, "minimized", "the others still hid");
+  assert.equal(chrome.win(3).state, "minimized");
+  assert.equal(1 in tico.state.windows, false, "tico leaves it alone from now on");
+  await tico.event();
+  assert.equal(tico.state.displays.hd, 2, "the next sync doesn't read it as a restore");
+  assert.equal(chrome.win(2).state, "minimized");
+});
+
+test("a dimmed window that refuses to minimize is undimmed", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true, url: "https://example.com/" }),
+    on(HD, 2, { url: "https://example.org/" }),
+    on(HD, 3, { url: "https://example.net/" }),
+  ]);
+  chrome.granted = true;
+  await tico.setDim(true);
+  assert.deepEqual([...chrome.dimmed].sort(), [20, 30]);
+  chrome.refuse.add(2);
+  await tico.command("workspace-2");
+  assert.equal(chrome.win(2).state, "normal", "it refused");
+  assert.deepEqual([...chrome.dimmed], [30], "still showing, it isn't left dimmed");
+  await tico.event();
+  assert.deepEqual([...chrome.dimmed], [30]);
+});
+
+test("Secure Shell's popup windows tile; other popups float", async () => {
+  const { chrome, tico } = await setup([HD], [
+    on(HD, 1, { focused: true }),
+    on(HD, 2, { type: "popup", url: "chrome-extension://iodihamcpbpeioajjeobimgagajmlibd/html/nassh.html" }),
+    on(HD, 3, { type: "popup", url: "https://accounts.example.com/signin" }),
+  ]);
+  assert.deepEqual(tico.state.workspaces[1].windows, [1, 2]);
+  assert.deepEqual(chrome.box(2), { x: 1056, y: 0, w: 864, h: 1032 });
+  assert.equal(3 in tico.state.windows, false);
 });
 
 test("focus-next and swap-master follow the stack", async () => {
@@ -180,11 +233,10 @@ test("returning to a workspace doesn't restore a window you minimized there", as
 });
 
 test("a floating window moves with its workspace to the other display", async () => {
-  const { chrome, tico } = await setup([HD, UW], [
-    on(HD, 1, { focused: true }),
-    on(HD, 2, { alwaysOnTop: true, left: 100, top: 50 }),
-    on(UW, 3),
-  ]);
+  const { chrome, tico } = await setup([HD, UW], [on(HD, 1, { focused: true }), on(HD, 2), on(UW, 3)]);
+  await floatAt(chrome, tico, 2, 100, 50);
+  chrome.focus(1);
+  await tico.event();
   await tico.command("workspace-2");
   // The displays swapped, so workspace 1 and its floating window are on the ultrawide.
   assert.equal(tico.state.displays.uw, 1);
@@ -225,13 +277,8 @@ test("a focused popup on the other display makes commands act there", async () =
 });
 
 test("a floating window on a hidden workspace comes up on the display that shows it", async () => {
-  const { chrome, tico } = await setup([HD, UW], [
-    on(HD, 1, { focused: true }),
-    on(HD, 2, { alwaysOnTop: true, left: 100, top: 50 }),
-    on(UW, 3),
-  ]);
-  chrome.focus(2);
-  await tico.event();
+  const { chrome, tico } = await setup([HD, UW], [on(HD, 1, { focused: true }), on(HD, 2), on(UW, 3)]);
+  await floatAt(chrome, tico, 2, 100, 50);
   await tico.command("send-4");
   assert.equal(chrome.win(2).state, "minimized");
   chrome.focus(3);

@@ -8,6 +8,7 @@ export class FakeChrome {
     this.wins = windows.map((w) => ({ type: "normal", state: "normal", focused: false, alwaysOnTop: false, ...w }));
     this.store = {};
     this.updates = [];
+    this.refuse = new Set();
     this.created = [];
     this.removed = [];
     const fake = this;
@@ -35,8 +36,10 @@ export class FakeChrome {
         return structuredClone(fake.win(id));
       },
       update: async (id, props) => {
-        fake.updates.push({ id, ...props });
         const w = fake.win(id);
+        // Like Document picture-in-picture, a window can refuse a state.
+        if (props.state && fake.refuse.has(id)) throw new Error(`Window ${id} can't be ${props.state}`);
+        fake.updates.push({ id, ...props });
         if (props.focused) {
           for (const o of fake.wins) o.focused = false;
           if (w.state === "minimized") w.state = "normal";

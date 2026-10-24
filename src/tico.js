@@ -15,8 +15,22 @@ export const DEFAULTS = {
 };
 
 // Window types tico manages. Popups and devtools float untracked (§5.4),
-// except the app popups tico opens itself (§9.1).
+// except the app popups tico opens itself (§9.1) and Secure Shell's.
 const MANAGED = ["normal", "app"];
+const TILED_POPUP_ORIGINS = [
+  // Secure Shell opens its terminals as popup windows (§6.4).
+  "chrome-extension://iodihamcpbpeioajjeobimgagajmlibd/",
+];
+
+// Whether tico manages `w`. Always-on-top windows (Document
+// picture-in-picture, always-on-top popups) refuse minimizing, so they're
+// left alone on every workspace (§5.4), as is any window that refused once.
+function managed(w, appPopups, refused) {
+  if (w.alwaysOnTop || refused.has(w.id)) return false;
+  if (MANAGED.includes(w.type) || appPopups.has(w.id)) return true;
+  const url = w.tabs?.[0]?.url ?? "";
+  return w.type === "popup" && TILED_POPUP_ORIGINS.some((o) => url.startsWith(o));
+}
 const STATE_KEY = "state";
 const VIEW_KEY = "view";
 export const DIM_ORIGINS = ["<all_urls>"];
@@ -162,7 +176,8 @@ export class Tico {
     // Every window type, so a focused popup or devtools window still says
     // which display you're on, but only managed ones are tracked.
     const all = await this.api.windows.getAll({ populate: true, windowTypes: [...MANAGED, "popup", "devtools"] });
-    const wins = all.filter((w) => MANAGED.includes(w.type) || appPopups.has(w.id));
+    const refused = new Set((before?.refused ?? []).filter((id) => all.some((w) => w.id === id)));
+    const wins = all.filter((w) => managed(w, appPopups, refused));
     this.windows = new Map(wins.map((w) => [w.id, w]));
     this.all = new Map(all.map((w) => [w.id, w]));
     this.activeTab = new Map(all.map((w) => [w.id, w.tabs?.find((t) => t.active)?.id]));
@@ -179,7 +194,7 @@ export class Tico {
     // workspace makes other windows look minimized or restored.
     for (const w of wins) {
       if (!(w.id in s.windows) || !before || !(w.id in before.windows)) {
-        s = ws.addWindow(s, w.id, displayFor(w, this.displays), { floating: !!w.alwaysOnTop });
+        s = ws.addWindow(s, w.id, displayFor(w, this.displays));
         // A window already minimized when tico first sees it stays so.
         if (w.state === "minimized") s = ws.userMinimized(s, w.id);
         if (w.focused) s = ws.focused(s, w.id);
@@ -199,6 +214,7 @@ export class Tico {
       if (w.focused) s = ws.focused(s, w.id);
     }
     s.appPopups = [...appPopups].filter((id) => this.windows.has(id));
+    s.refused = [...refused];
     // A mark clears when you go to its window, or it closes.
     s.marks = (before?.marks ?? []).filter((id) => this.windows.has(id) && !this.windows.get(id).focused);
     s.unread = Object.fromEntries(
@@ -342,8 +358,9 @@ export class Tico {
     for (const tabId of dimmed) {
       if (want.has(tabId)) continue;
       const win = this.tabWindow.get(tabId);
-      // Leave a hidden window's overlay for when it comes back.
-      if (this.dimOn() && win !== undefined && !shown.has(win)) continue;
+      // Leave a hidden window's overlay for when it comes back; a window tico
+      // stopped managing never will, so it's undimmed.
+      if (this.dimOn() && win in s.windows && !shown.has(win)) continue;
       if (win !== undefined) await set(tabId, false);
       dimmed.delete(tabId);
     }
@@ -515,8 +532,25 @@ export class Tico {
       if (w && this.windows.has(id)) this.windows.set(id, w);
       return w;
     };
-    for (const id of restore) await update(id, { state: "normal" });
-    for (const id of minimize) await update(id, { state: "minimized" });
+    // A window that refuses to hide (a locked full-screen one, say) can't
+    // follow a workspace, so tico stops managing it rather than stop the
+    // switch, or read it still showing as your doing next time (§5.4).
+    const refusedNow = [];
+    const setState = async (id, state) => {
+      try {
+        await update(id, { state });
+      } catch (e) {
+        console.warn(`tico: window ${id} refused to be ${state}; leaving it alone:`, e?.message ?? e);
+        refusedNow.push(id);
+      }
+    };
+    for (const id of restore) await setState(id, "normal");
+    for (const id of minimize) await setState(id, "minimized");
+    for (const id of refusedNow) {
+      this.state = ws.removeWindow(this.state, id);
+      this.windows.delete(id);
+      this.state.refused = [...new Set([...(this.state.refused ?? []), id])];
+    }
 
     for (const display of this.displays) {
       const n = ws.showing(s, display.id);

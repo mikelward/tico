@@ -98,6 +98,10 @@ Contents:
   warns that the bounds you get aren't exactly the ones you asked for.
 - Picture-in-picture windows report `type: "normal"` (a TODO in the source,
   crbug 438514981), so tico has to recognize them another way (§5.4).
+  Document picture-in-picture and always-on-top popups are `TYPE_FLOATING`:
+  `normal` with `alwaysOnTop: true`, and `windows.update` refuses to
+  minimize, maximize or full-screen them (`windows_api.cc`). Video
+  picture-in-picture isn't a browser window at all, so tico never sees it.
 - `chrome.system.display.getInfo` gives each display's `bounds` and
   `workArea`, which excludes the shelf. Changing the display layout is
   Kiosk-only (`extensions/common/api/system_display.webidl`).
@@ -118,7 +122,17 @@ Contents:
   (`chrome/browser/extensions/extension_commands_global_registry.cc`).
 - So every tico key fires only while a Chrome or web app window is focused.
   It never fires over an Android app, a Linux app, the launcher or an empty
-  desk. tico designs around that (§6.2).
+  desk. tico designs around that (§6.2). Chromium's tip of tree has a new
+  ChromeOS global-accelerator listener
+  (`ui/base/accelerators/global_accelerator_listener/global_accelerator_listener_chromeos.cc`);
+  if it ships for extensions, `"global": true` commands could reach past
+  these *(unverified: no flag or milestone found)*.
+- **In app windows the page sees keys first.** Installed web apps, site
+  shortcuts and ChromeOS's system apps (`TYPE_APP`, `TYPE_APP_POPUP`) hand
+  every key to the page before Chrome's accelerators
+  (`BrowserView::PreHandleKeyboardEvent`, `browser_view.cc`), so a page that
+  consumes `Search+…`, like a terminal, keeps tico's keys from firing.
+  Browser windows and plain popups run extension commands first.
 - OS shortcuts win over extension ones. Search is a valid modifier for
   extension commands on ChromeOS only.
 - **Only some keys can be bound**: A–Z, 0–9, Comma, Period, the arrows,
@@ -418,9 +432,13 @@ tide's Lua layout is the reference; the two share test fixtures (§15).
   popups, and tico's home window (§6.2). tico's own app popups (§9.1) are
   the one exception.
 - `devtools`.
-- **Picture-in-picture**, which reports `normal`: a window that is
-  always-on-top, which `chrome.windows` reports as `alwaysOnTop`
-  *(unverified for PiP)*, or that matches chrometile's Meet PiP URL rule.
+- **Always-on-top windows**: Document picture-in-picture and always-on-top
+  popups, which report `normal` with `alwaysOnTop` (§2.1). They refuse
+  minimizing, so tico doesn't track them at all: they stay where they are,
+  on every workspace. Chrometile's Meet PiP URL rule covers any that don't.
+- **Except Secure Shell**: its terminals open as `popup` windows, so tico
+  tiles popups whose tab is on Secure Shell's extension origin, like its own
+  app popups (§6.4).
 - **Chrome Remote Desktop** and the other URL rules chrometile ships, as a
   user-editable list.
 - Anything you float with `Search+Shift+F`, remembered by window ID and
@@ -495,6 +513,32 @@ windows.
 - **Overview** shows every window, minimized ones included *(unverified)*.
 - **Native desks**: the checklist removes all but one, so a stray
   `Search+]` has nowhere to go. A desk-aware design is open question 1.
+
+### 6.4 What won't play nice
+
+Beyond Android and Linux apps, from Chromium's and Secure Shell's source
+*(each unverified on a device)*:
+
+| Thing | What happens | What to do |
+|---|---|---|
+| **Secure Shell**, from its toolbar popup | A `popup` window. Tiled by tico's Secure Shell rule (§5.4); tico's keys work. | Fine as is. |
+| **Secure Shell**, from "New session" (Ctrl+Shift+N) | An app popup: tiled, but the terminal swallows every Ctrl, Alt and Search combo, so tico's keys go dead while it has focus. | Open connections from the toolbar popup or as tabs, or add pass-through keybindings in Secure Shell's options. |
+| **Secure Shell**, Shift-click or as a tab | A normal window or tab: tiles, keys work. | Fine. |
+| **ChromeOS's system apps** (Files, Settings, Camera) | Report as `app`, so they tile like web apps, with the page-first keys of §2.2. | Fine; expect the odd key to be eaten. |
+| **The Terminal system app** | The same terminal as Secure Shell: it tiles, and tico's keys go dead in it. | Use Secure Shell from its popup, or Crostini's terminal (§12). |
+| **Document picture-in-picture** (a call's pop-out) | Always on top, refuses minimizing; tico leaves it alone on every workspace. | Fine; it floats over everything, as it should. |
+| **Video picture-in-picture** | Invisible to tico; floats over everything. | Fine. |
+| **Chrome Apps** (the old `chrome.app.window` kind) | Invisible to other extensions: untiled, on every workspace. | Use the web app instead. |
+| **Steam, Parallels** | VM windows, invisible like Linux apps: untiled, on every workspace, keys dead while focused. | Keep them full screen, or on native desks you don't switch. |
+| **Incognito windows** | Invisible unless tico is allowed in Incognito: untiled, on every workspace. | Allow tico in Incognito at `chrome://extensions`. |
+| **A second signed-in user, or Guest** | That user's windows are invisible: tico can't manage them. | One user per session. |
+| **Full-screen video** | tico leaves full-screen windows alone (§5.1). | Fine. |
+| **Extension popups, the side panel** | Not windows; unaffected. | Fine. |
+
+A window that refuses a state change (a locked full-screen kiosk window, say)
+is logged and skipped, so it can't stop the rest of a workspace switch.
+tico then stops managing it, like an always-on-top window, so it isn't read
+as a window you restored by hand on the next event.
 
 ## 7. Keys
 
