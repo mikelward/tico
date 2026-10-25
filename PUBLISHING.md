@@ -134,6 +134,11 @@ In the [developer dashboard](https://chrome.google.com/webstore/devconsole):
    Broad host permissions slow them down. tico asks for all-sites access
    only as an optional permission, which helps.
 
+tico's item ID is `ajcfbfgjfglgofbepnkiimmmnaidfedl`, and it keeps it for
+every update. Its store page is
+<https://chromewebstore.google.com/detail/ajcfbfgjfglgofbepnkiimmmnaidfedl>,
+which answers "not found" until the first submission is published.
+
 Once it's published, a Chromebook installs it from the store like any
 extension, and updates arrive on their own within a few hours of approval.
 Remove the unpacked copy from `chrome://extensions` first, or you'll have
