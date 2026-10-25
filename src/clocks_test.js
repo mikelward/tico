@@ -14,26 +14,27 @@ import {
   strip,
 } from "./clocks.js";
 
-// 2026-10-24 23:30 in London (BST), 15:30 in SF, 18:30 in NYC.
+// 2026-10-24 23:30 in London (BST), 15:30 in LA, 18:30 in NYC, 09:30 on the 25th in Sydney.
 const T = new Date("2026-10-24T22:30:00Z");
 
-test("the row is SF, NYC, LON, then local with its date", () => {
-  assert.deepEqual(clockRow(T, "Australia/Sydney"), [
-    { label: "SF", time: "15:30", day: -1 },
+test("the row is SYD, LAX, NYC, LON, then local with its date", () => {
+  assert.deepEqual(clockRow(T, "Asia/Tokyo"), [
+    { label: "SYD", time: "09:30", day: 0 },
+    { label: "LAX", time: "15:30", day: -1 },
     { label: "NYC", time: "18:30", day: -1 },
     { label: "LON", time: "23:30", day: -1 },
-    { label: "Oct 25", time: "09:30", day: 0, local: true },
+    { label: "Oct 25", time: "07:30", day: 0, local: true },
   ]);
 });
 
 test("a listed zone that is the local zone is hidden", () => {
   const row = clockRow(T, "Europe/London");
-  assert.deepEqual(row.map((r) => r.label), ["SF", "NYC", "Oct 24"]);
+  assert.deepEqual(row.map((r) => r.label), ["SYD", "LAX", "NYC", "Oct 24"]);
 });
 
 test("a zone that only shares local's offset stays", () => {
   const row = clockRow(T, "Europe/Dublin");
-  assert.deepEqual(row.map((r) => r.label), ["SF", "NYC", "LON", "Oct 24"]);
+  assert.deepEqual(row.map((r) => r.label), ["SYD", "LAX", "NYC", "LON", "Oct 24"]);
 });
 
 test("a later date shows +1", () => {
@@ -76,7 +77,7 @@ test("hours from local can be fractional and negative", () => {
 });
 
 test("a zone's strip sits on local hours and splits at midnight", () => {
-  // SF is 9 h behind Paris: its 07-19 day is Paris 16-04, its 09-17 work Paris 18-02.
+  // LA is 9 h behind Paris: its 07-19 day is Paris 16-04, its 09-17 work Paris 18-02.
   assert.deepEqual(strip(T, "Europe/Paris", "America/Los_Angeles"), [
     { kind: "day", start: 16, end: 24 },
     { kind: "day", start: 0, end: 4 },
@@ -96,7 +97,7 @@ test("a zone's strip sits on local hours and splits at midnight", () => {
 test("the DST note names each change and the week the gap is off", () => {
   assert.equal(
     dstNote(T, "Australia/Sydney"),
-    "London moves to GMT on Sun, Oct 25; New York and San Francisco move to EST/PST on Sun, Nov 1. " +
+    "London moves to GMT on Sun, Oct 25; New York and Los Angeles move to EST/PST on Sun, Nov 1. " +
       "Until Sun, Nov 1, London is 4 h ahead of New York instead of 5.",
   );
 });

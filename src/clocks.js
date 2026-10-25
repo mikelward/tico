@@ -3,7 +3,8 @@
 // whose date differs from local.
 
 export const DEFAULT_CLOCKS = [
-  { zone: "America/Los_Angeles", label: "SF", city: "San Francisco" },
+  { zone: "Australia/Sydney", label: "SYD", city: "Sydney" },
+  { zone: "America/Los_Angeles", label: "LAX", city: "Los Angeles" },
   { zone: "America/New_York", label: "NYC", city: "New York" },
   { zone: "Europe/London", label: "LON", city: "London" },
 ];
