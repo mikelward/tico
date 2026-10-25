@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Tico } from "./tico.js";
 import { FakeChrome, HD } from "./fake_chrome.js";
-import { WATCHED } from "./unread.js";
 
 const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url)));
 
@@ -74,9 +73,13 @@ test("frequent actions take no modifier but Search, and no two commands share a 
   }
 });
 
-test("the title watcher runs on the watched origins and nowhere else", () => {
-  assert.deepEqual(manifest.content_scripts, [{ matches: WATCHED, js: ["src/unread_watch.js"], run_at: "document_idle" }]);
-  assert.equal(manifest.host_permissions, undefined, "no host access beyond the content script's");
+// Tiling needs no permission with an install warning; tab access and each
+// site's are asked for on the options page (§14.1).
+test("every permission with an install warning is optional", () => {
+  assert.deepEqual(manifest.permissions, ["storage", "system.display", "scripting"]);
+  assert.deepEqual(manifest.optional_permissions, ["tabs"]);
+  assert.equal(manifest.content_scripts, undefined, "the title watcher is registered once its sites are allowed");
+  assert.equal(manifest.host_permissions, undefined);
 });
 
 test("all-sites access is optional, for the dim alone", () => {

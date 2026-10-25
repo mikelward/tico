@@ -4,6 +4,7 @@
 
 import { APP_COMMANDS, DEFAULT_APPS } from "./apps.js";
 import { checkZone, DAY, DEFAULT_CLOCKS, WORK } from "./clocks.js";
+import { DEFAULT_SITES } from "./unread.js";
 
 export const SETTINGS_KEY = "settings";
 
@@ -22,8 +23,8 @@ export const DEFAULT_SETTINGS = {
   work: WORK,
   apps: DEFAULT_APPS,
   dimStrength: 0.1,
-  // Sites watched for unread counts beyond Gmail, Chat and Calendar.
-  watched: [],
+  // Sites whose unread counts tico shows (§10.3).
+  watched: DEFAULT_SITES,
   // The layout a workspace starts in, by its display's aspect (§5.2), and
   // each layout's main share and main-window count, in tide's names.
   defaultMode: { normal: "tile", ultrawide: "threecol" },

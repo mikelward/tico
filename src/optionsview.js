@@ -6,6 +6,8 @@ import { APP_COMMANDS } from "./apps.js";
 import { checklist } from "./keys.js";
 import { MOUSE_PAGE } from "./mouse.js";
 import { ITEMS, progress, SETUP_KEY, tick } from "./setup.js";
+import { EXTRAS as BASE_EXTRAS } from "./extras.js";
+import { DEFAULT_SITES } from "./unread.js";
 import { pattern } from "./watchers.js";
 import { DEFAULT_SETTINGS, PER_MACHINE, pick, resolve, SETTINGS_KEY, SHARED, START_MODES } from "./settings.js";
 
@@ -96,8 +98,61 @@ function appRow(command, app) {
   return tr;
 }
 
-// The extra watched sites (§10.3). Settings sync, but a site's access is
-// granted per Chromebook, so each shows whether it's watched here.
+// The extras (§14.1), each with what turning it on or off here takes
+// beyond its permission.
+const HOOKS = {
+  unread: {
+    // On only while they're in the list too.
+    on: () => DEFAULT_SITES.every((s) => watchedSites.includes(s)),
+    // Off takes them out of the list too: with all sites allowed for
+    // dimming, their access stays, so the list is what turns them off.
+    off: async () => {
+      watchedSites = watchedSites.filter((s) => !DEFAULT_SITES.includes(s));
+      return save();
+    },
+    // Allowing them puts back any you'd removed.
+    allowed: async () => {
+      const missing = DEFAULT_SITES.filter((s) => !watchedSites.includes(s));
+      if (missing.length === 0) return;
+      watchedSites.push(...missing);
+      await save();
+    },
+  },
+  // Every page is undimmed while tico can still reach them.
+  dim: { off: () => chrome.runtime.sendMessage({ dim: false }) },
+};
+const EXTRAS = BASE_EXTRAS.map((e) => ({ ...e, ...HOOKS[e.id] }));
+
+async function renderPermissions() {
+  const items = await Promise.all(
+    EXTRAS.map(async (extra) => {
+      const li = document.createElement("li");
+      const on = (await chrome.permissions.contains(extra.access)) && (extra.on?.() ?? true);
+      const title = Object.assign(document.createElement("strong"), { textContent: extra.title });
+      const state = Object.assign(document.createElement("span"), { className: "muted", textContent: on ? "On" : "Off" });
+      const toggle = button(on ? "Turn off" : "Allow", `${on ? "Turn off" : "Allow"}: ${extra.title}`, async () => {
+        try {
+          if (on) {
+            if (extra.off && !(await extra.off())) throw new Error("tico couldn't undim the windows");
+            await chrome.permissions.remove(extra.access);
+          } else if (await chrome.permissions.request(extra.access)) {
+            await extra.allowed?.();
+          }
+        } catch (e) {
+          showErrors([`${extra.title}: ${e.message}`]);
+        }
+        renderPermissions();
+        renderWatched();
+      });
+      li.append(title, " ", state, " ", toggle, Object.assign(document.createElement("p"), { className: "muted", textContent: extra.how }));
+      return li;
+    }),
+  );
+  $("permissions").replaceChildren(...items);
+}
+
+// The sites whose unread counts tico shows (§10.3). Settings sync, but a
+// site's access is allowed per Chromebook, so each shows whether it's on here.
 let watchedSites = [];
 
 async function renderWatched() {
@@ -105,19 +160,20 @@ async function renderWatched() {
     watchedSites.map(async (site) => {
       const li = document.createElement("li");
       const granted = await chrome.permissions.contains({ origins: [pattern(site)] });
-      li.append(site, " ", Object.assign(document.createElement("span"), { className: "muted", textContent: granted ? "watched" : "needs access here" }));
+      li.append(site, " ", Object.assign(document.createElement("span"), { className: "muted", textContent: granted ? "on" : "not allowed yet" }));
       if (!granted) {
         li.append(" ", button("Allow", `Allow ${site}`, async () => {
           if (await chrome.permissions.request({ origins: [pattern(site)] })) renderWatched();
         }));
       }
-      li.append(" ", button("×", `Stop watching ${site}`, async () => {
+      li.append(" ", button("×", `Stop showing unread counts for ${site}`, async () => {
         watchedSites = watchedSites.filter((s) => s !== site);
         if (await save()) {
-          // Gives back this site's access; with all-sites access for the dim,
-          // Chrome keeps that, which is fine: it's the dim's.
+          // Gives back this site's access; with all-sites access for dimming
+          // inactive windows, Chrome keeps that, which is fine: it's the dim's.
           await chrome.permissions.remove({ origins: [pattern(site)] });
           renderWatched();
+          renderPermissions();
         }
       }));
       return li;
@@ -175,6 +231,7 @@ function toForm(settings) {
   $("dim-strength").value = Number((settings.dimStrength * 100).toPrecision(12));
   watchedSites = [...settings.watched];
   renderWatched();
+  renderPermissions();
   appRows.replaceChildren(...APP_COMMANDS.map((c) => appRow(c, settings.apps.find((a) => a.command === c))));
   for (const [k, ids] of Object.entries(HOURS)) ids.forEach((id, i) => ($(id).value = settings[k][i]));
   for (const [k, id] of Object.entries(START)) $(id).value = settings.defaultMode[k];
@@ -251,7 +308,7 @@ $("add-clock").addEventListener("click", () => {
 });
 for (const ids of Object.values(HOURS)) for (const id of ids) $(id).addEventListener("change", () => save());
 $("dim-strength").addEventListener("change", () => save());
-// Chrome asks for a site's access only from a click, so Watch asks first and
+// Chrome asks for a site's access only from a click, so Add asks first and
 // saves the site once it's granted.
 $("watch-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -267,7 +324,7 @@ $("watch-form").addEventListener("submit", async (e) => {
     return;
   }
   if (!(await chrome.permissions.request({ origins: [pattern(origin)] }))) {
-    showErrors([`tico needs access to ${origin} to watch it`]);
+    showErrors([`tico needs access to ${origin} to show its unread counts`]);
     return;
   }
   if (!watchedSites.includes(origin)) watchedSites.push(origin);
@@ -365,6 +422,16 @@ $("open-shortcuts").addEventListener("click", () =>
 window.addEventListener("focus", () => renderKeys());
 await renderKeys();
 await renderSetup();
+// Allowed or removed elsewhere too: the dashboard's dim switch, or Chrome's
+// own extension page.
+chrome.permissions.onAdded.addListener(() => {
+  renderPermissions();
+  renderWatched();
+});
+chrome.permissions.onRemoved.addListener(() => {
+  renderPermissions();
+  renderWatched();
+});
 const shared = (await chrome.storage.sync.get(SETTINGS_KEY))[SETTINGS_KEY];
 const { settings, errors: stored } = resolve(shared);
 toForm(settings);

@@ -825,7 +825,8 @@ tabs and running tico's commands.
 - **Two scopes**, switched by their chips or Tab: **Launch** (the app keys'
   apps and tico's commands, each with its key) and **Tabs** (every open tab
   but tico's own, with its workspace). The home page opens on Launch, the
-  dashboard on Tabs.
+  dashboard on Tabs. Without the `tabs` permission (§14.1) the dashboard
+  opens on Launch too, and Tabs offers "Allow tab search".
 - **Fuzzy matching:** every query letter in order, with word starts and runs
   scoring higher, so "gc" finds Google Calendar. A tab matches by title,
   by the name of the app whose site it's on (so "calendar" finds Calendar's
@@ -884,18 +885,18 @@ can't see other sites' notifications. tide's §14.4 derives attention from
 notifications; tico derives it from **page titles** instead:
 
 - Gmail, Chat and Calendar put an unread count in the title, like
-  `Chat (3)`. A content script on those origins, and only those, watches
-  the title and tells tico when the count goes up.
+  `Chat (3)`. A content script on the allowed sites, and only those,
+  reads the title and tells tico when the count goes up.
 - tico marks the window: the badge goes amber (§8.1), the workspace is
   marked in the bar, and `windows.update({drawAttention: true})` flashes
   its shelf icon.
 - `Search+Tab` activates the most recent mark (§6.1); again goes to the next, as in
   tide §14.3. With nothing marked, it goes to the last window you were in.
 - A mark clears when the window is focused.
-- The watched origins are a setting. Gmail, Chat and Calendar are always
-  watched, from the manifest; each other site is added on the options page,
-  which asks for that site's access alone, without the all-sites warning,
-  and tico registers the same title watcher for it at runtime
+- The sites are a setting, **Unread counts**, with Gmail, Chat and
+  Calendar to start with. Each needs its own access, asked for on the
+  options page, without the all-sites warning. tico registers the title
+  script for each allowed site at runtime
   (`scripting.registerContentScripts`). Grants are per Chromebook while
   settings sync, so a site added elsewhere waits for its access here.
 
@@ -998,11 +999,22 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
 
 - MV3, service worker background, minimum Chrome version set to the M2
   device's.
-- Permissions: `storage`, `system.display`, `tabs` (app focus, URL rules),
-  `power` (keep awake), `management` (launching installed apps, if §9.1
-  holds), `scripting` plus narrow host permissions for the attention
-  origins.
-- Optional permission, asked at runtime: `<all_urls>` for the dim.
+- Permissions: `storage`, `system.display`, `scripting`, none with an
+  install warning, so tiling and workspaces need nothing sensitive.
+  (`power` for keep-awake and `management` for installed apps, if §9.1
+  holds, would join them.)
+- Optional, each asked for from a click under **Extras** at the top of the
+  settings, which a new install opens once. The dashboard also shows a
+  card offering the extras still off, with an Allow button each, until
+  you dismiss it (kept in `storage.local`). Turning unread counts for
+  Gmail, Chat and Calendar off takes them out of the list, since
+  all-sites access for dimming keeps their access:
+  - `tabs`, for tab search (§9.4), matching windows after a restart
+    (§14.2) and recognizing Secure Shell's popups (§6.4). Without it,
+    those popups float and a restart loses workspaces.
+  - Each unread-count site's own origin (§10.3). Gmail, Chat and Calendar
+    are one Allow.
+  - `<all_urls>`, for dimming inactive windows (§10.1).
 
 ### 14.2 Living with the service worker
 
@@ -1071,12 +1083,11 @@ development only. That shapes the design *(Web Store policy, secondary)*:
 
 - **One purpose**: window management. The clocks, keep-awake and attention
   belong to it as the desktop around the tiles; the listing says so.
-- **Every permission is justified in the listing**: `tabs` for app focus
-  and URL rules, `system.display` for layout, `power` for keep-awake,
-  `management` for launching installed apps, `scripting` and the narrow
-  attention origins for unread counts. All-sites access for the dim stays
-  optional and is requested at runtime (§10.1), so the install warning
-  stays small and review stays simpler.
+- **Every permission is justified in the listing** (PUBLISHING.md):
+  `system.display` for layout, `scripting` for unread counts and dimming,
+  and, optional and asked for at runtime, `tabs`, each unread-count site,
+  and all sites for dimming (§14.1). So the install shows no warning, and
+  review stays simpler.
 - **No remote code** and no network calls, which MV3 requires anyway.
 - Updates go through Web Store review, so a fix after a ChromeOS change
   takes days, not minutes. Keep a tested build ready before each ChromeOS

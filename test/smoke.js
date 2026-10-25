@@ -46,13 +46,17 @@ test("the options page renders every section and saves changes", async () => {
   const { page, errors } = await open("src/options.html");
   await page.waitForSelector("#setup li");
   const headings = await page.locator("h2").allInnerTexts();
-  for (const h of ["Clocks", "Setup checklist", "Keys", "Apps", "Attention", "Dim", "Workspaces", "Layouts on this Chromebook", "Mouse on this Chromebook", "Import and export"]) {
+  for (const h of ["Extras", "Clocks", "Setup checklist", "Keys", "Apps", "Unread counts", "Dim", "Workspaces", "Layouts on this Chromebook", "Mouse on this Chromebook", "Import and export"]) {
     assert.ok(headings.includes(h), `no ${h} section in ${headings}`);
   }
   assert.ok((await page.locator("#clocks tbody tr").count()) > 0, "no clocks");
   assert.ok((await page.locator("#keys tbody tr").count()) > 0, "no keys");
   assert.ok((await page.locator("#modes tbody tr").count()) > 0, "no layouts");
-
+  // Nothing is allowed yet, so every extra offers to be.
+  await page.waitForSelector("#permissions li");
+  assert.deepEqual(await page.locator("#permissions li button").allInnerTexts(), ["Allow", "Allow", "Allow"]);
+  assert.equal(await page.locator("#watched li").count(), 3, "Gmail, Chat and Calendar to start with");
+  assert.match(await page.locator("#watched").innerText(), /not allowed yet/);
   await page.locator("#dim-strength").fill("20");
   await page.locator("#dim-strength").dispatchEvent("change");
   await page.waitForFunction(async () => (await chrome.storage.sync.get("settings")).settings?.dimStrength === 0.2);
@@ -83,6 +87,25 @@ test("the settings open pages in their own window", async () => {
   for (const o of await page.evaluate(() => window.opened)) assert.equal(o.windowId, here, o.url);
 });
 
+test("turning off Gmail, Chat and Calendar takes them out of the list", async () => {
+  // As with all sites allowed for dimming, which keeps their access: Chrome
+  // grants only from a real click, so the page's view of it is faked.
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.addInitScript(() => {
+    chrome.permissions.contains = async () => true;
+    chrome.permissions.remove = async () => true;
+  });
+  await page.goto(base + "src/options.html");
+  await page.waitForFunction(() => document.querySelectorAll("#permissions li button")[1]?.textContent === "Turn off");
+  await page.locator("#permissions li button").nth(1).click();
+  await page.waitForFunction(async () => (await chrome.storage.sync.get("settings")).settings?.watched?.length === 0);
+  await page.waitForFunction(() => document.querySelectorAll("#permissions li button")[1]?.textContent === "Allow");
+  assert.deepEqual(errors, []);
+  await worker.evaluate(() => chrome.storage.sync.remove("settings"));
+});
+
 for (const mode of ["home", "dashboard"]) {
   test(`the ${mode} page renders the bar, clocks and launcher`, async () => {
     const { page, errors } = await open(`src/launcher.html?mode=${mode}`);
@@ -96,6 +119,35 @@ for (const mode of ["home", "dashboard"]) {
     assert.deepEqual(errors, []);
   });
 }
+
+test("without tab access, the dashboard opens on Launch and offers tab search", async () => {
+  const { page, errors } = await open("src/launcher.html?mode=dashboard");
+  await page.waitForSelector("#results li");
+  assert.equal(await page.locator('.scopes [aria-selected="true"]').innerText(), "Launch");
+  await page.locator('.scopes [data-scope="tabs"]').click();
+  assert.deepEqual(await page.locator("#results .title").allInnerTexts(), ["Allow tab search"]);
+  assert.deepEqual(errors, []);
+});
+
+test("the dashboard offers the extras still off until you dismiss it", async () => {
+  const { page, errors } = await open("src/launcher.html?mode=dashboard");
+  await page.waitForSelector("#extras li");
+  assert.deepEqual(await page.locator("#extras li strong").allInnerTexts(), [
+    "Find any tab in a keystroke",
+    "Show unread counts for Gmail, Chat and Calendar",
+    "Dim inactive windows",
+  ]);
+  await page.locator("#dismiss-extras").click();
+  assert.equal(await page.locator("#extras").isHidden(), true);
+  const again = await open("src/launcher.html?mode=dashboard");
+  await again.page.waitForSelector("#clocks li");
+  assert.equal(await again.page.locator("#extras").isHidden(), true, "dismissed stays dismissed");
+  const home = await open("src/launcher.html?mode=home");
+  await home.page.waitForSelector("#clocks li");
+  assert.equal(await home.page.locator("#extras").isHidden(), true, "only on the dashboard");
+  assert.deepEqual([...errors, ...again.errors, ...home.errors], []);
+  await worker.evaluate(() => chrome.storage.local.remove("extrasDismissed"));
+});
 
 test("the dashboard stays open while Chrome asks for the dim's access", async () => {
   const { page, errors } = await open("src/launcher.html?mode=dashboard");

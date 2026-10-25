@@ -65,8 +65,12 @@ export class FakeChrome {
     this.granted = false;
     // `granted` is all-sites access; `grantedOrigins` holds narrower grants.
     this.grantedOrigins = new Set();
+    // API permissions, such as tabs; tab search is allowed unless a test
+    // takes it away.
+    this.grantedPermissions = new Set(["tabs"]);
     this.permissions = {
-      contains: async ({ origins }) => fake.granted || origins.every((o) => fake.grantedOrigins.has(o)),
+      contains: async ({ origins = [], permissions = [] }) =>
+        permissions.every((p) => fake.grantedPermissions.has(p)) && (fake.granted || origins.every((o) => fake.grantedOrigins.has(o))),
     };
     this.registered = new Map();
     this.injected = [];

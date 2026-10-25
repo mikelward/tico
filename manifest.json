@@ -14,24 +14,13 @@
   "permissions": [
     "storage",
     "system.display",
-    "tabs",
     "scripting"
+  ],
+  "optional_permissions": [
+    "tabs"
   ],
   "optional_host_permissions": [
     "<all_urls>"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "https://mail.google.com/*",
-        "https://chat.google.com/*",
-        "https://calendar.google.com/*"
-      ],
-      "js": [
-        "src/unread_watch.js"
-      ],
-      "run_at": "document_idle"
-    }
   ],
   "commands": {
     "focus-next": {

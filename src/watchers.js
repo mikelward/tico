@@ -1,27 +1,26 @@
-// Sites watched for unread counts beyond the built-in ones (SPEC.md §10.3).
-// The manifest's content script covers Gmail, Chat and Calendar; each site
-// the settings add needs its own host permission, asked for on the options
-// page, and gets the same title watcher registered at runtime. A site
-// without its permission on this Chromebook (settings sync, grants don't) is
-// left out until it has one.
+// The sites whose unread counts tico shows (SPEC.md §10.3), from the
+// settings. Each needs its host permission, asked for on the options page,
+// and gets the title watcher registered at runtime. A site without its
+// permission on this Chromebook (settings sync, grants don't) is left out
+// until it has one.
 
-import { WATCHED } from "./unread.js";
-
+// Named for when it held only sites beyond Gmail, Chat and Calendar; kept,
+// so an update replaces the script it registered.
 export const WATCHER_ID = "tico-watch-extra";
 
 // The match pattern for an origin: "https://example.com" -> "https://example.com/*".
 export const pattern = (origin) => `${origin}/*`;
 
-// The patterns to register: each setting's site not already built in.
-export function extraPatterns(sites) {
-  return [...new Set(sites.map(pattern))].filter((p) => !WATCHED.includes(p));
+// The patterns to register, each site once.
+export function watchPatterns(sites) {
+  return [...new Set(sites.map(pattern))];
 }
 
-// Make the registered watcher match the granted extra sites. `api` is
+// Make the registered watcher match the granted sites. `api` is
 // chrome. Returns the patterns now watched.
 export async function syncWatchers(api, sites) {
   const granted = [];
-  for (const p of extraPatterns(sites)) if (await api.permissions.contains({ origins: [p] })) granted.push(p);
+  for (const p of watchPatterns(sites)) if (await api.permissions.contains({ origins: [p] })) granted.push(p);
   const [current] = await api.scripting.getRegisteredContentScripts({ ids: [WATCHER_ID] });
   const same = current && current.matches.length === granted.length && current.matches.every((m) => granted.includes(m));
   if (same || (!current && granted.length === 0)) return granted;
@@ -48,8 +47,7 @@ export async function syncWatchers(api, sites) {
   return granted;
 }
 
-// Whether a page at `url` is watched: one of the built-in sites, or one the
-// settings name now. A page whose site was removed keeps its injected
+// Whether a page at `url` is on a site the settings name now. A page whose site was removed keeps its injected
 // watcher until it reloads (unregistering doesn't remove it), so its
 // reports are dropped here.
 export function isWatched(url, sites) {
@@ -60,7 +58,7 @@ export function isWatched(url, sites) {
     // a report with no page address isn't from a watched page
     return false;
   }
-  return WATCHED.includes(pattern(origin)) || sites.includes(origin);
+  return sites.includes(origin);
 }
 
 // `fn` run one call at a time, in the order called, so an older call

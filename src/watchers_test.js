@@ -1,10 +1,26 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FakeChrome, HD } from "./fake_chrome.js";
-import { extraPatterns, isWatched, serialized, syncWatchers, WATCHER_ID } from "./watchers.js";
+import { DEFAULT_SETTINGS } from "./settings.js";
+import { DEFAULT_SITES } from "./unread.js";
+import { watchPatterns, isWatched, serialized, syncWatchers, WATCHER_ID } from "./watchers.js";
 
-test("built-in sites aren't registered again", () => {
-  assert.deepEqual(extraPatterns(["https://mail.google.com", "https://app.slack.com"]), ["https://app.slack.com/*"]);
+test("each site is registered once", () => {
+  assert.deepEqual(watchPatterns(["https://mail.google.com", "https://app.slack.com", "https://mail.google.com"]), [
+    "https://mail.google.com/*",
+    "https://app.slack.com/*",
+  ]);
+});
+
+test("Gmail, Chat and Calendar are the default sites, shown only once allowed", async () => {
+  const chrome = new FakeChrome({ displays: [HD] });
+  assert.deepEqual(DEFAULT_SETTINGS.watched, DEFAULT_SITES);
+  assert.deepEqual(await syncWatchers(chrome, DEFAULT_SITES), []);
+  assert.equal(chrome.registered.has(WATCHER_ID), false);
+  for (const site of DEFAULT_SITES) chrome.grantedOrigins.add(`${site}/*`);
+  const all = DEFAULT_SITES.map((site) => `${site}/*`);
+  assert.deepEqual(await syncWatchers(chrome, DEFAULT_SITES), all);
+  assert.deepEqual(chrome.registered.get(WATCHER_ID).matches, all);
 });
 
 test("only sites granted on this Chromebook are watched", async () => {
@@ -31,8 +47,9 @@ test("the watcher follows the settings and grants, and goes when none are left",
   assert.equal(chrome.registered.has(WATCHER_ID), false);
 });
 
-test("a report counts only from a built-in site or one the settings name now", () => {
-  assert.equal(isWatched("https://mail.google.com/mail/u/0/#inbox", []), true);
+test("a report counts only from a site the settings name now", () => {
+  assert.equal(isWatched("https://mail.google.com/mail/u/0/#inbox", DEFAULT_SITES), true);
+  assert.equal(isWatched("https://mail.google.com/mail/u/0/#inbox", []), false, "Gmail too, once removed");
   assert.equal(isWatched("https://app.slack.com/client/T1", ["https://app.slack.com"]), true);
   assert.equal(isWatched("https://app.slack.com/client/T1", []), false, "a removed site's open page is ignored");
   assert.equal(isWatched(undefined, ["https://app.slack.com"]), false);
