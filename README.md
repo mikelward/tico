@@ -11,5 +11,9 @@ notifications, screenshots, dark mode) to match.
 explains what chromeOS lets an extension do, and what it doesn't: Android
 and Linux windows, global keys and a top bar are out of reach.
 
+It isn't on the Chrome Web Store yet. Once it's published, it will be at
+<https://chromewebstore.google.com/detail/ajcfbfgjfglgofbepnkiimmmnaidfedl>.
+Until then, load it unpacked, as [PUBLISHING.md](PUBLISHING.md) §2 says.
+
 Thanks to [chrometile](https://github.com/brockgr/chrometile), which showed
 the way.
