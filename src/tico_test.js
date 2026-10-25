@@ -946,3 +946,20 @@ test("a window back from maximized isn't read as resized", async () => {
   assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.55);
   assert.deepEqual(chrome.box(1), { x: 0, y: 0, w: 1056, h: 1032 });
 });
+
+test("without tab search, no tab addresses are kept, even with all sites allowed", async () => {
+  const chrome = new FakeChrome({
+    displays: [HD],
+    windows: [on(HD, 1, { focused: true, url: "https://mail.google.com/" }), on(HD, 2, { url: "https://github.com/" })],
+  });
+  chrome.grantedPermissions.delete("tabs");
+  // All-sites access for dimming lets Chrome show every tab's address.
+  chrome.granted = true;
+  const tico = new Tico(chrome);
+  await tico.event();
+  await tico.tabLoaded(20);
+  for (const info of Object.values(chrome.store.state.windows)) assert.deepEqual(info.urls, []);
+  chrome.grantedPermissions.add("tabs");
+  await tico.event();
+  assert.deepEqual(chrome.store.state.windows[1].urls, ["https://mail.google.com/"], "kept once tab search is allowed");
+});

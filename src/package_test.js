@@ -49,7 +49,7 @@ test("every file the manifest names is in the ZIP", () => {
   const named = [
     manifest.background.service_worker,
     manifest.options_ui.page,
-    ...manifest.content_scripts.flatMap((c) => c.js),
+    "src/unread_watch.js",
     ...Object.values(manifest.icons),
     ...Object.values(manifest.action.default_icon),
   ];

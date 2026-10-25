@@ -113,13 +113,16 @@ In the [developer dashboard](https://chrome.google.com/webstore/devconsole):
      - `storage`: settings, and the workspace state that survives a
        restart.
      - `system.display`: each display's work area, to lay out windows.
-     - `tabs`: tab titles and URLs, for the launcher's tab search, for
-       matching windows after a restart, and for unread counts.
-     - `scripting`: the title watcher on sites you add, and the dim.
-     - Host access to Gmail, Chat and Calendar: their unread counts, from
-       the page title.
-     - Optional all-sites access: the dim, asked for only when you turn it
-       on.
+     - `scripting`: the unread-count script on sites you allow, and the
+       shade that dims inactive windows.
+     - Optional `tabs`: tab titles and URLs, for the launcher's tab search,
+       for matching windows after a restart, and for recognizing Secure
+       Shell's windows. Asked for only when you allow tab search.
+     - Optional host access to each site in the unread counts list, Gmail,
+       Chat and Calendar to start with: its unread count, from the page
+       title. Asked for only when you allow it.
+     - Optional all-sites access: dimming inactive windows, asked for only
+       when you turn it on.
    - **Remote code:** no. tico runs only the code in its package.
    - **Data use:** tico sends nothing to its developer or anyone else.
      Chrome Sync carrying the shared settings is Chrome's, not tico's, but

@@ -6,6 +6,7 @@
 import { scrub } from "./clocks.js";
 import { stepMonth } from "./calendar.js";
 import { renderClocks, renderDetail, today } from "./clockview.js";
+import { addDefaultSites, DISMISSED_KEY, EXTRAS, isOn } from "./extras.js";
 import { items, rank } from "./launcher.js";
 import { load as loadSettings, SETTINGS_KEY } from "./settings.js";
 
@@ -19,6 +20,10 @@ const clocks = $("clocks");
 const detail = $("clock-detail");
 
 let scope = home ? "launch" : "tabs";
+// Tab titles and addresses need the tabs permission (§9.4); without it the
+// Tabs scope offers to allow it.
+let tabsAllowed = true;
+const ALLOW_TABS = { kind: "allow", title: "Allow tab search", detail: "Chrome asks first" };
 let all = [];
 let shown = [];
 let selected = 0;
@@ -70,8 +75,12 @@ function renderBar() {
 
 async function refresh() {
   me = await chrome.windows.getCurrent();
+  const wasAllowed = tabsAllowed;
+  tabsAllowed = await chrome.permissions.contains({ permissions: ["tabs"] });
+  // The dashboard opens on tabs only when it can show them.
+  if (!home && !tabsAllowed && wasAllowed && scope === "tabs" && query.value === "") scope = "launch";
   const [tabs, stored, { settings: current }] = await Promise.all([
-    chrome.tabs.query({}),
+    tabsAllowed ? chrome.tabs.query({}) : [],
     chrome.storage.local.get(["state", "view"]),
     loadSettings(chrome.storage),
   ]);
@@ -96,7 +105,7 @@ async function refresh() {
 }
 
 function update() {
-  shown = rank(query.value, all, { scope });
+  shown = scope === "tabs" && !tabsAllowed ? [ALLOW_TABS] : rank(query.value, all, { scope });
   selected = Math.min(selected, Math.max(shown.length - 1, 0));
   for (const b of document.querySelectorAll(".scopes button")) {
     b.setAttribute("aria-selected", String(b.dataset.scope === scope));
@@ -126,7 +135,8 @@ function update() {
 
 function choose(item) {
   if (!item) return;
-  if (item.kind === "tab") send({ tabId: item.tabId, windowId: item.windowId });
+  if (item.kind === "allow") allowTabs();
+  else if (item.kind === "tab") send({ tabId: item.tabId, windowId: item.windowId });
   else send({ command: item.command });
 }
 
@@ -242,6 +252,63 @@ dim.addEventListener("change", async () => {
   }
 });
 
+async function allowTabs() {
+  asking = true;
+  try {
+    if (await chrome.permissions.request({ permissions: ["tabs"] })) await refresh();
+  } catch (e) {
+    console.error("tico: couldn't ask for tab search:", e);
+  } finally {
+    asking = false;
+  }
+  query.focus();
+}
+
+// The dashboard offers the extras still off (§14.1) until you dismiss it.
+// Chrome's prompt takes focus, so the dashboard stays open while it asks.
+async function renderExtras() {
+  const card = $("extras");
+  if (home || (await chrome.storage.local.get(DISMISSED_KEY))[DISMISSED_KEY]) {
+    card.hidden = true;
+    return;
+  }
+  const off = [];
+  for (const extra of EXTRAS) if (!(await isOn(chrome, extra))) off.push(extra);
+  card.hidden = off.length === 0;
+  card.querySelector("ul").replaceChildren(
+    ...off.map((extra) => {
+      const li = document.createElement("li");
+      const allow = Object.assign(document.createElement("button"), { type: "button", textContent: "Allow" });
+      allow.setAttribute("aria-label", `Allow: ${extra.title}`);
+      allow.addEventListener("click", async () => {
+        asking = true;
+        try {
+          if (await chrome.permissions.request(extra.access)) {
+            if (extra.id === "unread") await addDefaultSites(chrome.storage);
+            await refresh();
+          }
+        } catch (e) {
+          console.error(`tico: couldn't turn on ${extra.title}:`, e);
+        } finally {
+          asking = false;
+        }
+        await renderExtras();
+        query.focus();
+      });
+      li.append(Object.assign(document.createElement("strong"), { textContent: extra.title }), allow);
+      li.append(Object.assign(document.createElement("p"), { textContent: extra.how }));
+      return li;
+    }),
+  );
+}
+$("dismiss-extras").addEventListener("click", async () => {
+  $("extras").hidden = true;
+  await chrome.storage.local.set({ [DISMISSED_KEY]: true });
+  query.focus();
+});
+chrome.permissions.onAdded.addListener(() => renderExtras());
+chrome.permissions.onRemoved.addListener(() => renderExtras());
+
 if (home) {
   document.body.classList.add("home");
   detail.hidden = false;
@@ -257,6 +324,7 @@ if (home) {
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.view || changes.state) refresh();
   if (changes[SETTINGS_KEY]) {
+    renderExtras();
     loadClocks();
     refresh();
   }
@@ -267,6 +335,7 @@ window.addEventListener("focus", () => {
   query.focus();
 });
 refresh();
+renderExtras();
 loadClocks();
 setInterval(renderTime, 10000);
 query.focus();

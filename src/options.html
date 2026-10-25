@@ -14,6 +14,12 @@
 <div id="errors" role="alert" hidden></div>
 
 <section>
+<h2>Extras</h2>
+<p class="muted">tico tiles your windows and runs your workspaces without any of these. Each needs Chrome's permission, which it asks for when you click Allow, and you can turn each off again here.</p>
+<ul id="permissions" class="checklist"></ul>
+</section>
+
+<section>
 <h2>Clocks</h2>
 <p class="muted">Shown on the dashboard and the home page, in this order, with local time last. A zone that is your local zone is hidden.</p>
 <table id="clocks">
@@ -56,12 +62,12 @@
 </section>
 
 <section>
-<h2>Attention</h2>
-<p class="muted">tico marks a window when a site's unread count goes up in its title. Gmail, Chat and Calendar are always watched; add others here. Each needs access to its site, asked for on this Chromebook when you add it.</p>
+<h2>Unread counts</h2>
+<p class="muted">tico highlights a window when a site's unread count goes up in its title, like "Inbox (3)". Gmail, Chat and Calendar are here to start with, and you can add other sites. Chrome asks for access to each site you add, on this Chromebook.</p>
 <ul id="watched"></ul>
 <form id="watch-form" class="row">
-<input id="watch-site" type="url" placeholder="https://app.example.com" aria-label="Site to watch" required>
-<button type="submit">Watch</button>
+<input id="watch-site" type="url" placeholder="https://app.example.com" aria-label="Site to show unread counts for" required>
+<button type="submit">Add</button>
 </form>
 </section>
 

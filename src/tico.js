@@ -124,9 +124,17 @@ export class Tico {
   }
 
   async rememberUrls() {
+    this.tabsAllowed = await this.api.permissions.contains({ permissions: ["tabs"] });
     const all = await this.api.windows.getAll({ populate: true, windowTypes: [...MANAGED, "popup"] });
-    for (const w of all) if (w.id in this.state.windows) this.state.windows[w.id].urls = windowUrls(w);
+    for (const w of all) if (w.id in this.state.windows) this.state.windows[w.id].urls = this.urlsOf(w);
     await this.save();
+  }
+
+  // The tab addresses kept for a restart (§14.2), only with tab search
+  // allowed: all-sites access for dimming, or a site's for unread counts,
+  // shows Chrome's tabs' addresses too, but that's not the opt-in.
+  urlsOf(w) {
+    return this.tabsAllowed ? windowUrls(w) : [];
   }
 
   dimOn() {
@@ -176,6 +184,8 @@ export class Tico {
     this.settings = (await loadSettings(this.api.storage)).settings;
     this.apps = this.settings.apps;
     this.displays = await this.api.system.display.getInfo();
+    // Before matching windows after a restart, which reads their addresses.
+    this.tabsAllowed = await this.api.permissions.contains({ permissions: ["tabs"] });
     const ids = this.displays.map((d) => d.id);
     // Every window type, so a focused popup or devtools window still says
     // which display you're on, but only managed ones are tracked.
@@ -241,7 +251,7 @@ export class Tico {
     // What a window is, should the browser restart and renumber it.
     for (const w of wins) {
       if (!(w.id in s.windows)) continue;
-      s.windows[w.id].urls = windowUrls(w);
+      s.windows[w.id].urls = this.urlsOf(w);
       s.windows[w.id].type = w.type;
     }
     // A mark clears when you go to its window, or it closes.
@@ -305,7 +315,7 @@ export class Tico {
       const old = Object.fromEntries(
         Object.entries(waiting).filter(([, info]) => info.type === type).map(([id, info]) => [id, info.urls]),
       );
-      const current = candidates.filter((w) => w.type === type).map((w) => ({ id: w.id, urls: windowUrls(w) }));
+      const current = candidates.filter((w) => w.type === type).map((w) => ({ id: w.id, urls: this.urlsOf(w) }));
       for (const [from, to] of matchWindows(old, current)) renames.set(from, to);
     }
     // A window that matches nothing doesn't end the wait for the rest; with

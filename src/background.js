@@ -41,9 +41,11 @@ chrome.runtime.onStartup.addListener(() => {
   watch();
   remind(chrome).catch((e) => console.error("tico: couldn't open the mouse reminder:", e));
 });
-chrome.runtime.onInstalled.addListener(() => {
+// A new install opens the settings, whose extras each need allowing (§14.1).
+chrome.runtime.onInstalled.addListener(({ reason }) => {
   changed();
   watch();
+  if (reason === "install") chrome.runtime.openOptionsPage().catch((e) => console.error("tico: couldn't open the settings:", e));
 });
 // A newly active tab needs the dim if its window has it, and so does a
 // dimmed tab that loaded a new page.

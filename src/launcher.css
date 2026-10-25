@@ -344,3 +344,43 @@ main {
   color: var(--muted);
   font-size: 12px;
 }
+
+/* The extras still off (§14.1), until dismissed. */
+#extras h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+#extras ul {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+#extras li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  align-items: center;
+  padding: 8px 0;
+}
+#extras li p {
+  grid-column: 1;
+  margin: 0;
+  color: var(--muted);
+}
+#extras li button {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+}
+#extras button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+#extras li button {
+  background: var(--accent);
+  color: var(--on-accent);
+}
