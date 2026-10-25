@@ -264,6 +264,12 @@ async function allowTabs() {
   query.focus();
 }
 
+// The settings open in a tab of their own; the dashboard closes as it
+// loses focus.
+$("open-settings").addEventListener("click", () =>
+  chrome.runtime.openOptionsPage().catch((e) => console.error("tico: couldn't open the settings:", e)),
+);
+
 // The dashboard offers the extras still off (§14.1) until you dismiss it.
 // Chrome's prompt takes focus, so the dashboard stays open while it asks.
 async function renderExtras() {
