@@ -18,13 +18,6 @@ export const ITEMS = [
     ref: "§6.3",
   },
   {
-    id: "shelf",
-    title: "Pin the Linux apps to the shelf, in order",
-    where: "",
-    how: "Terminal, workstation terminal, files, notepad, remote desktop, headphones, so Alt+1 to Alt+6 launch them.",
-    ref: "§9.3",
-  },
-  {
     id: "idle",
     title: "Set what happens when idle",
     where: "chrome://os-settings/power",
@@ -46,32 +39,11 @@ export const ITEMS = [
     ref: "§11",
   },
   {
-    id: "layout",
-    title: "Keyboard layout: US Dvorak",
-    where: "chrome://os-settings/osLanguages/input",
-    how: "Add US Dvorak as an input method and make it the one in use.",
-    ref: "§11",
-  },
-  {
-    id: "capslock",
-    title: "Remap Caps Lock",
-    where: "chrome://os-settings/per-device-keyboard",
-    how: "Make Caps Lock Escape or Ctrl (ChromeOS has no Compose), and set key repeat.",
-    ref: "§11",
-  },
-  {
     id: "focus",
     title: "Turn on focus follows cursor",
     where: "chrome://flags/#focus-follows-cursor",
     how: "Set \u201cFocus follows cursor\u201d to Enabled and restart, so the window under the pointer takes focus without a click, as in KDE. It doesn't raise the window.",
     ref: "§10.2",
-  },
-  {
-    id: "mouse",
-    title: "Set up the mouse",
-    where: "chrome://os-settings/per-device-mouse",
-    how: "Per mouse: swap the primary button if you use it left-handed, speed 5 with acceleration on, and controlled scrolling at speed 5. For a longer wheel step than that, turn controlled scrolling off and set one under Mouse below.",
-    ref: "§11, §19.2",
   },
 ];
 
