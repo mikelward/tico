@@ -357,7 +357,7 @@ off-ramp.
 | Super+Tab to the window wanting attention (tide §14.3) | tico's attention list from title-count watchers (§10.3) | **partial**: chosen sites only |
 | Full-width bar, workspaces, urgency (tide §7) | no top bar on busy workspaces; shelf + toolbar badge + full-screen dashboard and home page with tide's bar (§6.2, §8) | **partial** |
 | Tray, network, volume, Bluetooth, battery | ChromeOS status area on the shelf | **yes**, native |
-| SF / NYC / LON clocks beside local (tide §7.3) | dashboard and home page: zones, strips, DST, scrubbing (§8.2) | **partial**: one key away, not always on screen |
+| SYD / LAX / NYC / LON clocks beside local (tide §7.3) | dashboard and home page: zones, strips, DST, scrubbing (§8.2) | **partial**: one key away, not always on screen |
 | Launcher on a Super tap (tide §8) | ChromeOS launcher on a Search tap | **yes**, native, without quick actions |
 | App keys (KDE `setup-kde`, tide `hyprland.lua`) | tico commands that open or focus web apps and profiles (§9) | **partial**: from a Chrome window only; Linux apps by shelf slot |
 | Two and three Chrome profiles (`browser2`, `browser3`) | a second ChromeOS account, or a Chrome profile if the build has them (§9.2) | **partial** |
