@@ -375,7 +375,7 @@ async function renderKeys() {
   for (const tr of appRows.rows) tr.querySelector("kbd").textContent = shortcuts[tr.dataset.command] || "No key";
   const rows = checklist(chrome.runtime.getManifest().commands, bound);
   // A command on another key is your choice (or Chrome's default off
-  // ChromeOS), so only an unbound one is still to do.
+  // chromeOS), so only an unbound one is still to do.
   const todo = rows.filter((r) => r.state === "unbound").length;
   $("keys-summary").textContent = todo === 0 ? "Every command has a key." : `${todo} of ${rows.length} commands have no key yet.`;
   // Still to do first, in manifest order.

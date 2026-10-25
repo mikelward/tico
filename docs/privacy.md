@@ -3,7 +3,7 @@
 Effective 24 October 2026.
 
 tico is a Chrome extension that tiles and arranges your Chrome and web app
-windows on ChromeOS. This policy says what it reads, what it keeps, and
+windows on chromeOS. This policy says what it reads, what it keeps, and
 where that goes.
 
 **In short:** tico has no server, no analytics and no ads. It sends nothing
