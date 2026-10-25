@@ -10,6 +10,12 @@ test("every item has an id of its own, a title, what to do, and its spec section
   }
 });
 
+// Only settings that suit anyone; a personal setup (a keyboard layout, the
+// shelf's apps, a mouse) isn't tico's to suggest.
+test("the list holds no personal settings", () => {
+  for (const id of ["shelf", "layout", "capslock", "mouse"]) assert.equal(ITEMS.find((i) => i.id === id), undefined, id);
+});
+
 test("focus follows cursor is on the list, at its flag", () => {
   assert.equal(ITEMS.find((i) => i.id === "focus")?.where, "chrome://flags/#focus-follows-cursor");
 });
@@ -28,8 +34,8 @@ test("ticks made together are all kept", async () => {
       Object.assign(stored, items);
     },
   };
-  await Promise.all([tick(area, "desks", true), tick(area, "shelf", true), tick(area, "dark", true)]);
-  assert.deepEqual(progress(stored[SETUP_KEY]).done, ["desks", "shelf", "dark"]);
-  await tick(area, "shelf", false);
+  await Promise.all([tick(area, "desks", true), tick(area, "idle", true), tick(area, "dark", true)]);
+  assert.deepEqual(progress(stored[SETUP_KEY]).done, ["desks", "idle", "dark"]);
+  await tick(area, "idle", false);
   assert.deepEqual(stored[SETUP_KEY], ["desks", "dark"]);
 });

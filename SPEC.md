@@ -308,9 +308,11 @@ which is chrometile's choice too.
 
 The lock, launcher, notifications, screenshots, screen-share picker, dark
 mode, keyboard layout and idle policy are ChromeOS's, and no extension can
-replace them. tico's options page has a **setup checklist**: every Settings
-and Shortcuts-app change that brings the OS closer to tide, each one with
-the page to open and how to check it's done. ChromeOS settings can't be
+replace them. tico's options page has a **setup checklist**: the Settings
+and Shortcuts-app changes that suit anyone using tico, each one with the
+page to open and how to check it's done. Personal ones (a keyboard layout,
+Caps Lock, the shelf's apps, a mouse) stay out of it; they're recorded in
+§9.3, §11 and §19.2. ChromeOS settings can't be
 scripted, so the list is the mechanism, and tico checks what it can
 (command bindings, through `chrome.commands.getAll`).
 
@@ -801,8 +803,8 @@ tico binds the keys to whichever works, decided in M3.
 
 An extension can't start a Linux app. The keys that run Linux apps (`T`
 terminal, `W` terminal on the workstation, `E` files, `N` notepad, `R`
-remote desktop, `B` headphones) use the **shelf**: the checklist pins them
-in a fixed order, and **Alt+1…8** launches shelf item N *(unverified on
+remote desktop, `B` headphones) use the **shelf**: pinned
+in a fixed order, by hand (not a checklist item, as it's personal), and **Alt+1…8** launches shelf item N *(unverified on
 current builds)*. If the Shortcuts app lets "launch shelf item N" take an
 extra combo, `Search+T` and the rest map there; that's
 *(unverified)* and is checked in M2.
@@ -925,8 +927,8 @@ All native, set from the checklist (§3.4). tico owns none of it.
 - **Theme**: Personalization › Dark mode › Auto follows sunset and sunrise.
   Chrome and web apps follow it. tide's fixed 07:00–19:00 schedule isn't
   offered *(unverified)*.
-- **Keyboard**: US Dvorak; Caps Lock remapped as the checklist says (there's
-  no Compose, so Escape or Ctrl is the choice); key repeat in Settings.
+- **Keyboard**: US Dvorak; Caps Lock remapped to Escape or Ctrl (there's
+  no Compose); key repeat in Settings.
 - **Mouse**: Settings › Mouse, per device: swap primary button,
   speed 5 with acceleration on, and "Controlled scrolling" with scroll
   speed 5. §19.2 has the numbers and the finer route.
