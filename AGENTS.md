@@ -76,10 +76,10 @@ and delete one that has stopped biting.
   (`AskUserQuestion` in Claude Code, `ask_question` in Antigravity). Wait for
   the answer before proceeding on an assumed one, and don't interrupt while
   I'm still typing.
-- Reply only in the message that ends your turn: the Claude app reliably
-  shows only a turn's last message, so text between tool calls can be lost.
-  Answer anything I send mid-task there too, reaching a stopping point soon
-  rather than working on.
+- Respond to anything I send mid-task in your very next output, before
+  continuing other tool calls. Claude Code only: its app reliably shows
+  just a turn's last message, so reply only there, answering a mid-task
+  message at a stopping point soon.
 - Keep replies short — lead with the one thing that matters, then ask
   before unloading more.
 - Message me only when I need to see it — each message notifies my phone. Work
