@@ -68,6 +68,21 @@ test("the options page renders every section and saves changes", async () => {
   assert.equal(await page.locator("#errors").isHidden(), true, await page.locator("#errors").innerText());
 });
 
+test("the settings open pages in their own window", async () => {
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    window.opened = [];
+    chrome.tabs.create = async (props) => window.opened.push(props);
+  });
+  await page.goto(base + "src/options.html");
+  await page.waitForSelector("#setup li button");
+  await page.locator("#setup li button").first().click();
+  await page.locator("#open-shortcuts").click();
+  await page.waitForFunction(() => window.opened.length === 2);
+  const here = await page.evaluate(async () => (await chrome.windows.getCurrent()).id);
+  for (const o of await page.evaluate(() => window.opened)) assert.equal(o.windowId, here, o.url);
+});
+
 for (const mode of ["home", "dashboard"]) {
   test(`the ${mode} page renders the bar, clocks and launcher`, async () => {
     const { page, errors } = await open(`src/launcher.html?mode=${mode}`);
