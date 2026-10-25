@@ -29,6 +29,14 @@ function input(value, attrs, onChange = () => save()) {
   return i;
 }
 
+// A page opened from here goes in this window, beside the settings. Left to
+// choose, Chrome may pick another window and refuse it, as a Chromebook did
+// with "You cannot create new tabs while in locked fullscreen mode".
+async function openHere(url) {
+  const { id } = await chrome.windows.getCurrent();
+  return chrome.tabs.create({ url, windowId: id });
+}
+
 function button(text, label, onClick) {
   const b = Object.assign(document.createElement("button"), { type: "button", textContent: text });
   b.setAttribute("aria-label", label);
@@ -343,7 +351,7 @@ async function renderSetup() {
       li.append(box, label);
       if (item.where) {
         li.append(" ", button("Open", `Open the settings for: ${item.title}`, () =>
-          chrome.tabs.create({ url: item.where }).catch((e) => showErrors([`Couldn't open ${item.where}: ${e.message}`])),
+          openHere(item.where).catch((e) => showErrors([`Couldn't open ${item.where}: ${e.message}`])),
         ));
       }
       li.append(how);
@@ -351,7 +359,9 @@ async function renderSetup() {
     }),
   );
 }
-$("open-shortcuts").addEventListener("click", () => chrome.tabs.create({ url: "chrome://extensions/shortcuts" }));
+$("open-shortcuts").addEventListener("click", () =>
+  openHere("chrome://extensions/shortcuts").catch((e) => showErrors([`Couldn't open the shortcuts page: ${e.message}`])),
+);
 window.addEventListener("focus", () => renderKeys());
 await renderKeys();
 await renderSetup();
@@ -370,7 +380,7 @@ if (overrides.length > 0) {
 $("ultrawide").addEventListener("change", () => saveLocal());
 $("wheel-step").addEventListener("change", () => saveLocal());
 $("show-mouse").addEventListener("click", () =>
-  chrome.tabs.create({ url: chrome.runtime.getURL(MOUSE_PAGE) }).catch((e) => showErrors([`Couldn't open the mouse page: ${e.message}`])),
+  openHere(chrome.runtime.getURL(MOUSE_PAGE)).catch((e) => showErrors([`Couldn't open the mouse page: ${e.message}`])),
 );
 $("add-rule").addEventListener("click", () => {
   ruleRows.append(ruleRow({}));
