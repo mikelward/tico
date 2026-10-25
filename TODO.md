@@ -16,11 +16,11 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   toolchain.
 - **The four suggested keys are `Search+J`, `Search+K`, `Search+Space` (the
   dashboard) and `Search+Tab`**, each with an `Alt+Shift+` default so the
-  manifest installs off ChromeOS too. Attention's default is `Alt+Shift+U`,
+  manifest installs off chromeOS too. Attention's default is `Alt+Shift+U`,
   not `Alt+Shift+Tab`, which Windows and most Linux desktops take for window
   switching. `Search+.` (next layout) lost its suggestion to make room.
   Swap-with-master moved off `Search+Space` to `Search+Shift+M`, bound by
-  hand; `Search+Z` was the first idea, but it's ChromeOS's layout menu.
+  hand; `Search+Z` was the first idea, but it's chromeOS's layout menu.
   Reversible: edit `manifest.json`.
 - **A maximized or fullscreen window on a workspace you leave is minimized
   like the rest, and comes back normal**, losing its maximize. The
@@ -64,11 +64,11 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   as such, since every window's tabs are listed. The alternative is a
   library such as fzf's algorithm. Reversible: `src/launcher.js`.
 - **The dashboard opens full screen every time**, not as Chrome's toolbar
-  popup. If ChromeOS shows its full-screen bubble on each open, a large
+  popup. If chromeOS shows its full-screen bubble on each open, a large
   centered window is the fallback. Reversible: `Tico.dashboard`.
 - **Always-on-top windows aren't tracked at all**: Document
   picture-in-picture and always-on-top popups stay put on every workspace,
-  since ChromeOS refuses to minimize them. The alternative is tracking them
+  since chromeOS refuses to minimize them. The alternative is tracking them
   as floating windows that stay on one workspace, which can't hide them.
   Reversible: `managed()` in `src/tico.js`.
 - **Secure Shell's popup windows tile**, by its extension ID in a built-in

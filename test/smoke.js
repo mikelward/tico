@@ -1,6 +1,6 @@
 // The smoke test (SPEC.md §17): loads the unpacked extension in Chromium and
 // opens its pages, which the node tests can't reach. Tiling, workspaces and
-// keys need ChromeOS's windows, so FakeChrome covers those instead.
+// keys need chromeOS's windows, so FakeChrome covers those instead.
 
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";

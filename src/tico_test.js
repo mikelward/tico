@@ -297,7 +297,7 @@ test("connecting a display shows its workspace's windows", async () => {
 test("disconnecting a display hides its workspace instead of moving it", async () => {
   const { chrome, tico } = await setup([HD, UW], [on(HD, 1, { focused: true }), on(UW, 2)]);
   chrome.displaysList = [HD];
-  // ChromeOS moves the ultrawide's window onto the remaining display.
+  // chromeOS moves the ultrawide's window onto the remaining display.
   Object.assign(chrome.win(2), { left: 100, top: 100 });
   await tico.event();
   assert.equal(tico.state.displays.hd, 1, "the remaining display keeps its workspace");
@@ -921,7 +921,7 @@ test("moving a window without resizing it leaves the share", async () => {
 
 test("a window resized by a change in the work area isn't a drag", async () => {
   const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
-  // The shelf hides, and ChromeOS widens the master as it goes.
+  // The shelf hides, and chromeOS widens the master as it goes.
   chrome.displaysList = [{ ...HD, workArea: { left: 0, top: 0, width: 1920, height: 1080 } }];
   chrome.win(1).width = 1300;
   await tico.event();
@@ -940,7 +940,7 @@ test("a window back from maximized isn't read as resized", async () => {
   const { chrome, tico } = await setup([HD], [on(HD, 1, { focused: true }), on(HD, 2)]);
   Object.assign(chrome.win(1), { state: "maximized", left: 0, width: 1920 });
   await tico.event();
-  // ChromeOS puts it back somewhere of its own choosing.
+  // chromeOS puts it back somewhere of its own choosing.
   Object.assign(chrome.win(1), { state: "normal", left: 0, width: 1500 });
   await tico.event();
   assert.equal(tico.state.workspaces[1].modes.tile.mfact, 0.55);

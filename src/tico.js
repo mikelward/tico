@@ -234,7 +234,7 @@ export class Tico {
       if (minimized && shouldShow) s = ws.userMinimized(s, w.id);
       else if (!minimized && !shouldShow) s = ws.userRestored(s, w.id, focusedDisplay);
       else if (!minimized && w.state === "normal") {
-        // A window ChromeOS moved off a display that's gone wasn't dragged;
+        // A window chromeOS moved off a display that's gone wasn't dragged;
         // its workspace just hides.
         const was = ws.displayOf(before, before.windows[w.id].ws);
         const d = displayFor(w, this.displays);
@@ -266,7 +266,7 @@ export class Tico {
     for (const [d, id] of Object.entries(this.state?.homes ?? {})) {
       if (!this.all.has(id)) continue;
       if (ids.includes(d)) s.homes[d] = id;
-      // ChromeOS moves a gone display's home onto another, where nothing
+      // chromeOS moves a gone display's home onto another, where nothing
       // would ever close it.
       else await this.api.windows.remove(id);
     }

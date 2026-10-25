@@ -23,7 +23,7 @@ export function checklist(manifest, bound) {
   });
 }
 
-// Chrome reports ChromeOS's Search key as "Search" and orders modifiers its
+// Chrome reports chromeOS's Search key as "Search" and orders modifiers its
 // own way, so keys compare as sets of parts.
 function sameKey(a, b) {
   const parts = (k) => new Set(k.split("+").map((p) => p.trim().toLowerCase()));

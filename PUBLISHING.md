@@ -18,7 +18,7 @@ make smoke   # loads the extension in Chromium and opens its pages
 ```
 
 CI runs the same three on every pull request. The smoke test can't show
-tiling, workspaces or keys: desktop Chromium has no ChromeOS window
+tiling, workspaces or keys: desktop Chromium has no chromeOS window
 manager. Those need a Chromebook.
 
 ## 2. Load it on a Chromebook
@@ -108,7 +108,7 @@ In the [developer dashboard](https://chrome.google.com/webstore/devconsole):
    screenshots.
 3. **Privacy:**
    - **Single purpose:** "Tiles and arranges Chrome and web app windows on
-     ChromeOS into workspaces, as a tiling window manager does."
+     chromeOS into workspaces, as a tiling window manager does."
    - **Permission justifications**, one each:
      - `storage`: settings, and the workspace state that survives a
        restart.

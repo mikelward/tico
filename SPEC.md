@@ -4,16 +4,16 @@ last_modified: 2026-10-24
 
 # tico: design spec (milestone 1)
 
-tico is tiling on ChromeOS, as close to [tide](https://github.com/mikelward/tide)
+tico is tiling on chromeOS, as close to [tide](https://github.com/mikelward/tide)
 and the KDE setup in `mikelward/scripts` (`setup-kde`) as a Chromebook allows
 without turning off verified boot. It is a **Manifest V3 extension** that tiles
 Chrome and installed web app windows, owns its own workspaces, and dims the
-windows you're not in. A **checklist** sets the native ChromeOS shortcuts and
+windows you're not in. A **checklist** sets the native chromeOS shortcuts and
 settings to the tide key map where the OS can do the job better than an
 extension can.
 
-This document is milestone 1: what ChromeOS allows, the decisions that
-follow, and what "done" means for each later milestone. Claims about ChromeOS
+This document is milestone 1: what chromeOS allows, the decisions that
+follow, and what "done" means for each later milestone. Claims about chromeOS
 and Chromium were checked on 2026-10-23 against Chromium `main` at
 `a3f88457` (`chrome/VERSION` major 158) and chrometile at `af8e367`, except
 where a claim says *(unverified)* or *(secondary)*: those came from release
@@ -21,7 +21,7 @@ notes or news reports, and are what M2 checks on a real device first.
 
 Contents:
 [Goals](#1-goals) ·
-[What ChromeOS allows](#2-what-chromeos-allows) ·
+[What chromeOS allows](#2-what-chromeos-allows) ·
 [Decisions](#3-decisions) ·
 [Feature map](#4-feature-map) ·
 [Windows](#5-windows-and-layouts) ·
@@ -54,7 +54,7 @@ Contents:
   or 16:10.
 - Nine **workspaces** on `Search+1…9`, sending a window on
   `Search+Shift+1…9`, stepping on `Search+Page Up/Down` (§7.2).
-- The tide **key map**, with Search as Super, for every action ChromeOS lets
+- The tide **key map**, with Search as Super, for every action chromeOS lets
   tico or the OS bind.
 - **Inactive windows dimmed** as the focus cue.
 - **App keys**: `Search+G` browser, `Search+T` terminal, `Search+C` Calendar,
@@ -64,16 +64,16 @@ Contents:
 
 **Non-goals**
 
-- Replacing the ChromeOS shell, shelf, lock screen or login. The OS owns them,
+- Replacing the chromeOS shell, shelf, lock screen or login. The OS owns them,
   and no third-party API reaches them (§2).
-- Tiling Android or Linux windows from the extension. ChromeOS doesn't expose
+- Tiling Android or Linux windows from the extension. chromeOS doesn't expose
   them (§2.1). Linux apps get their own path (§12).
 - Developer mode, custom firmware or a Chromium OS build. Those are the
   [off-ramp](#36-the-off-ramp-run-tide), not tico.
 
 **Principles**, carried over from tide:
 
-1. **One owner per job.** Where ChromeOS already does a job (lock, launcher,
+1. **One owner per job.** Where chromeOS already does a job (lock, launcher,
    notifications, screenshots, theme), tico configures it and stays out.
    tico owns only what the OS lacks: tiling, workspaces, the dim and clocks.
 2. **Every requirement names its mechanism** (§4), and each is checked on a
@@ -81,7 +81,7 @@ Contents:
 3. **State survives the service worker.** MV3 kills an idle worker, so
    nothing tico knows lives only in memory (§14.2).
 
-## 2. What ChromeOS allows
+## 2. What chromeOS allows
 
 ### 2.1 Extensions see Chrome windows, nothing else
 
@@ -116,25 +116,25 @@ Contents:
   `extensions/common/api/commands/commands_handler.cc`). It may declare
   any number more, which **you bind by hand** at
   `chrome://extensions/shortcuts`. No API sets them.
-- **Global commands don't exist on ChromeOS.**
+- **Global commands don't exist on chromeOS.**
   `GetGlobalAcceleratorListener()` returns `nullptr` there, with the comment
   "Global extension commands are not supported on ChromeOS"
   (`chrome/browser/extensions/extension_commands_global_registry.cc`).
 - So every tico key fires only while a Chrome or web app window is focused.
   It never fires over an Android app, a Linux app, the launcher or an empty
   desk. tico designs around that (§6.2). Chromium's tip of tree has a new
-  ChromeOS global-accelerator listener
+  chromeOS global-accelerator listener
   (`ui/base/accelerators/global_accelerator_listener/global_accelerator_listener_chromeos.cc`);
   if it ships for extensions, `"global": true` commands could reach past
   these *(unverified: no flag or milestone found)*.
 - **In app windows the page sees keys first.** Installed web apps, site
-  shortcuts and ChromeOS's system apps (`TYPE_APP`, `TYPE_APP_POPUP`) hand
+  shortcuts and chromeOS's system apps (`TYPE_APP`, `TYPE_APP_POPUP`) hand
   every key to the page before Chrome's accelerators
   (`BrowserView::PreHandleKeyboardEvent`, `browser_view.cc`), so a page that
   consumes `Search+…`, like a terminal, keeps tico's keys from firing.
   Browser windows and plain popups run extension commands first.
 - OS shortcuts win over extension ones. Search is a valid modifier for
-  extension commands on ChromeOS only.
+  extension commands on chromeOS only.
 - **Only some keys can be bound**: A–Z, 0–9, Comma, Period, the arrows,
   Insert, Delete, Home, End, Page Up, Page Down, Space, Tab and the media
   keys (`ui/base/accelerators/command.cc`, `ParseImpl`). Return, Backspace,
@@ -167,7 +167,7 @@ another app's window. A consumer can install an unlisted IWA only behind
 `kIsolatedWebAppDevMode`, which is off by default
 (`chrome/common/chrome_features.cc`).
 
-### 2.4 What ChromeOS does natively
+### 2.4 What chromeOS does natively
 
 From `ash/public/cpp/accelerators.h` and
 `ash/webui/shortcut_customization_ui/backend/accelerator_layout_table.cc`.
@@ -189,7 +189,7 @@ From `ash/public/cpp/accelerators.h` and
 | Cycle windows | Alt+Tab |
 | Launch shelf item 1–8 | Alt+1…8 *(unverified on current builds)* |
 
-- **The Shortcuts app** (ChromeOS 123, *secondary*) adds up to 5 combos to an
+- **The Shortcuts app** (chromeOS 123, *secondary*) adds up to 5 combos to an
   **existing** action. It can't create actions. 88 actions are editable and
   101 locked. Maximize, minimize, fullscreen, float, snap, the layout menu,
   move to display and the desk-left/right actions are editable; desk-by-number
@@ -224,7 +224,7 @@ From `ash/public/cpp/accelerators.h` and
 The other attempts are older and dead:
 [Quilt](https://github.com/MrViolets/Quilt) (MV3, 2023),
 [chromewm](https://github.com/JayGoldberg/chromewm) (MV2, 2018, with
-workspaces), croutonwm and chrome-o-tile. MV2 no longer runs on ChromeOS 133
+workspaces), croutonwm and chrome-o-tile. MV2 no longer runs on chromeOS 133
 and later.
 
 ## 3. Decisions
@@ -307,19 +307,19 @@ which is chrometile's choice too.
 ### 3.4 Native features, configured from a checklist
 
 The lock, launcher, notifications, screenshots, screen-share picker, dark
-mode, keyboard layout and idle policy are ChromeOS's, and no extension can
+mode, keyboard layout and idle policy are chromeOS's, and no extension can
 replace them. tico's options page has a **setup checklist**: the Settings
 and Shortcuts-app changes that suit anyone using tico, each one with the
 page to open and how to check it's done. Personal ones (a keyboard layout,
 Caps Lock, the shelf's apps, a mouse) stay out of it; they're recorded in
-§9.3, §11 and §19.2. ChromeOS settings can't be
+§9.3, §11 and §19.2. chromeOS settings can't be
 scripted, so the list is the mechanism, and tico checks what it can
 (command bindings, through `chrome.commands.getAll`).
 
 ### 3.5 Web apps are installed PWAs, one per site
 
 tide runs Gmail, Calendar, Chat, Meet and YouTube Music as Chrome `--app=URL`
-windows. ChromeOS has no command line, so they become **installed web
+windows. chromeOS has no command line, so they become **installed web
 apps**. Those are listed (`type: "app"`), tileable, and launchable from a
 key. Each is one site per window, which tide's attention rules
 already assume (§10.3).
@@ -329,19 +329,19 @@ already assume (§10.3).
 Everything tico can't reach (Android and Linux windows, global keys, the
 bar) needs the OS replaced. On a Chromebook that means
 third-party UEFI firmware (MrChromebox) and a normal distro running tide,
-giving up verified boot, ChromeOS updates and Google's security guarantees,
+giving up verified boot, chromeOS updates and Google's security guarantees,
 with some risk of bricking *(unverified for any specific model)*.
 [crouton](https://github.com/dnschneid/crouton) is end of life (2024-12-31)
-and broken from ChromeOS 111. tico doesn't pursue either, but the spec
+and broken from chromeOS 111. tico doesn't pursue either, but the spec
 records the line so nobody rediscovers it.
 
 ## 4. Feature map
 
-Status: **yes** = tico or ChromeOS meets the tide or KDE behavior;
+Status: **yes** = tico or chromeOS meets the tide or KDE behavior;
 **partial** = close, with the gap named; **no** = not reachable without the
 off-ramp.
 
-| tide / KDE | On ChromeOS | Status |
+| tide / KDE | On chromeOS | Status |
 |---|---|---|
 | Tile, three-column, two columns + stack, monocle (tide §6.1) | tico layouts over Chrome and web app windows (§5) | **partial**: not Android or Linux windows |
 | Lone window 80% on ultrawide, 100% otherwise | tico, per display, from `workArea` aspect | **yes** |
@@ -349,25 +349,25 @@ off-ramp.
 | 9 workspaces, Search+1…9 / Shift (KDE, tide §6.6) | tico workspaces by minimize (§3.2) | **partial**: keys need a Chrome window focused; Android/Linux windows on every workspace |
 | One workspace per monitor from a shared pool (tide §6.5) | tico: nine shared workspaces, one showing per display (§6.1) | **partial**, same caveats |
 | Dim inactive, 0.07 (tide §6.2; KDE 0.15) | an overlay injected into the page of each unfocused window (§10.1) | **partial**: page only, not tab strip or title bar; not over `chrome://` pages |
-| No borders, no gaps | ChromeOS draws its own frames; tico margin 0 | **partial** |
+| No borders, no gaps | chromeOS draws its own frames; tico margin 0 | **partial** |
 | Maximize, fullscreen, restore (tide §6.3) | native Alt+=, fullscreen key, rebound to Search+Up/Shift+Up/Down in the Shortcuts app | **yes** |
 | Dialogs float, centered on parent (tide §6.4) | popups and dialogs untiled by type and rule (§5.4) | **yes** for Chrome; the OS places native dialogs |
-| Focus follows mouse (KDE `FocusFollowsMouse`) | ChromeOS's `chrome://flags/#focus-follows-cursor`, from the setup checklist (§10.2) | **partial**: a flag, off by default, which Chrome can drop |
-| Nothing steals focus (tide §14) | ChromeOS activation rules; tico never focuses unasked | **partial**: the OS decides for apps |
+| Focus follows mouse (KDE `FocusFollowsMouse`) | chromeOS's `chrome://flags/#focus-follows-cursor`, from the setup checklist (§10.2) | **partial**: a flag, off by default, which Chrome can drop |
+| Nothing steals focus (tide §14) | chromeOS activation rules; tico never focuses unasked | **partial**: the OS decides for apps |
 | Super+Tab to the window wanting attention (tide §14.3) | tico's attention list from title-count watchers (§10.3) | **partial**: chosen sites only |
 | Full-width bar, workspaces, urgency (tide §7) | no top bar on busy workspaces; shelf + toolbar badge + full-screen dashboard and home page with tide's bar (§6.2, §8) | **partial** |
-| Tray, network, volume, Bluetooth, battery | ChromeOS status area on the shelf | **yes**, native |
+| Tray, network, volume, Bluetooth, battery | chromeOS status area on the shelf | **yes**, native |
 | SYD / LAX / NYC / LON clocks beside local (tide §7.3) | dashboard and home page: zones, strips, DST, scrubbing (§8.2) | **partial**: one key away, not always on screen |
-| Launcher on a Super tap (tide §8) | ChromeOS launcher on a Search tap | **yes**, native, without quick actions |
+| Launcher on a Super tap (tide §8) | chromeOS launcher on a Search tap | **yes**, native, without quick actions |
 | App keys (KDE `setup-kde`, tide `hyprland.lua`) | tico commands that open or focus web apps and profiles (§9) | **partial**: from a Chrome window only; Linux apps by shelf slot |
-| Two and three Chrome profiles (`browser2`, `browser3`) | a second ChromeOS account, or a Chrome profile if the build has them (§9.2) | **partial** |
-| Notifications, history, DND (tide §9) | ChromeOS notification center and Do Not Disturb | **yes**, native, without auto-DND while sharing *(unverified)* |
-| Idle timeline: dim 2:30, lock 5:00, off 5:30, suspend 30:00 (tide §10) | ChromeOS power settings; keep-awake toggle by `chrome.power` | **partial**: OS timings, not tide's |
-| Lock = login, short hostname | ChromeOS lock screen | **partial**: no hostname |
-| Screenshots of window, screen, region (tide §13) | ChromeOS screen capture | **yes**, native, saved to Downloads and copied |
-| Meet sharing of a window or screen (tide §12) | Chrome's picker on ChromeOS | **partial**: no 16:9 slice of an ultrawide |
-| Automatic light and dark (tide §15) | ChromeOS Auto dark mode, sunset to sunrise *(unverified)* | **partial**: sun schedule, not 07:00–19:00 |
-| US Dvorak (KDE `kxkbrc`) | ChromeOS US Dvorak input | **yes** |
+| Two and three Chrome profiles (`browser2`, `browser3`) | a second chromeOS account, or a Chrome profile if the build has them (§9.2) | **partial** |
+| Notifications, history, DND (tide §9) | chromeOS notification center and Do Not Disturb | **yes**, native, without auto-DND while sharing *(unverified)* |
+| Idle timeline: dim 2:30, lock 5:00, off 5:30, suspend 30:00 (tide §10) | chromeOS power settings; keep-awake toggle by `chrome.power` | **partial**: OS timings, not tide's |
+| Lock = login, short hostname | chromeOS lock screen | **partial**: no hostname |
+| Screenshots of window, screen, region (tide §13) | chromeOS screen capture | **yes**, native, saved to Downloads and copied |
+| Meet sharing of a window or screen (tide §12) | Chrome's picker on chromeOS | **partial**: no 16:9 slice of an ultrawide |
+| Automatic light and dark (tide §15) | chromeOS Auto dark mode, sunset to sunrise *(unverified)* | **partial**: sun schedule, not 07:00–19:00 |
+| US Dvorak (KDE `kxkbrc`) | chromeOS US Dvorak input | **yes** |
 | Mouse: fastest speed, adaptive accel, left-handed, wheel 3× (conf `hyprland.lua`) | Settings › Mouse, per device, five steps each (§19.2) | **partial**: coarse steps; finer only through `gesture_prop` |
 | Caps Lock as Compose | Caps Lock remaps to Search, Ctrl, Alt, Esc and others; no Compose | **no** |
 | kitty, Ubuntu Mono, shell config | Crostini with `conf` and `setup` inside (§12) | **yes** inside Linux; its windows untiled |
@@ -497,7 +497,7 @@ workspace is showing on some display and you haven't minimized it.
 | **Send** a window to N (`Search+Shift+N`) | The window moves to the end of N's stack. If N is showing on any display, the window appears there at once; if not, it's hidden. | stays put, as in tide |
 | **Activate** a window: a tab from the launcher (§9.4), `Search+Tab` (§10.3) | If its workspace isn't showing, show it on the focused display, as Show N. Clear the window's minimized-by-you flag. | that window |
 | **Moved to another display** by you: the native `Search+Alt+M`, or a drag ending with the window's center on another display, seen as an `onBoundsChanged` tico didn't cause | The window joins the end of the stack of the workspace showing on that display. | that window |
-| **Minimize** by you | Set the flag. | ChromeOS picks |
+| **Minimize** by you | Set the flag. | chromeOS picks |
 | **Restore** by you: any un-minimize tico didn't cause, from the shelf or Alt+Tab | Clear the window's minimized-by-you flag. If its workspace is hidden, this is Activate, so the workspace comes with it. | that window |
 
 ### 6.2 Empty workspaces get a home page
@@ -512,12 +512,12 @@ display and then made full screen. It shows:
 - the launcher (§9.4), focused on its **Launch** scope, ready to type;
 - every zone's day, the next clock change and a month calendar (§8.2).
 
-Full screen is the point: a `popup` window otherwise carries ChromeOS's
+Full screen is the point: a `popup` window otherwise carries chromeOS's
 caption bar and possibly a read-only address strip above tico's own bar,
 which no extension can remove. While the page shows, the shelf is hidden.
 
 The home page takes the keys and doesn't tile. It closes when a real window
-arrives, and is never counted as one. If ChromeOS shows its "hold Esc to
+arrives, and is never counted as one. If chromeOS shows its "hold Esc to
 exit full screen" bubble when it opens is *(unverified)* for extension
 windows.
 
@@ -540,7 +540,7 @@ Beyond Android and Linux apps, from Chromium's and Secure Shell's source
 | **Secure Shell**, from its toolbar popup | A `popup` window. Tiled by tico's Secure Shell rule (§5.4); tico's keys work. | Fine as is. |
 | **Secure Shell**, from "New session" (Ctrl+Shift+N) | An app popup: tiled, but the terminal swallows every Ctrl, Alt and Search combo, so tico's keys go dead while it has focus. | Open connections from the toolbar popup or as tabs, or add pass-through keybindings in Secure Shell's options. |
 | **Secure Shell**, Shift-click or as a tab | A normal window or tab: tiles, keys work. | Fine. |
-| **ChromeOS's system apps** (Files, Settings, Camera) | Report as `app`, so they tile like web apps, with the page-first keys of §2.2. | Fine; expect the odd key to be eaten. |
+| **chromeOS's system apps** (Files, Settings, Camera) | Report as `app`, so they tile like web apps, with the page-first keys of §2.2. | Fine; expect the odd key to be eaten. |
 | **The Terminal system app** | The same terminal as Secure Shell: it tiles, and tico's keys go dead in it. | Use Secure Shell from its popup, or Crostini's terminal (§12). |
 | **Document picture-in-picture** (a call's pop-out) | Always on top, refuses minimizing; tico leaves it alone on every workspace. | Fine; it floats over everything, as it should. |
 | **Video picture-in-picture** | Invisible to tico; floats over everything. | Fine. |
@@ -587,7 +587,7 @@ Bound by tico, unless the column says the Shortcuts app:
 That's about 50 tico commands. Four ship with suggested keys: `Search+Tab`,
 because the shortcuts page can't capture Tab (§19.1), so a manifest
 suggestion is the only way to bind it, and then the three used most,
-`Search+J`, `Search+K` and `Search+Space` for the dashboard. If ChromeOS already owns
+`Search+J`, `Search+K` and `Search+Space` for the dashboard. If chromeOS already owns
 `Search+Tab`, the suggestion is dropped at install *(unverified)*, and
 attention moves to a key the page can capture. You bind the rest once at
 `chrome://extensions/shortcuts`. The checklist (§3.4)
@@ -602,11 +602,11 @@ close.
 
 ### 7.2 Conflicts to settle in M2
 
-ChromeOS uses Search as its remapping key, and some tide combos land on
+chromeOS uses Search as its remapping key, and some tide combos land on
 those remaps. Each must be checked on a device, and the answer goes in this
 table:
 
-| Combo | ChromeOS default | Plan |
+| Combo | chromeOS default | Plan |
 |---|---|---|
 | Search+Left / Right, and with Shift | Home / End, and Shift to select to the beginning or end of the line, remapped before Chrome sees them, so `chrome://extensions/shortcuts` refuses Search+Right and Search+Shift+Right ("include Ctrl, Alt, or Search") | the Shortcuts app lists them as the beginning and end of line under Text, but can't edit them; so Search+Page Down / Page Up, which the shortcuts page accepts, step the workspaces |
 | Search+Up / Down | Page Up / Down, at the keyboard level: the Shortcuts app doesn't list them, and the shortcuts page refuses them the same way | Search+Page Up / Page Down for the workspace steps |
@@ -631,7 +631,7 @@ table:
 
 The Shortcuts app's settings are in Settings › Keyboard and inputs ›
 View keyboard shortcuts; Calendar and microphone mute (under Device), the emoji picker and
-Quick Insert are editable there; Search+Left / Right are listed under Text but locked. A padlock marks a shortcut that can't be changed; an editable one shows a pencil on hover. ChromeOS takes its own shortcuts before Chrome sees them, so a
+Quick Insert are editable there; Search+Left / Right are listed under Text but locked. A padlock marks a shortcut that can't be changed; an editable one shows a pencil on hover. chromeOS takes its own shortcuts before Chrome sees them, so a
 tico key on one does nothing until it's removed there.
 
 Whatever moves to Alt+Shift moves as a set, so the map stays learnable.
@@ -649,7 +649,7 @@ workspace, along the stack), or marks a rare action like floating. T stays
 reserved for the terminal.
 
 This is every Search combo, from tico's manifest and from trying them on a
-Chromebook. **OS, removable** means ChromeOS has it and the Shortcuts app
+Chromebook. **OS, removable** means chromeOS has it and the Shortcuts app
 (§7.2) can take it off; **OS, locked** means it can't; a blank is untried.
 Search+Alt and Search+Ctrl are allowed too, and untried unless listed.
 
@@ -708,7 +708,7 @@ Alt+Tab and Overview.
 
 Instead:
 
-- **The shelf** at the bottom, as ChromeOS puts it, holds the status area:
+- **The shelf** at the bottom, as chromeOS puts it, holds the status area:
   network, volume, Bluetooth, battery, notifications and the local clock.
   That's tide's right-hand side, native.
 - **tico's toolbar icon** shows the current workspace number as its badge,
@@ -723,7 +723,7 @@ Instead:
   click away, or on its key again. It doesn't use Chrome's action popup,
   which is small, anchored to the toolbar and refused where there's no
   toolbar, as in web app windows ("Browser window has no toolbar",
-  `extension_action_api.cc` `OpenPopupInBrowser`). If ChromeOS's full-screen
+  `extension_action_api.cc` `OpenPopupInBrowser`). If chromeOS's full-screen
   bubble shows on every open, the dashboard falls back to a large centered
   window *(unverified)*.
 
@@ -785,9 +785,9 @@ Tabs scope (§9.4) or `Search+Tab` (§10.3):
 ### 9.2 Profiles
 
 `browser2` and `browser3` run Chrome with separate `--user-data-dir`s.
-ChromeOS has one Chrome profile per signed-in account. The choices are:
+chromeOS has one Chrome profile per signed-in account. The choices are:
 
-- **A second ChromeOS account**, switched with Ctrl+Alt+, and .
+- **A second chromeOS account**, switched with Ctrl+Alt+, and .
   *(unverified)*. Its windows are invisible to tico in the first account.
 - **Chrome profiles inside the session**: reportedly gone with Lacros in
   M128 *(secondary:
@@ -864,23 +864,23 @@ Android or Linux app, tap Search for the native launcher instead.
 
 ### 10.2 Focus
 
-- **Focus follows mouse is a ChromeOS flag**, `#focus-follows-cursor`
+- **Focus follows mouse is a chromeOS flag**, `#focus-follows-cursor`
   (`features::kFocusFollowsCursor`, "sloppyfocus"). It's off by default;
   on, the window under the pointer takes focus without a click and isn't
-  raised. Chromium 158's `about_flags.cc` still lists it for ChromeOS, with
+  raised. Chromium 158's `about_flags.cc` still lists it for chromeOS, with
   `expiry_milestone` 200 in `flag-metadata.json`. tico can't turn a flag on,
   so the setup checklist links to it (§3.4). It works on a Chromebook with
   Chrome windows. Whether it reaches Android and Linux windows is
   *(unverified)*.
 - tico never focuses a window you didn't ask for. It focuses only on its
   own keys, a workspace switch, or a close (the next window in the stack).
-- Whether a new window takes focus is ChromeOS's call. Chrome windows you
+- Whether a new window takes focus is chromeOS's call. Chrome windows you
   open do; tide's "a window from another app opens dimmed and urgent" has
   no equivalent.
 
 ### 10.3 Attention
 
-Chrome on ChromeOS doesn't raise urgency for web notifications, and tico
+Chrome on chromeOS doesn't raise urgency for web notifications, and tico
 can't see other sites' notifications. tide's §14.4 derives attention from
 notifications; tico derives it from **page titles** instead:
 
@@ -904,9 +904,9 @@ notifications; tico derives it from **page titles** instead:
 
 All native, set from the checklist (§3.4). tico owns none of it.
 
-- **Notifications**: the ChromeOS notification center keeps history and has
+- **Notifications**: the chromeOS notification center keeps history and has
   Do Not Disturb. Chrome web notifications show there with the site.
-  Automatic DND while presenting is *(unverified)*; if ChromeOS doesn't,
+  Automatic DND while presenting is *(unverified)*; if chromeOS doesn't,
   tico doesn't either.
 - **Idle and lock**:
   - Settings › Power picks what happens when idle (sleep, display off, or
@@ -933,14 +933,14 @@ All native, set from the checklist (§3.4). tico owns none of it.
 - **Mouse**: Settings › Mouse, per device: swap primary button,
   speed 5 with acceleration on, and "Controlled scrolling" with scroll
   speed 5. §19.2 has the numbers and the finer route.
-- **Fonts**: Ubuntu Mono inside Linux. ChromeOS UI fonts aren't settable.
+- **Fonts**: Ubuntu Mono inside Linux. chromeOS UI fonts aren't settable.
 
 ## 12. Linux apps (Crostini)
 
 Crostini runs kitty, the shell config and the terminal tools, so `conf` and
 `setup` apply there like on any Debian machine.
 
-- Each Linux window is its own ChromeOS window, managed by the OS and
+- Each Linux window is its own chromeOS window, managed by the OS and
   invisible to tico. They get native snap and float, not tiling.
 - **Nested tiling, as an option**: sway (or cage running kitty) inside one
   Sommelier window would tile Linux windows among themselves *(unverified:
@@ -976,9 +976,9 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   (every command, the key this spec gives it and the key Chrome has bound,
   the unbound ones first, with a button to `chrome://extensions/shortcuts`;
   a command on another key counts as done), the setup checklist (the
-  ChromeOS settings in §3.4, each with how to set it and, where it has
+  chromeOS settings in §3.4, each with how to set it and, where it has
   one, a button to its `chrome://os-settings` page; you tick them off, as
-  ChromeOS can't be read, and the ticks stay in `storage.local`), the
+  chromeOS can't be read, and the ticks stay in `storage.local`), the
   extra sites watched for
   attention (§10.3), the dim's strength (2% to 50%,
   repainting what's already dimmed), this Chromebook's
@@ -1050,9 +1050,9 @@ Crostini runs kitty, the shell config and the terminal tools, so `conf` and
   animation.
 - **Failure modes**:
   - A Chrome update could change how bounds or minimize behave; CI can't
-    catch that, so M2's device checks are re-run on each ChromeOS major.
-  - ChromeOS's Android-based successor, Googlebook OS, is already
-    shipping on new laptops (§20). ChromeOS itself is reported to continue
+    catch that, so M2's device checks are re-run on each chromeOS major.
+  - chromeOS's Android-based successor, Googlebook OS, is already
+    shipping on new laptops (§20). chromeOS itself is reported to continue
     for enterprise and education, with updates through 2034
     *(secondary)*.
 - **If tico is off or crashes**, windows stay where they are and the native
@@ -1089,8 +1089,8 @@ development only. That shapes the design *(Web Store policy, secondary)*:
   and all sites for dimming (§14.1). So the install shows no warning, and
   review stays simpler.
 - **No remote code** and no network calls, which MV3 requires anyway.
-- Updates go through Web Store review, so a fix after a ChromeOS change
-  takes days, not minutes. Keep a tested build ready before each ChromeOS
+- Updates go through Web Store review, so a fix after a chromeOS change
+  takes days, not minutes. Keep a tested build ready before each chromeOS
   major (§14.3).
 
 tidal would ship on the **Play Store** (§20.4).
@@ -1109,7 +1109,7 @@ tidal would ship on the **Play Store** (§20.4).
 | # | Milestone | Done when |
 |---|---|---|
 | **M1** | This spec | agreed; open questions answered |
-| **M2** | Device checks + layouts | every *(unverified)* claim in §2, §7.2, §9 and §11 is checked on a Chromebook, with the ChromeOS version, and this spec updated. The four layouts and the lone-window rule tile Chrome and web app windows on the laptop panel and on an ultrawide. Frame offsets are measured and tiles meet. State survives the worker sleeping and a browser restart. |
+| **M2** | Device checks + layouts | every *(unverified)* claim in §2, §7.2, §9 and §11 is checked on a Chromebook, with the chromeOS version, and this spec updated. The four layouts and the lone-window rule tile Chrome and web app windows on the laptop panel and on an ultrawide. Frame offsets are measured and tiles meet. State survives the worker sleeping and a browser restart. |
 | **M3** | Workspaces + keys | nine workspaces switch and send on one and two displays, with the home window on empty ones. Every key in §7.1 is bound or listed by the checklist. App keys open a new window of each web app and profile. |
 | **M4** | Dashboard, clocks, attention | the dashboard shows workspaces and urgency from live state, the clocks follow tide's rules across a DST fixture, and a Chat message marks its window and `Search+Tab` goes there. |
 | **M5** | Dim + settings | the optional dim works and is off without the permission. The options page edits everything live, syncs, and imports tide's JSON. |
@@ -1128,7 +1128,7 @@ tidal would ship on the **Play Store** (§20.4).
   The fake's bounds can be off by a frame, to test the offset correction.
 - **Playwright with Chromium** loads the unpacked extension on Linux for
   what the fake can't show: the dashboard and home page, options page and content scripts.
-  Window management on Linux Chromium differs from ChromeOS, so those
+  Window management on Linux Chromium differs from chromeOS, so those
   results don't stand in for M2's device checks.
   - `test/smoke.js`, run by `make smoke` and CI's `smoke` job, checks that
     the worker starts, that the options page renders every section and
@@ -1166,7 +1166,7 @@ tidal would ship on the **Play Store** (§20.4).
 6. **Googlebook**: the target is a work machine. Accessibility services
    and sideloading aren't ruled out; adb is unknown. That decides whether
    tidal (§20.4) could re-tile, or only place apps at launch. The same
-   machine's ChromeOS policy (§14.4) decides whether tico loads at all.
+   machine's chromeOS policy (§14.4) decides whether tico loads at all.
 
 ## 19. Upstream patches and workarounds
 
@@ -1289,7 +1289,7 @@ map is open to better choices (open question 5).
   default. kitty adds `wheel_scroll_multiplier 5.0` on top.
 - Touchpads: natural scrolling, tap to click, disable while typing.
 
-**What ChromeOS offers.** The settings are per device
+**What chromeOS offers.** The settings are per device
 (`ash/public/mojom/input_device_settings.mojom`, `MouseSettings`), set in
 Settings › Mouse
 (`chrome/browser/resources/ash/settings/device_page/per_device_mouse_subsection.ts`):
@@ -1304,7 +1304,7 @@ Settings › Mouse
 Chrome writes them to the input stack as libgestures properties
 (`ui/events/ozone/evdev/input_device_factory_evdev.cc` 329–366). The
 curves are in libgestures, read here from an AOSP mirror of it
-(`platform.external.libchrome-gestures`) and assumed to match ChromeOS's
+(`platform.external.libchrome-gestures`) and assumed to match chromeOS's
 copy *(unverified)*:
 
 - **Pointer, acceleration on**: five fixed curves
@@ -1381,7 +1381,7 @@ finer steps and the exact 3× aren't offered in Settings.
    overwrite the rootfs. That's the off-ramp (§3.6), not tico.
 4. **Web pages only**: extensions can rescale wheel events in pages, not
    in the shell or Linux apps. That's a poor fit.
-5. **Linux apps**: exo converts ChromeOS's offset to Wayland axis units
+5. **Linux apps**: exo converts chromeOS's offset to Wayland axis units
    (`components/exo/wayland/wayland_pointer_delegate.cc`). Sommelier has
    no scroll-scale option (`vm_tools/sommelier/sommelier-seat.cc`), so
    per-app multipliers, like kitty's, are the tool.
@@ -1399,7 +1399,7 @@ mouse policy is the primary-button swap.
 A cheaper version is a "flat speed" and a "scroll multiplier" that map
 onto `Mouse CPI` and the scroll curve. Either way it's 1–2 weeks of work
 plus review across ash settings, ozone and gestures, and an outside patch
-is unlikely to land. The five steps are a product choice by the ChromeOS
+is unlikely to land. The five steps are a product choice by the chromeOS
 peripherals team, though a flag or an accessibility framing would help.
 **And it wouldn't reach this Chromebook** until it shipped, since a
 patched Chrome needs developer mode and a custom image. No existing
@@ -1412,7 +1412,7 @@ reboot, and record the result in M2. Don't patch.
 
 ## 20. Googlebook OS (tidal)
 
-ChromeOS's successor, codenamed Aluminium, is Android-based. If tico ever
+chromeOS's successor, codenamed Aluminium, is Android-based. If tico ever
 follows it, the port is **tidal**. This section records what that OS
 allows, so tico's core is built to carry over. Checked 2026-10-23. The
 Android sites, news sites and Google hosts were mostly unreachable from
@@ -1421,7 +1421,7 @@ the sandbox, so most dates here are *(secondary)*.
 ### 20.1 Status
 
 - **Timeline** *(secondary)*:
-  - Google announced the ChromeOS and Android merger in 2025.
+  - Google announced the chromeOS and Android merger in 2025.
   - It announced the **Googlebook** laptop brand on 2026-05-12, with Acer,
     ASUS, Dell, HP and Lenovo.
   - It named the OS **Googlebook OS** in September 2026.
@@ -1431,7 +1431,7 @@ the sandbox, so most dates here are *(secondary)*.
   ([verified](https://developer.android.com/googlebook)).
 - It's reported to be based on Android 17 *(secondary)*.
 - **Existing Chromebooks**: "many" newer ones, mostly commercial models,
-  will be able to switch, with no list yet. ChromeOS continues for
+  will be able to switch, with no list yet. chromeOS continues for
   enterprise and education, with updates through 2034 *(secondary)*.
 
 ### 20.2 What it offers natively
@@ -1452,7 +1452,7 @@ isn't public yet:
 | Need | Possible? | How | Caveats |
 |---|---|---|---|
 | List every window with its bounds | yes | `AccessibilityService.getWindowsOnAllDisplays()` | Play makes apps declare accessibility use. Android 17's opt-in Advanced Protection blocks services not marked as accessibility tools *(secondary)*. |
-| **Global keys** | likely | accessibility `onKeyEvent` with key filtering, which sees keys before apps and before the system's key gestures (AOSP `KeyboardInterceptor`) | Not tried on a Googlebook. This is what ChromeOS lacks (§2.2). |
+| **Global keys** | likely | accessibility `onKeyEvent` with key filtering, which sees keys before apps and before the system's key gestures (AOSP `KeyboardInterceptor`) | Not tried on a Googlebook. This is what chromeOS lacks (§2.2). |
 | Place a window when launching it | yes | `ActivityOptions.setLaunchBounds()` | Launch time only; the system may adjust. |
 | Move or resize another app's running window, public API | **no** | none. Android 17's `AppTask.moveTaskTo` moves only the caller's own tasks, and needs a role only the default browser gets. | none |
 | Move or resize it through Shizuku or adb | yes | `IActivityTaskManager.resizeTask`, `setTaskWindowingMode`; the shell user holds `MANAGE_ACTIVITY_TASKS` | Hidden APIs that break between releases. Shizuku needs re-arming over wireless debugging after each reboot. Enterprise policy can disable adb, which ends it. |
@@ -1469,7 +1469,7 @@ two breakages. It has no workspaces and no keyboard control yet.
 ### 20.4 What it means for tico
 
 - **tidal could tile every app**, not just Chrome's, and catch keys
-  globally. That's more than tico can ever do on ChromeOS. The price is
+  globally. That's more than tico can ever do on chromeOS. The price is
   Shizuku: developer options, re-arming after each reboot, and hidden APIs
   that move every release.
 - **It ships on the Play Store.** That means declaring the accessibility
@@ -1496,14 +1496,14 @@ two breakages. It has no workspaces and no keyboard control yet.
 ## Appendix A: the rest of the setup
 
 Everything else in `mikelward/conf` and `mikelward/scripts`, and what
-ChromeOS can do with it. The desktop pieces are in §4; this is the rest.
+chromeOS can do with it. The desktop pieces are in §4; this is the rest.
 
-- **Crostini**: works inside Linux on ChromeOS.
-- **Native**: ChromeOS has its own equivalent.
+- **Crostini**: works inside Linux on chromeOS.
+- **Native**: chromeOS has its own equivalent.
 - **Partial** or **no**: the gap is named.
 
 Unmarked claims come from reading the configs and scripts.
-*(unverified)* marks ChromeOS behavior not yet checked on a device.
+*(unverified)* marks chromeOS behavior not yet checked on a device.
 
 ### A.1 Works in Crostini
 
@@ -1512,17 +1512,17 @@ Unmarked claims come from reading the configs and scripts.
 | Shells and prompt: zsh, bash, fish, nushell, Elvish, mesh, ksh (`shrc`, `shrc.vcs`, `config/{fish,nushell,elvish,mesh}`), the `vcs` binary | The Terminal app opens the container user's login shell, so `chsh` to zsh works *(unverified)*. crosh isn't a real shell; not a target. |
 | `env`, `config/environment.d` | The container runs a systemd user manager (garcon runs under it), so apps from the launcher should get the environment *(unverified)*. |
 | readline and tool rc files (`inputrc`, `editrc`, `exrc`, `nanorc`, `gdbinit`, `screenrc`, `muttrc`, …) | Affect Linux apps only. |
-| kitty, sakura | kitty needs OpenGL 3.3. Classic Crostini has virgl where the board supports it. Baguette drops GPU support, so kitty would render on the CPU through llvmpipe *(unverified)*. kitty's auto light/dark likely doesn't see ChromeOS's dark mode *(unverified)*. |
-| vim, nvim, helix, emacs, Sublime Text; `codeedit`, `idea`, `makemakefile`, `precommit` | GUI editors run as their own ChromeOS windows. `homepkg` handles aarch64 for ARM Chromebooks. |
-| tmux, shpool, `sessionlib` and the session scripts | `setup`'s systemd user unit works. Sessions outlive a closed Terminal window but not a ChromeOS reboot or a Linux shutdown *(unverified)*. |
-| git, hg, jj and their config; `gitbackup`, `confinst`, `confdist`, `homepkg`, `package` | The container's `$HOME` is separate from ChromeOS's files. Share through "Linux files" or a shared folder. |
-| atuin, lf, fzf, zoxide, rg, fd, bat, delta, gh, uv; the small utilities (`args`, `clocks`, `filter`, `total`, …) | `diskspace` and `diskuse` report the VM's disk, not ChromeOS's. `mailifnotempty` needs an MTA. |
+| kitty, sakura | kitty needs OpenGL 3.3. Classic Crostini has virgl where the board supports it. Baguette drops GPU support, so kitty would render on the CPU through llvmpipe *(unverified)*. kitty's auto light/dark likely doesn't see chromeOS's dark mode *(unverified)*. |
+| vim, nvim, helix, emacs, Sublime Text; `codeedit`, `idea`, `makemakefile`, `precommit` | GUI editors run as their own chromeOS windows. `homepkg` handles aarch64 for ARM Chromebooks. |
+| tmux, shpool, `sessionlib` and the session scripts | `setup`'s systemd user unit works. Sessions outlive a closed Terminal window but not a chromeOS reboot or a Linux shutdown *(unverified)*. |
+| git, hg, jj and their config; `gitbackup`, `confinst`, `confdist`, `homepkg`, `package` | The container's `$HOME` is separate from chromeOS's files. Share through "Linux files" or a shared folder. |
+| atuin, lf, fzf, zoxide, rg, fd, bat, delta, gh, uv; the small utilities (`args`, `clocks`, `filter`, `total`, …) | `diskspace` and `diskuse` report the VM's disk, not chromeOS's. `mailifnotempty` needs an MTA. |
 | ssh config, `set-ssh-alias`, `terminal_on`, `terminal_on_workstation` | ssh-agent works per container. |
 | Agent config (`conf/claude`, `conf/gemini`, `conf/agents`) | The CLIs run in Linux. |
 
-### A.2 Native on ChromeOS instead
+### A.2 Native on chromeOS instead
 
-| What | ChromeOS has |
+| What | chromeOS has |
 |---|---|
 | `bluetooth-connect` | Quick Settings › Bluetooth. The container has no Bluetooth stack. |
 | `vol`, `playpause`, `media` | Media and volume keys, Quick Settings. pactl in the container moves only its own stream. |
@@ -1539,21 +1539,21 @@ Unmarked claims come from reading the configs and scripts.
 
 | What | Gap |
 |---|---|
-| US Dvorak with Caps Lock as Compose (`setup` `configure_keyboard`, `dvorak`, `dvorak.kmap`) | Dvorak is native. There's no Compose key anywhere in ChromeOS *(unverified)*. In Crostini, `setxkbmap compose:caps` affects only X apps, and may map them differently from Wayland apps *(unverified)*. |
+| US Dvorak with Caps Lock as Compose (`setup` `configure_keyboard`, `dvorak`, `dvorak.kmap`) | Dvorak is native. There's no Compose key anywhere in chromeOS *(unverified)*. In Crostini, `setxkbmap compose:caps` affects only X apps, and may map them differently from Wayland apps *(unverified)*. |
 | espanso | Its Wayland backend needs evdev and uinput, which Crostini doesn't expose. Its X11 backend could expand inside X apps only *(unverified)*. Text-expander extensions work only in web pages. |
 | `xbindkeys`, `xmodmaprc`, `imwheelrc`, `Xdefaults`, `kev` | X apps under Xwayland only, while one has focus. |
-| `chrome` and `browser1`–`3` run from Linux | They start a Linux Chrome, if one is installed. To send plain links to the ChromeOS browser instead, point `BROWSER` at `garcon-url-handler` *(secondary)*. `--app=` can't go that way. |
-| `pidcat`, adb | adb reaches ChromeOS's own Android from Crostini once ADB debugging is on in Settings › Linux, which may need a powerwash *(secondary)*. A USB phone needs per-device USB passthrough. |
+| `chrome` and `browser1`–`3` run from Linux | They start a Linux Chrome, if one is installed. To send plain links to the chromeOS browser instead, point `BROWSER` at `garcon-url-handler` *(secondary)*. `--app=` can't go that way. |
+| `pidcat`, adb | adb reaches chromeOS's own Android from Crostini once ADB debugging is on in Settings › Linux, which may need a powerwash *(secondary)*. A USB phone needs per-device USB passthrough. |
 | `chrome-remote-desktop-session` | Controlling other machines works. Hosting from a consumer Chromebook is Remote Support codes only; unattended access is an admin policy *(secondary)*. |
 
 ### A.4 Not possible
 
 | What | Why |
 |---|---|
-| sway, Hyprland, i3, qtile, xmonad, wingo; waybar, polybar, xmobar, dunst, swaync, fuzzel, swaylock, compton, uwsm, tide | Linux windows are guests of ChromeOS's window manager. A WM can only run nested in one window (§12). |
+| sway, Hyprland, i3, qtile, xmonad, wingo; waybar, polybar, xmobar, dunst, swaync, fuzzel, swaylock, compton, uwsm, tide | Linux windows are guests of chromeOS's window manager. A WM can only run nested in one window (§12). |
 | `xinitrc`, `xsession`, `xsessionrc` | There's no X session to start. |
-| `ddcinput` | No i2c in the container, and no DDC control in ChromeOS *(unverified)*. |
-| `amethyst.yml`, `setup-macos`, karabiner | macOS only. ChromeOS's per-keyboard modifier remapping covers the basic swaps. |
+| `ddcinput` | No i2c in the container, and no DDC control in chromeOS *(unverified)*. |
+| `amethyst.yml`, `setup-macos`, karabiner | macOS only. chromeOS's per-keyboard modifier remapping covers the basic swaps. |
 
 ### A.5 `setup` in Crostini
 
@@ -1587,16 +1587,16 @@ these:
   `/opt/google/cros-containers`, *(unverified on a device, and for
   Baguette)*), on Debian only;
 - keeps kitty and fonts, but skips KDE, `setup-kde`, tide, the keyboard
-  config, the GPU rule and the root group, printing what to set in ChromeOS
+  config, the GPU rule and the root group, printing what to set in chromeOS
   Settings instead;
-- explains the disk-size cutoff, pointing at Settings › About ChromeOS ›
+- explains the disk-size cutoff, pointing at Settings › About chromeOS ›
   Linux development environment › Disk size;
 - comes with `setup_test` cases.
 
 Still to do, in that repo's `TODO.md`:
 
 - set `BROWSER` to `garcon-url-handler`, and teach `chrome` to hand plain
-  URLs to the ChromeOS browser;
+  URLs to the chromeOS browser;
 - warn on Baguette that kitty will render on the CPU.
 
 ## Sources
@@ -1642,7 +1642,7 @@ Checked 2026-10-23:
   [virtualdesktops-extension](https://github.com/google/virtualdesktops-extension)
 - [crouton](https://github.com/dnschneid/crouton) README and commit
   `59e36db` (end of life, 2024-12-31)
-- *(secondary)* [ChromeOS developer news](https://developers.google.com/chromeos/app-development/develop/news)
+- *(secondary)* [chromeOS developer news](https://developers.google.com/chromeos/app-development/develop/news)
   for Baguette; [Chromebook keyboard shortcuts](https://support.google.com/chromebook/answer/183101);
   [9to5Google on Lacros](https://9to5google.com/2024/07/12/chromeos-lacros-ending/);
   [Aluminium OS](https://en.wikipedia.org/wiki/Aluminium_OS)

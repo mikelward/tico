@@ -1,4 +1,4 @@
-// The setup checklist (SPEC.md §3.4): the ChromeOS settings that bring the
+// The setup checklist (SPEC.md §3.4): the chromeOS settings that bring the
 // OS closer to tide. Settings can't be scripted, so each item says where to
 // go and what to set, and you tick it off; the ticks are this Chromebook's
 // own, kept in storage.local. The keys have their own list (src/keys.js).

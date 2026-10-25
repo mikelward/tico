@@ -37,20 +37,20 @@ test("at most four commands suggest a key, as Chromium allows", () => {
 test("every suggested key is one Chromium can bind, on every platform", () => {
   for (const [name, c] of Object.entries(manifest.commands)) {
     if (!c.suggested_key) continue;
-    assert.ok("default" in c.suggested_key, `${name} has no default, so it fails to install off ChromeOS`);
+    assert.ok("default" in c.suggested_key, `${name} has no default, so it fails to install off chromeOS`);
     for (const [platform, combo] of Object.entries(c.suggested_key)) {
       const parts = combo.split("+");
       const key = parts.pop();
       assert.match(key, KEYS, `${name} ${platform}: ${combo}`);
       for (const mod of parts) {
         assert.ok(["Ctrl", "Alt", "Shift", "Command", "MacCtrl", "Search"].includes(mod), `${name}: ${mod}`);
-        if (mod === "Search") assert.equal(platform, "chromeos", `${name}: Search only works on ChromeOS`);
+        if (mod === "Search") assert.equal(platform, "chromeos", `${name}: Search only works on chromeOS`);
       }
     }
   }
 });
 
-// ChromeOS turns Search+arrows into Home, End, Page Up and Page Down before
+// chromeOS turns Search+arrows into Home, End, Page Up and Page Down before
 // Chrome sees them, so chrome://extensions/shortcuts refuses them (§7.2).
 test("no command's key is a Search+arrow", () => {
   for (const [name, c] of Object.entries(manifest.commands)) {
