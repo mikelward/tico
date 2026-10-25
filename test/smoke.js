@@ -149,6 +149,21 @@ test("the dashboard offers the extras still off until you dismiss it", async () 
   await worker.evaluate(() => chrome.storage.local.remove("extrasDismissed"));
 });
 
+test("the dashboard's footer lines up, and its Settings button opens the settings", async () => {
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    window.optionsOpened = 0;
+    chrome.runtime.openOptionsPage = async () => window.optionsOpened++;
+  });
+  await page.goto(base + "src/launcher.html?mode=dashboard");
+  await page.waitForSelector("#clocks li");
+  const middle = (sel) => page.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; });
+  const text = await middle(".hint > span");
+  for (const sel of ["#dim", ".hint label", "#open-settings"]) assert.ok(Math.abs((await middle(sel)) - text) < 1, `${sel} isn't level with the hint`);
+  await page.locator("#open-settings").click();
+  await page.waitForFunction(() => window.optionsOpened === 1);
+});
+
 test("the dashboard stays open while Chrome asks for the dim's access", async () => {
   const { page, errors } = await open("src/launcher.html?mode=dashboard");
   await page.waitForSelector("#clocks li");

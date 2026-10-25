@@ -339,10 +339,32 @@ main {
 .hint {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 24px;
   padding: 10px;
   color: var(--muted);
   font-size: 12px;
+}
+
+/* A checkbox's own margin sat it below the text beside it. */
+.hint label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hint input {
+  margin: 0;
+}
+#open-settings {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+#open-settings:hover {
+  color: var(--fg);
 }
 
 /* The extras still off (§14.1), until dismissed. */
