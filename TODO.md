@@ -95,6 +95,37 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 
 ## Later
 
+- **Set the PRO 2 LIGHTSPEED's DPI from Linux** (SPEC.md §19.2, fix 1).
+  The mouse keeps its DPI in onboard profile memory, so a setting written
+  there carries to the Chromebook. Solaar 1.1.20 refuses it: "no onboard
+  profiles that Solaar supports". Findings from the mouse (2026-10-25):
+  - It has `ONBOARD PROFILES {8100}`. Its description is
+    `01 07 01 05 01 08 10 00ff 0a`: writable flash (`01`), but profile
+    **format 7**, and Solaar's `OnboardProfiles.from_device` accepts 1–5
+    only. Five profile slots, 8 buttons, 255-byte profiles.
+  - No user profiles yet: the flash header (`hdr0`) is all `ff`, and it
+    runs its ROM profile at sector `0x0101`.
+  - With the format check relaxed, `bin/solaar profiles` reads it but
+    misplaces the fields. Format 7's DPI table starts at byte 4 as five
+    steps of X u16, Y u16 and one more byte, probably lift-off distance:
+    400, 800 (current), 1600, 3200, 6400. Formats ≤5 have five plain u16s.
+    The button table also sits about 16 bytes later.
+
+  Plan, a Solaar PR (pwr-Solaar/Solaar):
+  1. Map the whole format-7 profile: dump the ROM profile's raw sector,
+     and check each field against what G HUB or the mouse shows (report
+     rate, DPI steps, buttons, lighting, name, checksum).
+  2. Add a format-7 decoder and encoder beside the existing one in
+     `lib/logitech_receiver/hidpp20.py`, with a unit test from the dump.
+  3. Test on the mouse: copy the ROM profile into a flash sector, change
+     one DPI step to 1600, write it, power-cycle, read back, then check
+     the Chromebook. The CRC protects against a bad write; the mouse falls
+     back to ROM.
+  4. Ask before opening the PR upstream; it posts under your account.
+
+  Until then: a DPI button under the mouse, if it has one, steps through
+  the profile's 400–6400; or G HUB once on Windows or a Mac.
+
 - If the service worker syncs before Chrome has restored any window after a
   restart, nothing matches and the old places are lost; keeping them
   waiting then would also catch "closed every window" (SPEC.md §14.2).
