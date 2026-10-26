@@ -159,12 +159,12 @@ test("the dashboard's footer lines up, and its Settings button opens the setting
   await page.waitForSelector("#clocks li");
   const middle = (sel) => page.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; });
   const text = await middle(".hint > span");
-  for (const sel of ["#dim", ".hint label", "#open-settings"]) assert.ok(Math.abs((await middle(sel)) - text) < 1, `${sel} isn't level with the hint`);
+  for (const sel of ["#open-settings"]) assert.ok(Math.abs((await middle(sel)) - text) < 1, `${sel} isn't level with the hint`);
   await page.locator("#open-settings").click();
   await page.waitForFunction(() => window.optionsOpened === 1);
 });
 
-test("the dashboard stays open while Chrome asks for the dim's access", async () => {
+test("the dashboard stays open while Chrome asks for an extra's access", async () => {
   const { page, errors } = await open("src/launcher.html?mode=dashboard");
   await page.waitForSelector("#clocks li");
   // Hold the prompt open, and record closes rather than closing.
@@ -174,12 +174,12 @@ test("the dashboard stays open while Chrome asks for the dim's access", async ()
     window.closes = 0;
     window.close = () => window.closes++;
   });
-  await page.locator("#dim").click();
+  await page.locator('[aria-label="Allow: Dim inactive windows"]').click();
   await page.waitForFunction(() => window.answer !== null);
   await page.evaluate(() => window.dispatchEvent(new Event("blur")));
   assert.equal(await page.evaluate(() => window.closes), 0, "closed under the prompt");
   await page.evaluate(() => window.answer(false));
-  await page.waitForFunction(() => !document.getElementById("dim").checked);
+  await page.waitForFunction(() => document.activeElement?.id === "query");
   await page.evaluate(() => window.dispatchEvent(new Event("blur")));
   assert.equal(await page.evaluate(() => window.closes), 1, "didn't close once answered");
   assert.deepEqual(errors, []);

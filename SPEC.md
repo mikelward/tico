@@ -860,7 +860,7 @@ Android or Linux app, tap Search for the native launcher instead.
 - **It costs the "read and change all your data on all websites" permission**
   (`<all_urls>` host access plus `scripting`). That's the warning users
   rightly fear. So the dim is **optional**, off by default, and requested
-  at runtime when you turn it on.
+  at runtime when you turn it on under Extras in the settings (§13).
 
 ### 10.2 Focus
 

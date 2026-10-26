@@ -87,6 +87,13 @@ test("all-sites access is optional, for the dim alone", () => {
   assert.ok(manifest.permissions.includes("scripting"));
 });
 
+test("the dim is switched on and off in the settings, not on the dashboard", () => {
+  const page = (name) => readFileSync(new URL(`./${name}`, import.meta.url), "utf8");
+  assert.doesNotMatch(page("launcher.html"), /id="dim"/);
+  assert.match(page("options.html"), /id="permissions"/, "the settings list the extras, the dim among them");
+  assert.doesNotMatch(page("options.html"), /from the dashboard/);
+});
+
 test("every command in the manifest does something", async () => {
   for (const name of Object.keys(manifest.commands)) {
     const chrome = new FakeChrome({

@@ -43,14 +43,14 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   one Chromebook shows "needs access here" on the next. Only https sites.
   The alternative is making the built-in three removable. Reversible:
   `src/watchers.js`.
-- **Granting all-sites access turns the dim on**, and the toggle lives on
-  the dashboard and home page until the options page exists. The prompt
-  takes focus, which closes the dashboard that asked, so tico treats the
-  grant itself as the switch. Turning it off
+- **Granting all-sites access turns the dim on**, and the switch is under
+  Extras in the settings. The dashboard only offers it, with the other
+  extras, until you dismiss the offer; its prompt takes focus and closes the
+  dashboard, so tico treats the grant itself as the switch. Turning it off
   undims every page, then gives the access back. Revoking the access at
   `chrome://extensions` instead leaves pages dimmed until they reload, since
   tico can no longer reach them. The alternative is a separate stored
-  setting. Reversible: `Tico.dimOn` and the page's checkbox.
+  setting. Reversible: `Tico.dimOn` and the settings' Extras list.
 - **The clock detail opens on a click** of the dashboard's clocks, and is
   always open on the home page, where there's room. Day is 07–19 and work is
   09–17 in every zone, and the DST note looks three weeks ahead. Zone
