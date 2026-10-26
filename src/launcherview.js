@@ -70,7 +70,6 @@ function renderBar() {
   layout.textContent = SYMBOLS[here?.mode] ?? "";
   nav.append(layout);
   $("title").textContent = here?.workspace ? `Workspace ${here.workspace}${home ? " · empty" : ""}` : "";
-  $("dim").checked = !!view.dim;
 }
 
 async function refresh() {
@@ -167,7 +166,7 @@ query.addEventListener("keydown", (e) => {
   }
 });
 // Esc anywhere on the page, not just in the search box: after a click on the
-// clocks or the dim toggle, focus is elsewhere.
+// clocks, focus is elsewhere.
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   e.preventDefault();
@@ -228,29 +227,9 @@ document.body.addEventListener("mouseleave", () => {
   renderTime();
 });
 
-// The dim needs all-sites access (§10.1), asked for here because Chrome only
-// prompts on a click. Turning it off undims every page first, then gives the
-// access back.
-const DIM_ORIGINS = ["<all_urls>"];
-const dim = $("dim");
 // Chrome's prompt takes focus, and closing the dashboard under it drops the
 // request, so the dashboard stays open until you answer.
 let asking = false;
-dim.addEventListener("change", async () => {
-  if (dim.checked) {
-    let granted;
-    asking = true;
-    try {
-      granted = await chrome.permissions.request({ origins: DIM_ORIGINS });
-    } finally {
-      asking = false;
-    }
-    if (granted) await chrome.runtime.sendMessage({ dim: true });
-    else dim.checked = false;
-  } else if (await chrome.runtime.sendMessage({ dim: false })) {
-    await chrome.permissions.remove({ origins: DIM_ORIGINS });
-  }
-});
 
 async function allowTabs() {
   asking = true;

@@ -422,8 +422,8 @@ $("open-shortcuts").addEventListener("click", () =>
 window.addEventListener("focus", () => renderKeys());
 await renderKeys();
 await renderSetup();
-// Allowed or removed elsewhere too: the dashboard's dim switch, or Chrome's
-// own extension page.
+// Allowed or removed elsewhere too: the dashboard's offer of extras, or
+// Chrome's own extension page.
 chrome.permissions.onAdded.addListener(() => {
   renderPermissions();
   renderWatched();
