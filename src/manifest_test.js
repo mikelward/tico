@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { Tico } from "./tico.js";
+import { Tileco } from "./tileco.js";
 import { FakeChrome, HD } from "./fake_chrome.js";
 
 const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url)));
@@ -103,28 +103,28 @@ test("every command in the manifest does something", async () => {
         { id: 2, left: 500, top: 0, width: 400, height: 300 },
       ],
     });
-    const tico = new Tico(chrome);
-    await tico.event();
+    const tileco = new Tileco(chrome);
+    await tileco.event();
     // Removing a master needs a second one to remove, and going or sending
     // to workspace 1 needs to start somewhere else.
-    if (name === "master-remove") await tico.command("master-add");
+    if (name === "master-remove") await tileco.command("master-add");
     // Search+Tab with nothing marked goes back to the last window you were in.
     if (name === "attention") {
       chrome.focus(2);
-      await tico.event();
+      await tileco.event();
       chrome.focus(1);
-      await tico.event();
+      await tileco.event();
     }
     if (name.endsWith("-1")) {
-      await tico.command("workspace-2");
+      await tileco.command("workspace-2");
       chrome.open({ id: 9, left: 0, top: 0, width: 400, height: 300 });
       chrome.focus(9);
-      await tico.event();
+      await tileco.event();
     }
-    const before = JSON.stringify([tico.state, chrome.wins]);
+    const before = JSON.stringify([tileco.state, chrome.wins]);
     chrome.updates.length = 0;
-    await tico.command(name);
-    const after = JSON.stringify([tico.state, chrome.wins]);
+    await tileco.command(name);
+    const after = JSON.stringify([tileco.state, chrome.wins]);
     const acted = before !== after || chrome.updates.some((u) => u.focused);
     assert.ok(acted, `${name} changed nothing`);
   }

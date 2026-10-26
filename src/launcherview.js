@@ -1,4 +1,4 @@
-// tico's full-screen page (SPEC.md §6.2, §8.1, §9.4): tide's bar on top,
+// tileco's full-screen page (SPEC.md §6.2, §8.1, §9.4): tide's bar on top,
 // with a launcher under it. As the home page of an empty workspace it opens
 // on the launch scope and stays; as the dashboard, from its key or the
 // toolbar button, it opens on open tabs and closes once you choose.
@@ -236,7 +236,7 @@ async function allowTabs() {
   try {
     if (await chrome.permissions.request({ permissions: ["tabs"] })) await refresh();
   } catch (e) {
-    console.error("tico: couldn't ask for tab search:", e);
+    console.error("tileco: couldn't ask for tab search:", e);
   } finally {
     asking = false;
   }
@@ -246,7 +246,7 @@ async function allowTabs() {
 // The settings open in a tab of their own; the dashboard closes as it
 // loses focus.
 $("open-settings").addEventListener("click", () =>
-  chrome.runtime.openOptionsPage().catch((e) => console.error("tico: couldn't open the settings:", e)),
+  chrome.runtime.openOptionsPage().catch((e) => console.error("tileco: couldn't open the settings:", e)),
 );
 
 // The dashboard offers the extras still off (§14.1) until you dismiss it.
@@ -273,7 +273,7 @@ async function renderExtras() {
             await refresh();
           }
         } catch (e) {
-          console.error(`tico: couldn't turn on ${extra.title}:`, e);
+          console.error(`tileco: couldn't turn on ${extra.title}:`, e);
         } finally {
           asking = false;
         }

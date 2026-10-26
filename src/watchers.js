@@ -1,11 +1,12 @@
-// The sites whose unread counts tico shows (SPEC.md §10.3), from the
+// The sites whose unread counts tileco shows (SPEC.md §10.3), from the
 // settings. Each needs its host permission, asked for on the options page,
 // and gets the title watcher registered at runtime. A site without its
 // permission on this Chromebook (settings sync, grants don't) is left out
 // until it has one.
 
-// Named for when it held only sites beyond Gmail, Chat and Calendar; kept,
-// so an update replaces the script it registered.
+// Named for when it held only sites beyond Gmail, Chat and Calendar, and
+// before tico was renamed tileco; kept, so an update replaces the script it
+// registered (it persists across sessions).
 export const WATCHER_ID = "tico-watch-extra";
 
 // The match pattern for an origin: "https://example.com" -> "https://example.com/*".
@@ -40,7 +41,7 @@ export async function syncWatchers(api, sites) {
         await api.scripting.executeScript({ target: { tabId: tab.id }, files: ["src/unread_watch.js"] });
       } catch (e) {
         // a discarded or closing tab gets the watcher when it next loads
-        console.warn(`tico: couldn't watch tab ${tab.id} yet:`, e?.message ?? e);
+        console.warn(`tileco: couldn't watch tab ${tab.id} yet:`, e?.message ?? e);
       }
     }
   }

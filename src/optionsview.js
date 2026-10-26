@@ -118,7 +118,7 @@ const HOOKS = {
       await save();
     },
   },
-  // Every page is undimmed while tico can still reach them.
+  // Every page is undimmed while tileco can still reach them.
   dim: { off: () => chrome.runtime.sendMessage({ dim: false }) },
 };
 const EXTRAS = BASE_EXTRAS.map((e) => ({ ...e, ...HOOKS[e.id] }));
@@ -133,7 +133,7 @@ async function renderPermissions() {
       const toggle = button(on ? "Turn off" : "Allow", `${on ? "Turn off" : "Allow"}: ${extra.title}`, async () => {
         try {
           if (on) {
-            if (extra.off && !(await extra.off())) throw new Error("tico couldn't undim the windows");
+            if (extra.off && !(await extra.off())) throw new Error("tileco couldn't undim the windows");
             await chrome.permissions.remove(extra.access);
           } else if (await chrome.permissions.request(extra.access)) {
             await extra.allowed?.();
@@ -151,7 +151,7 @@ async function renderPermissions() {
   $("permissions").replaceChildren(...items);
 }
 
-// The sites whose unread counts tico shows (§10.3). Settings sync, but a
+// The sites whose unread counts tileco shows (§10.3). Settings sync, but a
 // site's access is allowed per Chromebook, so each shows whether it's on here.
 let watchedSites = [];
 
@@ -324,7 +324,7 @@ $("watch-form").addEventListener("submit", async (e) => {
     return;
   }
   if (!(await chrome.permissions.request({ origins: [pattern(origin)] }))) {
-    showErrors([`tico needs access to ${origin} to show its unread counts`]);
+    showErrors([`tileco needs access to ${origin} to show its unread counts`]);
     return;
   }
   if (!watchedSites.includes(origin)) watchedSites.push(origin);

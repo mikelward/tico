@@ -1,4 +1,4 @@
-// tico's core: it reads Chrome's windows and displays, applies an operation
+// tileco's core: it reads Chrome's windows and displays, applies an operation
 // to the workspace state, and makes the screen match (SPEC.md §5, §6).
 // `api` is `chrome` in the extension and a fake in the tests; only its
 // promise-returning calls are used.
@@ -11,15 +11,15 @@ import * as geometry from "./geometry.js";
 import { unreadCount } from "./unread.js";
 import * as ws from "./workspaces.js";
 
-// Window types tico manages. Popups and devtools float untracked (§5.4),
-// except the app popups tico opens itself (§9.1) and Secure Shell's.
+// Window types tileco manages. Popups and devtools float untracked (§5.4),
+// except the app popups tileco opens itself (§9.1) and Secure Shell's.
 const MANAGED = ["normal", "app"];
 const TILED_POPUP_ORIGINS = [
   // Secure Shell opens its terminals as popup windows (§6.4).
   "chrome-extension://iodihamcpbpeioajjeobimgagajmlibd/",
 ];
 
-// Whether tico manages `w`. Always-on-top windows (Document
+// Whether tileco manages `w`. Always-on-top windows (Document
 // picture-in-picture, always-on-top popups) refuse minimizing, so they're
 // left alone on every workspace (§5.4), as is any window that refused once.
 function managed(w, appPopups, refused) {
@@ -50,7 +50,7 @@ export function displayFor(win, displays) {
   return (hit || displays[0]).id;
 }
 
-export class Tico {
+export class Tileco {
   constructor(api) {
     this.apps = DEFAULT_APPS;
     this.api = api;
@@ -65,11 +65,11 @@ export class Tico {
   // each step reads what the one before it did.
   run(step) {
     const done = this.queue.then(step);
-    this.queue = done.catch((e) => console.error("tico:", e));
+    this.queue = done.catch((e) => console.error("tileco:", e));
     return done;
   }
 
-  // Something changed outside tico: a window opened, closed, moved or took
+  // Something changed outside tileco: a window opened, closed, moved or took
   // focus, or a display came or went.
   event() {
     return this.run(async () => {
@@ -98,9 +98,9 @@ export class Tico {
     });
   }
 
-  // The dim is on while tico holds all-sites access (§10.1) and you haven't
+  // The dim is on while tileco holds all-sites access (§10.1) and you haven't
   // turned it off. Turning it off comes here first, to undim every page
-  // while tico can still reach them, then gives the access back.
+  // while tileco can still reach them, then gives the access back.
   setDim(on) {
     return this.run(async () => {
       await this.sync();
@@ -217,14 +217,14 @@ export class Tico {
     // A tiled window you resized, the first if there are several.
     let resized = null;
     for (const w of wins) {
-      // Chrome restores a restarted window as it likes; tico puts it back.
+      // Chrome restores a restarted window as it likes; tileco puts it back.
       if (renamed.has(w.id)) {
         if (w.focused) s = ws.focused(s, w.id);
         continue;
       }
       if (!(w.id in s.windows) || !before || !(w.id in before.windows)) {
         s = ws.addWindow(s, w.id, displayFor(w, this.displays));
-        // A window already minimized when tico first sees it stays so.
+        // A window already minimized when tileco first sees it stays so.
         if (w.state === "minimized") s = ws.userMinimized(s, w.id);
         if (w.focused) s = ws.focused(s, w.id);
         continue;
@@ -297,7 +297,7 @@ export class Tico {
       );
     } else if (stored.restoring) {
       // Put the waiting windows back on their workspaces, and match only
-      // windows tico hasn't seen.
+      // windows tileco hasn't seen.
       state = structuredClone(stored);
       for (const [id, { appPopup, ...info }] of Object.entries(stored.restoring)) {
         state.windows[id] = info;
@@ -309,7 +309,7 @@ export class Tico {
       return none;
     }
     // Each kind of window only takes the place of its own kind, so a popup
-    // tico doesn't manage can't take a tab window's place.
+    // tileco doesn't manage can't take a tab window's place.
     const renames = new Map();
     for (const type of new Set(Object.values(waiting).map((info) => info.type))) {
       const old = Object.fromEntries(
@@ -331,7 +331,7 @@ export class Tico {
   }
 
   // A drag on a tiled window's edge sets its workspace's main share (§5.3).
-  // Its width changed since tico placed it, on the same display, which has
+  // Its width changed since tileco placed it, on the same display, which has
   // the same work area: a work area that changed may have moved it, and a
   // drag of the whole window keeps the width. Returns {n, mode, mfact}, or
   // null if this wasn't such a drag or the share doesn't move that edge.
@@ -478,7 +478,7 @@ export class Tico {
     for (const tabId of dimmed) {
       if (want.has(tabId)) continue;
       const win = this.tabWindow.get(tabId);
-      // Leave a hidden window's overlay for when it comes back; a window tico
+      // Leave a hidden window's overlay for when it comes back; a window tileco
       // stopped managing never will, so it's undimmed.
       if (this.dimOn() && win in s.windows && !shown.has(win)) continue;
       if (win !== undefined) await set(tabId, false);
@@ -580,7 +580,7 @@ export class Tico {
   // A web app key: always a new window on this workspace, never one already
   // open, as tide's and KDE's keys launch the app (§9.1). Installed web apps
   // open their own windows, but there's no public way to launch one by
-  // origin, so tico opens the site in an app-like popup and tiles it as the
+  // origin, so tileco opens the site in an app-like popup and tiles it as the
   // app's.
   async app(app, display) {
     const w = await this.open({ url: app.url, type: "popup" }, display);
@@ -588,7 +588,7 @@ export class Tico {
     return w.id;
   }
 
-  // An empty workspace gets a home window, so tico's keys still have a
+  // An empty workspace gets a home window, so tileco's keys still have a
   // Chrome window to work in (§6.2). It isn't tiled or counted, and closes
   // when a window arrives. One you close stays closed until the display
   // shows another empty workspace.
@@ -642,14 +642,14 @@ export class Tico {
       return w;
     };
     // A window that refuses to hide (a locked full-screen one, say) can't
-    // follow a workspace, so tico stops managing it rather than stop the
+    // follow a workspace, so tileco stops managing it rather than stop the
     // switch, or read it still showing as your doing next time (§5.4).
     const refusedNow = [];
     const setState = async (id, state) => {
       try {
         await update(id, { state });
       } catch (e) {
-        console.warn(`tico: window ${id} refused to be ${state}; leaving it alone:`, e?.message ?? e);
+        console.warn(`tileco: window ${id} refused to be ${state}; leaving it alone:`, e?.message ?? e);
         refusedNow.push(id);
       }
     };

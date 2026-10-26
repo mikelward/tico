@@ -1,4 +1,4 @@
-# Testing and publishing tico
+# Testing and publishing tileco
 
 How to try a change on a Chromebook, then publish it on the Chrome Web
 Store. The store steps are from memory of how the store worked through
@@ -35,16 +35,16 @@ Chrome loads an extension from a folder, as it is. There's no build step.
 3. Click **Load unpacked** and choose the folder that holds
    `manifest.json`.
 4. Bind the keys at `chrome://extensions/shortcuts`. Chrome binds four
-   when it installs tico; the options page's **Keys** list says which of
+   when it installs tileco; the options page's **Keys** list says which of
    the rest are still to do.
-5. Open tico's options (right-click its toolbar icon › **Options**) and
+5. Open tileco's options (right-click its toolbar icon › **Options**) and
    work through the **Setup checklist**.
 
 To try a change: update the folder (unzip again, or `git pull`), then click
-the reload arrow on tico's card in `chrome://extensions`. Reloading resets
-tico's worker, not your settings.
+the reload arrow on tileco's card in `chrome://extensions`. Reloading resets
+tileco's worker, not your settings.
 
-To see errors: on tico's card, **Errors** lists what the worker threw, and
+To see errors: on tileco's card, **Errors** lists what the worker threw, and
 **Inspect views › service worker** opens its console. A page's own console
 is the usual DevTools (Ctrl+Shift+J) on that page.
 
@@ -56,16 +56,16 @@ Search+Space, the dim, and that Android and Linux windows are left alone.
 
 What the first upload needs:
 
-- **Icons.** Done: `icons/tico.svg` (three columns under a bar of
+- **Icons.** Done: `icons/tileco.svg` (three columns under a bar of
   workspaces and a clock, a T), rendered to the 16, 32, 48 and 128 px PNGs
   the manifest names. After changing the SVG, `make icons` renders them
   again. The store's own listing icon is the 128 px one.
 - **A privacy policy URL.** Done: [docs/privacy.md](docs/privacy.md),
   which GitHub Pages serves from `docs/` at
-  `https://mikelward.github.io/tico/privacy`. Give the store that URL. It
-  says what tico reads, keeps and sends, including that Chrome Sync copies
+  `https://mikelward.github.io/tileco/privacy`. Give the store that URL. It
+  says what tileco reads, keeps and sends, including that Chrome Sync copies
   the shared settings to your Google account when Sync is on. Update it
-  when tico starts reading or keeping something new.
+  when tileco starts reading or keeping something new.
 - **Screenshots.** At least one, 1280×800 or 640×400. Take them on the
   Chromebook (Search+Ctrl+Show windows takes a screenshot).
 - **A developer account.** Register at the
@@ -76,11 +76,11 @@ What the first upload needs:
 ## 4. Package it
 
 The store takes a ZIP with `manifest.json` at its top level, which GitHub's
-**Download ZIP** isn't: that wraps everything in a `tico-main/` folder and
+**Download ZIP** isn't: that wraps everything in a `tileco-main/` folder and
 includes the tests. Build the store's from a checkout:
 
 ```sh
-make zip     # dist/tico-<version>.zip; `unzip -l` it to see what went in
+make zip     # dist/tileco-<version>.zip; `unzip -l` it to see what went in
 ```
 
 The version is automatic: the number of commits, so `46` for the 46th.
@@ -123,18 +123,18 @@ In the [developer dashboard](https://chrome.google.com/webstore/devconsole):
        title. Asked for only when you allow it.
      - Optional all-sites access: dimming inactive windows, asked for only
        when you turn it on.
-   - **Remote code:** no. tico runs only the code in its package.
-   - **Data use:** tico sends nothing to its developer or anyone else.
-     Chrome Sync carrying the shared settings is Chrome's, not tico's, but
+   - **Remote code:** no. tileco runs only the code in its package.
+   - **Data use:** tileco sends nothing to its developer or anyone else.
+     Chrome Sync carrying the shared settings is Chrome's, not tileco's, but
      the privacy policy says so. Then tick the certifications.
 4. **Distribution:** **Unlisted** to try a published build first (only
    people with the link can install it), or **Public**. **Private** limits
    it to listed testers.
 5. **Submit for review.** Reviews have taken from a day to a few weeks.
-   Broad host permissions slow them down. tico asks for all-sites access
+   Broad host permissions slow them down. tileco asks for all-sites access
    only as an optional permission, which helps.
 
-tico's item ID is `ajcfbfgjfglgofbepnkiimmmnaidfedl`, and it keeps it for
+tileco's item ID is `ajcfbfgjfglgofbepnkiimmmnaidfedl`, and it keeps it for
 every update. Its store page is
 <https://chromewebstore.google.com/detail/ajcfbfgjfglgofbepnkiimmmnaidfedl>,
 which answers "not found" until the first submission is published.
@@ -142,4 +142,4 @@ which answers "not found" until the first submission is published.
 Once it's published, a Chromebook installs it from the store like any
 extension, and updates arrive on their own within a few hours of approval.
 Remove the unpacked copy from `chrome://extensions` first, or you'll have
-two ticos fighting over the same windows.
+two tilecos fighting over the same windows.

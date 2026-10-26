@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS = {
   work: WORK,
   apps: DEFAULT_APPS,
   dimStrength: 0.1,
-  // Sites whose unread counts tico shows (§10.3).
+  // Sites whose unread counts tileco shows (§10.3).
   watched: DEFAULT_SITES,
   // The layout a workspace starts in, by its display's aspect (§5.2), and
   // each layout's main share and main-window count, in tide's names.
@@ -218,7 +218,7 @@ export function resolve(sync, local) {
 }
 
 // Whether a storage.onChanged batch touched the settings, rather than only
-// tico's own state.
+// tileco's own state.
 export function settingsChanged(changes) {
   return SETTINGS_KEY in changes;
 }

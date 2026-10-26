@@ -1,4 +1,4 @@
-# tico
+# tileco
 
 Tiling on chromeOS: a Manifest V3 extension that brings the dwm/Krohnkite
 tiling of [tide](https://github.com/mikelward/tide) to Chrome and installed

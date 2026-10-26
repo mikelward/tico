@@ -142,7 +142,7 @@ export function userMinimized(state, winId) {
   return s;
 }
 
-// Any un-minimize tico didn't cause. On a hidden workspace this is Activate.
+// Any un-minimize tileco didn't cause. On a hidden workspace this is Activate.
 export function userRestored(state, winId, focusedDisplayId) {
   return activate(state, winId, focusedDisplayId);
 }
@@ -272,7 +272,7 @@ export function toggleMonocle(state, n, current, fallback) {
 
 // Every workspace takes `modes`, each mode's main share and count from the
 // settings, dropping what the keys gave it (§5.2, tide's §6). `modesFrom`
-// remembers them, so tico applies a change once rather than on every step.
+// remembers them, so tileco applies a change once rather than on every step.
 export function setModes(state, modes) {
   const s = clone(state);
   for (let n = 1; n <= WORKSPACES; n++) s.workspaces[n].modes = structuredClone(modes);
@@ -298,7 +298,7 @@ export function setMfact(state, n, mode, mfact) {
 }
 
 // After a browser restart (§14.2), each window in `renames` (old ID to new)
-// keeps its workspace, place in the stack, and everything else tico knows.
+// keeps its workspace, place in the stack, and everything else tileco knows.
 export function renameWindows(state, renames) {
   const s = clone(state);
   for (const [from, to] of renames) {
