@@ -56,10 +56,10 @@ Search+Space, the dim, and that Android and Linux windows are left alone.
 
 What the first upload needs:
 
-- **Icons.** Done: `icons/tico.svg` (three columns under a bar, a T),
-  rendered to the 16, 32, 48 and 128 px PNGs the manifest names. After
-  changing the SVG, `make icons` renders them again. The store's own
-  listing icon is the 128 px one.
+- **Icons.** Done: `icons/tico.svg` (three columns under a bar of
+  workspaces and a clock, a T), rendered to the 16, 32, 48 and 128 px PNGs
+  the manifest names. After changing the SVG, `make icons` renders them
+  again. The store's own listing icon is the 128 px one.
 - **A privacy policy URL.** Done: [docs/privacy.md](docs/privacy.md),
   which GitHub Pages serves from `docs/` at
   `https://mikelward.github.io/tico/privacy`. Give the store that URL. It

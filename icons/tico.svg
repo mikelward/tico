@@ -1,8 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <!-- tico's icon: three columns under a bar, making a T. -->
+  <!-- tico's icon: three columns under a bar of workspaces and a clock, making a T. -->
   <rect x="4" y="4" width="120" height="120" rx="26" fill="#3584e4"/>
-  <rect x="22" y="22" width="84" height="12" rx="5" fill="#ffffff"/>
-  <rect x="22" y="40" width="18" height="66" rx="6" fill="#99c1f1"/>
-  <rect x="46" y="40" width="36" height="66" rx="8" fill="#ffffff"/>
-  <rect x="88" y="40" width="18" height="66" rx="6" fill="#99c1f1"/>
+  <rect x="22" y="22" width="84" height="16" rx="5" fill="#ffffff"/>
+  <rect x="28" y="26" width="8" height="8" rx="2" fill="#3584e4"/>
+  <rect x="40" y="26" width="8" height="8" rx="2" fill="#99c1f1"/>
+  <rect x="52" y="26" width="8" height="8" rx="2" fill="#99c1f1"/>
+  <rect x="78" y="26" width="22" height="8" rx="2" fill="#99c1f1"/>
+  <rect x="22" y="44" width="18" height="62" rx="6" fill="#99c1f1"/>
+  <rect x="46" y="44" width="36" height="62" rx="8" fill="#ffffff"/>
+  <rect x="88" y="44" width="18" height="62" rx="6" fill="#99c1f1"/>
 </svg>
