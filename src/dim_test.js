@@ -44,3 +44,11 @@ test("a dimmed page takes a new strength without a second overlay", () => {
   assert.equal(els.get("tico-dim").style.background, "rgba(0,0,0,0.05)");
   assert.equal(els.size, 1);
 });
+
+test("the overlay keeps its pre-rename ID, so an update can lift a dim already on a page", () => {
+  const els = fakePage();
+  const old = { id: "tico-dim", style: {}, remove: () => els.delete("tico-dim") };
+  els.set("tico-dim", old);
+  overlay(false);
+  assert.equal(els.has("tico-dim"), false);
+});

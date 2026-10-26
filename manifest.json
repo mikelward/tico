@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "tico",
+  "name": "tileco",
   "version": "0",
   "description": "dwm-style tiling and workspaces for Chrome and web app windows on chromeOS.",
   "background": {
@@ -154,29 +154,29 @@
       "description": "Open a new browser window (Search+G)"
     },
     "app-calendar": {
-      "description": "Open app 1, Google Calendar unless changed in tico's options (Search+C)"
+      "description": "Open app 1, Google Calendar unless changed in tileco's options (Search+C)"
     },
     "app-chat": {
-      "description": "Open app 2, Google Chat unless changed in tico's options (Search+Shift+C)"
+      "description": "Open app 2, Google Chat unless changed in tileco's options (Search+Shift+C)"
     },
     "app-meet": {
-      "description": "Open app 3, Google Meet unless changed in tico's options (Search+M)"
+      "description": "Open app 3, Google Meet unless changed in tileco's options (Search+M)"
     },
     "app-music": {
-      "description": "Open app 4, YouTube Music unless changed in tico's options (Search+Y)"
+      "description": "Open app 4, YouTube Music unless changed in tileco's options (Search+Y)"
     }
   },
   "icons": {
-    "16": "icons/tico-16.png",
-    "32": "icons/tico-32.png",
-    "48": "icons/tico-48.png",
-    "128": "icons/tico-128.png"
+    "16": "icons/tileco-16.png",
+    "32": "icons/tileco-32.png",
+    "48": "icons/tileco-48.png",
+    "128": "icons/tileco-128.png"
   },
   "action": {
-    "default_title": "tico",
+    "default_title": "tileco",
     "default_icon": {
-      "16": "icons/tico-16.png",
-      "32": "icons/tico-32.png"
+      "16": "icons/tileco-16.png",
+      "32": "icons/tileco-32.png"
     }
   }
 }

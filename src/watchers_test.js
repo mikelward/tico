@@ -93,3 +93,7 @@ test("pages already open on a newly watched site get the watcher now", async () 
   await syncWatchers(chrome, ["https://app.slack.com"]);
   assert.equal(chrome.injected.length, 1, "nothing again for a site already watched");
 });
+
+test("the watcher keeps its pre-rename ID, so an update replaces the registered one", () => {
+  assert.equal(WATCHER_ID, "tico-watch-extra");
+});

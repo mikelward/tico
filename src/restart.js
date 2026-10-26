@@ -31,7 +31,7 @@ export function matchWindows(old, current) {
   return renames;
 }
 
-// The URLs tico remembers for a window: its tabs', at most `limit`.
+// The URLs tileco remembers for a window: its tabs', at most `limit`.
 export function windowUrls(win, limit = 20) {
   return (win.tabs ?? []).map((t) => t.url ?? t.pendingUrl).filter(Boolean).slice(0, limit);
 }

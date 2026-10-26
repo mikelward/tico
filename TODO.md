@@ -4,7 +4,7 @@
 
 Guesses made on autopilot (2026-10-24), each cheap to undo.
 
-- **No `AGENTS.md` in tico yet.** The sibling repos each have one; tico
+- **No `AGENTS.md` in tileco yet.** The sibling repos each have one; tileco
   follows their shared conventions (tide's especially) without its own copy.
   The alternative is a short one pointing at `SPEC.md` and those
   conventions. Reversible: add the file.
@@ -27,15 +27,15 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   alternative is remembering the state and restoring it. Reversible: a
   per-window field.
 - **An app key with no window opens the site in a `popup` window**, which
-  tico then tiles and finds as the app's. It never tries
+  tileco then tiles and finds as the app's. It never tries
   `chrome.management.launchApp`, which SPEC.md §9.1 leaves unverified for
   web apps. An installed web app's own window is still found and focused.
   The alternative is launching the installed app. Reversible: one function.
 - **A page's first title report sets its baseline and marks nothing**, so
   opening, reloading or switching accounts in Gmail with old unread mail
-  doesn't mark it; only a rise tico sees marks. The alternative marks any
+  doesn't mark it; only a rise tileco sees marks. The alternative marks any
   nonzero first count.
-  Reversible: one line in `Tico.title`.
+  Reversible: one line in `Tileco.title`.
 - **Gmail, Chat and Calendar are always watched**, in the manifest's
   `content_scripts`; the options page adds other sites, each with its own
   host permission asked for on that Chromebook, and the same title watcher
@@ -46,11 +46,11 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
 - **Granting all-sites access turns the dim on**, and the switch is under
   Extras in the settings. The dashboard only offers it, with the other
   extras, until you dismiss the offer; its prompt takes focus and closes the
-  dashboard, so tico treats the grant itself as the switch. Turning it off
+  dashboard, so tileco treats the grant itself as the switch. Turning it off
   undims every page, then gives the access back. Revoking the access at
   `chrome://extensions` instead leaves pages dimmed until they reload, since
-  tico can no longer reach them. The alternative is a separate stored
-  setting. Reversible: `Tico.dimOn` and the settings' Extras list.
+  tileco can no longer reach them. The alternative is a separate stored
+  setting. Reversible: `Tileco.dimOn` and the settings' Extras list.
 - **The clock detail opens on a click** of the dashboard's clocks, and is
   always open on the home page, where there's room. Day is 07–19 and work is
   09–17 in every zone, and the DST note looks three weeks ahead. Zone
@@ -65,12 +65,12 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   library such as fzf's algorithm. Reversible: `src/launcher.js`.
 - **The dashboard opens full screen every time**, not as Chrome's toolbar
   popup. If chromeOS shows its full-screen bubble on each open, a large
-  centered window is the fallback. Reversible: `Tico.dashboard`.
+  centered window is the fallback. Reversible: `Tileco.dashboard`.
 - **Always-on-top windows aren't tracked at all**: Document
   picture-in-picture and always-on-top popups stay put on every workspace,
   since chromeOS refuses to minimize them. The alternative is tracking them
   as floating windows that stay on one workspace, which can't hide them.
-  Reversible: `managed()` in `src/tico.js`.
+  Reversible: `managed()` in `src/tileco.js`.
 - **Secure Shell's popup windows tile**, by its extension ID in a built-in
   list, until the options page has tile and float rules (SPEC.md §5.4).
   Reversible: `TILED_POPUP_ORIGINS`.
@@ -78,20 +78,20 @@ Guesses made on autopilot (2026-10-24), each cheap to undo.
   by shared tab URLs, closest fit first (SPEC.md §14.2). A session with
   one window whose tabs all changed comes back unmatched, on the showing
   workspace. The alternative is `runtime.onStartup` as the signal, which
-  can arrive after the first window event. Reversible: `Tico.restarted`
+  can arrive after the first window event. Reversible: `Tileco.restarted`
   and `src/restart.js`.
 - **The wait for restored windows ends at your first command**, not after
   a time. A window that never returns is forgotten then; one opened before
   you press a key, with a matching tab, takes the old window's place. The
   alternative is a timeout. To decide after trying it on a device.
-  Reversible: `Tico.command`.
+  Reversible: `Tileco.command`.
 - **Two restart edge cases are deferred, not fixed** (Codex on PR 14): a
   restored window that closes before the rest return drops the placements
   still waiting, and a window first seen on a placeholder page such as
   `about:blank` is never matched again. Eight findings came from matching
   incrementally; the alternative is rematching every window against a saved
   snapshot on each sync until the first command, which deletes the class.
-  To decide after trying restarts on a device. Reversible: `Tico.restarted`.
+  To decide after trying restarts on a device. Reversible: `Tileco.restarted`.
 
 ## Later
 

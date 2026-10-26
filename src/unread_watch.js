@@ -1,9 +1,11 @@
-// Content script on the watched origins (SPEC.md §10.3): tells tico the page
-// title whenever it changes, so tico can see an unread count go up. It reads
+// Content script on the watched origins (SPEC.md §10.3): tells tileco the page
+// title whenever it changes, so tileco can see an unread count go up. It reads
 // nothing else on the page.
 
-// tico may inject it into a page that already has it (§10.3); one watcher
+// tileco may inject it into a page that already has it (§10.3); one watcher
 // per page is enough.
+// The flag keeps its pre-rename name so a page already watched before an
+// update isn't watched twice.
 if (!globalThis.ticoWatching) {
   globalThis.ticoWatching = true;
   let last = null;

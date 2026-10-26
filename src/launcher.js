@@ -1,5 +1,5 @@
 // The launcher's matching and ranking (SPEC.md §9.4), free of chrome.* so it
-// tests in Node: tabs, apps and tico's commands, filtered by a fuzzy match
+// tests in Node: tabs, apps and tileco's commands, filtered by a fuzzy match
 // and ordered by how well they match, then by how recently you used them.
 
 import { appOfUrl } from "./apps.js";
@@ -39,7 +39,7 @@ function itemScore(query, item) {
   return found.length === 0 ? null : Math.max(...found);
 }
 
-// The two scopes: "launch" is apps and tico's commands, "tabs" is open tabs.
+// The two scopes: "launch" is apps and tileco's commands, "tabs" is open tabs.
 export const SCOPES = { launch: ["app", "command"], tabs: ["tab"] };
 
 // Items in `scope` matching `query`, best first; ties go to the most recent.
@@ -78,7 +78,7 @@ function host(url) {
   }
 }
 
-// The launcher's items: every tab but tico's own pages, the app keys, and
+// The launcher's items: every tab but tileco's own pages, the app keys, and
 // the manifest's commands. A tab on an app's site carries the app's name, so
 // "calendar" finds Calendar's tabs. `workspaceOf` names a window's
 // workspace, or null.

@@ -17,16 +17,16 @@ test("word starts and runs score higher", () => {
 const tabs = [
   { id: 10, windowId: 1, title: "Inbox (3) - Gmail", url: "https://mail.google.com/mail/u/0/", lastAccessed: 300 },
   { id: 20, windowId: 2, title: "Design doc", url: "https://docs.google.com/document/d/1", lastAccessed: 500 },
-  { id: 30, windowId: 3, title: "tico", url: "chrome-extension://tico/src/launcher.html" },
+  { id: 30, windowId: 3, title: "tileco", url: "chrome-extension://tileco/src/launcher.html" },
 ];
 const apps = [{ name: "Google Calendar", url: "https://calendar.google.com/", command: "app-calendar", key: "Search+C" }];
 const commands = {
   "workspace-4": { description: "Go to workspace 4 (Search+4)" },
   "app-calendar": { description: "Open Google Calendar (Search+C)" },
 };
-const all = items({ tabs, apps, commands, workspaceOf: (w) => ({ 1: 2, 2: 1 })[w] ?? null, ownOrigin: "chrome-extension://tico/" });
+const all = items({ tabs, apps, commands, workspaceOf: (w) => ({ 1: 2, 2: 1 })[w] ?? null, ownOrigin: "chrome-extension://tileco/" });
 
-test("the items are tabs, apps and commands, without tico's own pages", () => {
+test("the items are tabs, apps and commands, without tileco's own pages", () => {
   assert.deepEqual(
     all.map((i) => [i.kind, i.title, i.detail, i.key ?? ""]),
     [
