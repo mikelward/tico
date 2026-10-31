@@ -726,6 +726,16 @@ Instead:
   `extension_action_api.cc` `OpenPopupInBrowser`). If chromeOS's full-screen
   bubble shows on every open, the dashboard falls back to a large centered
   window *(unverified)*.
+- **No dead clicks in the bar.** Each workspace chip's click target reaches
+  the bar's top and bottom and halfway to the next chip, the first to the
+  bar's left edge. The clocks are one target, every zone's name and time
+  and the gaps between them, the bar's height and out to its right edge.
+  The launcher's scope chips meet halfway too. Under the pointer, an
+  item's whole target shows as a rounded rect a shade darker than the bar
+  in light, lighter in dark (`--hover`), as if half pressed: a chip with
+  the space around it, the clocks as one row. The rounding is drawn, not
+  hit-tested, so it leaves no dead corners. tilemo's bar shares this
+  stylesheet. Neither bar has an appearance (dark mode) button.
 
 ### 8.2 Clocks
 
