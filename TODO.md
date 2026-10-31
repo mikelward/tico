@@ -4,6 +4,17 @@
 
 Guesses made on autopilot (2026-10-24), each cheap to undo.
 
+- **The bar's middle stays a dead space** (2026-10-31): tileco's title
+  does nothing on a click, so the room between the chips and the clocks
+  isn't given to either; the clocks reach 7px left, half their own gap.
+  The alternative is to split that room between the layout symbol and the
+  clocks. Reversible: `#clocks::before` in `launcher.css`.
+- **Hover is a translucent overlay, darker in light and lighter in dark**
+  (2026-10-31): `--hover` is black at 8% on the light bar and white at
+  10% on the dark one, since a darker gray doesn't show on a near-black
+  bar. It tints a current (accent) chip too. The alternative is opaque
+  grays per theme, which would hide a chip's own color. Reversible: the
+  `--hover` token in `launcher.css`.
 - **No `AGENTS.md` in tileco yet.** The sibling repos each have one; tileco
   follows their shared conventions (tide's especially) without its own copy.
   The alternative is a short one pointing at `SPEC.md` and those

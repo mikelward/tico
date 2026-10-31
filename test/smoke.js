@@ -120,6 +120,62 @@ for (const mode of ["home", "dashboard"]) {
   });
 }
 
+// Every point of the bar's chips and clocks, top to bottom, reaches one of
+// them: none lands on the bar between or around them.
+test("a click anywhere on the bar's chips or clocks reaches one", async () => {
+  const { page, errors } = await open("src/launcher.html?mode=dashboard");
+  await page.waitForSelector("#clocks li");
+  await page.waitForSelector("#workspaces button");
+  const dead = await page.evaluate(() => {
+    const chips = document.querySelectorAll("#workspaces button");
+    const clocks = document.getElementById("clocks");
+    const bar = document.querySelector(".bar").getBoundingClientRect();
+    const spans = [
+      [bar.left, chips[chips.length - 1].getBoundingClientRect().right, (e) => e.closest("#workspaces button")],
+      [clocks.getBoundingClientRect().left, bar.right, (e) => e.closest("#clocks")],
+    ];
+    const out = [];
+    for (const [from, to, owner] of spans) {
+      for (let x = Math.ceil(from); x < to; x++) {
+        for (const y of [bar.top, (bar.top + bar.bottom) / 2, bar.bottom - 1]) {
+          const e = document.elementFromPoint(x, y);
+          if (!e || !owner(e)) out.push(`${x},${y}`);
+        }
+      }
+    }
+    // The scope chips meet, too.
+    const [launch, tabs] = document.querySelectorAll(".scopes button");
+    const y = (launch.getBoundingClientRect().top + launch.getBoundingClientRect().bottom) / 2;
+    for (let x = Math.ceil(launch.getBoundingClientRect().left); x < tabs.getBoundingClientRect().right; x++) {
+      if (!document.elementFromPoint(x, y)?.closest(".scopes button")) out.push(`scopes ${x},${y}`);
+    }
+    return out;
+  });
+  assert.deepEqual(dead.slice(0, 10), [], `${dead.length} dead points`);
+  // Under the pointer, even at the bar's corner outside the chip itself,
+  // the chip's whole target shows, and still takes the click there.
+  await page.mouse.move(0, 0);
+  const first = await page.evaluate(() => {
+    const chip = document.querySelector("#workspaces button");
+    const shown = getComputedStyle(chip, "::after");
+    return {
+      background: shown.backgroundColor,
+      top: shown.top,
+      left: shown.left,
+      corner: document.elementFromPoint(0, 0)?.closest("#workspaces button") === chip,
+    };
+  });
+  assert.notEqual(first.background, "rgba(0, 0, 0, 0)", "no hover shown");
+  assert.deepEqual([first.top, first.left], ["-6px", "-11px"], "the whole target, not the chip");
+  assert.ok(first.corner, "hovering rounds the shape but loses no clicks");
+  // Above the clocks' line of text, in their target.
+  const row = await page.locator("#clocks").boundingBox();
+  await page.mouse.move(row.x + row.width / 2, 1);
+  const clocks = await page.evaluate(() => getComputedStyle(document.getElementById("clocks"), "::after").backgroundColor);
+  assert.notEqual(clocks, "rgba(0, 0, 0, 0)", "the clocks row shows as one");
+  assert.deepEqual(errors, []);
+});
+
 test("without tab access, the dashboard opens on Launch and offers tab search", async () => {
   const { page, errors } = await open("src/launcher.html?mode=dashboard");
   await page.waitForSelector("#results li");
